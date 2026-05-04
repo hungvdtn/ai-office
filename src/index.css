@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #f59e0b;
+  --color-bg-dark: #05070a;
+  --color-panel: #0f172a;
+  --color-border: #1e293b;
+  --color-text-muted: #94a3b8;
+  --font-sans: "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Georgia", serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-dark text-slate-200 antialiased;
+    font-family: var(--font-sans);
+  }
+  
+  h1, h2, h3, .serif {
+    font-family: var(--font-serif);
+  }
+}
+
+@layer components {
+  .office-card {
+    @apply bg-[#1e293b]/40 border border-[#334155] rounded-xl shadow-lg backdrop-blur-sm transition-all duration-300;
+  }
+  
+  .office-button-primary {
+    @apply px-4 py-2 bg-brand text-bg-dark rounded-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 font-bold uppercase text-xs tracking-wider disabled:opacity-50;
+  }
+
+  .office-button-secondary {
+    @apply px-4 py-2 bg-[#1e293b] border border-[#334155] text-slate-200 rounded-lg hover:bg-[#334155] transition-all flex items-center gap-2 font-medium;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 mx-4 my-1 rounded-lg text-text-muted hover:bg-[#1e293b] hover:text-white transition-all font-medium cursor-pointer text-sm;
+  }
+
+  .sidebar-link-active {
+    @apply flex items-center gap-3 px-4 py-3 mx-4 my-1 rounded-lg bg-[#1e293b] text-white font-semibold border-l-4 border-brand;
+  }
+
+  .dot-grid {
+    background-image: radial-gradient(rgba(245, 158, 11, 0.1) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+/* Sophisticated Dark specific scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-bg-dark;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+.markdown-body h1 { @apply text-2xl font-bold mt-6 mb-4 text-brand; }
+.markdown-body h2 { @apply text-xl font-bold mt-5 mb-3 text-slate-100; }
+.markdown-body p { @apply my-3 leading-relaxed text-slate-300; }
+.markdown-body table { @apply w-full border-collapse my-4 bg-slate-900/40; }
+.markdown-body th, .markdown-body td { @apply border border-border px-3 py-2 text-sm; }
+.markdown-body th { @apply bg-panel/60 font-semibold text-brand; }
+

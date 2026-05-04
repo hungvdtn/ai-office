@@ -1,0 +1,14 @@
+{
+  "name": "Văn Phòng Số AI",
+  "description": "Trợ lý Trí tuệ nhân tạo chuyên gia trong lĩnh vực quản trị văn phòng và chuyển đổi số giáo dục. Hỗ trợ xử lý PDF, OCR, Biên bản cuộc họp và TTS theo quy chuẩn Việt Nam.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "OCR",
+    "PDF Processing",
+    "Minutes Generation",
+    "TTS"
+  ]
+}
