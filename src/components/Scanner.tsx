@@ -1,28 +1,25 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  Camera, X, Check, Scan, Save, Loader2
-} from 'lucide-react';
+import { Camera, X, Check, Scan, Save, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false); // Thêm state khóa nút khi đang tải
+  const [isInitializing, setIsInitializing] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   
   const [scannedPages, setScannedPages] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   
-  const [autoMode, setAutoMode] = useState(false);
-  const [showSaveModal, setShowSaveModal] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [showSaveModal, setShowSaveModal] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // --- BẬT CAMERA: ĐỒNG BỘ HÓA NGAY LẬP TỨC (FIX IOS ABORT ERROR) ---
+  // 1. Chỉ lấy luồng dữ liệu (Không đụng chạm giao diện ở bước này)
   const startCamera = async () => {
-    if (isInitializing) return; // Chặn bấm nhiều lần
+    if (isInitializing) return;
     setIsInitializing(true);
 
     try {
@@ -32,41 +29,40 @@ export default function Scanner() {
       });
       
       setStream(mediaStream);
-      setIsScanning(true);
+      setIsScanning(true); // Kích hoạt vẽ giao diện
       setScannedPages([]);
-
-      // Ép trực tiếp luồng hình ảnh vào thẻ video ngay lập tức (không dùng setTimeout)
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.muted = true;
-        
-        try {
-          await videoRef.current.play();
-        } catch (playErr: any) {
-          // Bỏ qua lỗi AbortError nếu người dùng vô tình tắt quá nhanh
-          if (playErr.name !== 'AbortError') {
-             console.error("Lỗi phát Video:", playErr);
-          }
-        }
-      }
     } catch (err: any) {
-      alert(`Thiết bị từ chối: ${err.message}. (Lưu ý: iOS bắt buộc phải dùng link https://...loca.lt)`);
+      alert(`Thiết bị từ chối: ${err.message}. Vui lòng đảm bảo bạn đang mở bằng Safari gốc, không mở trong Zalo/Messenger.`);
     } finally {
       setIsInitializing(false);
     }
   };
+
+  // 2. Chờ giao diện vẽ xong mới gắn Video (Tuyệt chiêu chống màn hình đen Safari)
+  useEffect(() => {
+    let isMounted = true;
+    if (isScanning && stream && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = stream;
+      video.setAttribute('playsinline', 'true');
+      video.muted = true;
+      
+      // Độ trễ siêu nhỏ để Safari kịp nhận diện khung hình HTML
+      setTimeout(() => {
+        if (isMounted) {
+          video.play().catch(e => console.log("Lỗi phát nền:", e));
+        }
+      }, 100);
+    }
+    return () => { isMounted = false; };
+  }, [isScanning, stream]);
 
   const stopCamera = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
-    if (videoRef.current) {
-        videoRef.current.srcObject = null;
-    }
     setIsScanning(false);
-    setIsInitializing(false);
   }, [stream]);
 
   useEffect(() => {
@@ -149,16 +145,7 @@ export default function Scanner() {
 
       <div className={`office-card flex-1 bg-black overflow-hidden border-[#1e293b] flex flex-col relative ${isScanning ? 'rounded-none md:rounded-2xl absolute inset-0 md:relative z-50' : 'rounded-2xl'}`}>
         
-        {/* LUÔN RENDER THẺ VIDEO, KỂ CẢ KHI CHƯA QUÉT ĐỂ SAFARI KHÔNG BỊ SỐC */}
-        <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className={`absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-300 ${isScanning ? 'opacity-100' : 'opacity-0'}`}
-        />
-
-        {!isScanning && (
+        {!isScanning ? (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-[#05070a]">
              <button 
                 onClick={startCamera} 
@@ -169,18 +156,25 @@ export default function Scanner() {
                {isInitializing ? 'ĐANG KẾT NỐI CAMERA...' : 'MỞ MÁY QUÉT'}
              </button>
           </div>
-        )}
-
-        {isScanning && (
-          <div className="absolute inset-0 z-20 flex flex-col pointer-events-none">
+        ) : (
+          <div className="absolute inset-0 z-20 flex flex-col bg-black pointer-events-none">
             
-            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex justify-center pointer-events-auto">
+            {/* THẺ VIDEO LUÔN NẰM Ở LỚP DƯỚI CÙNG KHI ĐANG SCAN */}
+            <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+            
+            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex justify-center z-10">
                 <div className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border bg-black/50 text-slate-400 border-slate-600">
                   CHỤP THỦ CÔNG
                 </div>
             </div>
             
-            <div className="absolute inset-0 p-6 pb-32 flex items-center justify-center">
+            <div className="absolute inset-0 p-6 pb-32 flex items-center justify-center z-10">
                <div className="w-full h-full max-w-lg relative border border-slate-500/30">
                   <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
                   <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
@@ -200,7 +194,7 @@ export default function Scanner() {
               )}
             </AnimatePresence>
 
-            <div className="absolute bottom-0 left-0 right-0 h-28 bg-black z-40 flex items-center justify-between px-6 pb-4 pointer-events-auto">
+            <div className="absolute bottom-0 left-0 right-0 h-28 bg-black/80 backdrop-blur-md z-40 flex items-center justify-between px-6 pb-4 pointer-events-auto">
                <button onClick={stopCamera} className="w-16 h-12 flex flex-col items-center justify-center text-slate-400 hover:text-white transition-colors">
                   <X size={24} />
                   <span className="text-[10px] mt-1 font-bold">HỦY</span>
