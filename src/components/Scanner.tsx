@@ -1,103 +1,84 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, X, Check, Scan, Save, Loader2, AlertCircle } from 'lucide-react';
+import { Camera, X, Check, Scan, Save, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   
   const [scannedPages, setScannedPages] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   
-  // --- STATE LƯU TRỮ LOG CHẨN ĐOÁN LỖI ---
-  const [debugLogs, setDebugLogs] = useState<string>('Hệ thống sẵn sàng...');
-  
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // SỬ DỤNG 'useRef' THAY VÌ 'useState' ĐỂ CHỐNG LỖI TỰ ĐỘNG NGẮT CAMERA CỦA REACT
+  const streamRef = useRef<MediaStream | null>(null);
 
-  // Hàm ghi log chẩn đoán
-  const logInfo = (msg: string) => {
-    setDebugLogs(prev => `${new Date().toLocaleTimeString()} - ${msg}\n${prev}`);
-  };
-
+  // --- HÀM BẬT CAMERA ĐÃ ĐƯỢC CÁCH LY ---
   const startCamera = async () => {
     if (isInitializing) return;
     setIsInitializing(true);
-    logInfo('1. Bắt đầu gọi Camera...');
 
     try {
-      logInfo('2. Đang xin quyền truy cập iOS...');
       let mediaStream;
-      
       try {
-        // Cố gắng mở Camera sau
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }, 
           audio: false
         });
-        logInfo('3a. Lấy thành công luồng Camera sau!');
       } catch (e: any) {
-        logInfo(`[Lỗi Camera sau]: ${e.name}. Đang thử Camera mặc định...`);
-        // Nếu thất bại (do xung đột ống kính iPhone), mở Camera mặc định
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: true, 
           audio: false
         });
-        logInfo('3b. Lấy thành công luồng Camera mặc định!');
       }
       
-      setStream(mediaStream);
+      // Lưu luồng hình ảnh vào neo tĩnh
+      streamRef.current = mediaStream;
       setIsScanning(true);
       setScannedPages([]);
-      logInfo('4. Đã bật trạng thái isScanning = true');
+
+      // Chờ giao diện render xong (100ms) rồi mới ép luồng vào thẻ Video
+      setTimeout(() => {
+        if (videoRef.current && streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+          videoRef.current.setAttribute('playsinline', 'true');
+          videoRef.current.muted = true;
+          videoRef.current.play().catch(err => console.error("Lỗi phát video:", err));
+        }
+      }, 100);
 
     } catch (err: any) {
-      logInfo(`[LỖI NGHIÊM TRỌNG]: ${err.name} - ${err.message}`);
-      alert(`Lỗi: ${err.message}`);
+      alert(`Thiết bị từ chối truy cập: ${err.message}`);
     } finally {
       setIsInitializing(false);
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    if (isScanning && stream && videoRef.current) {
-      logInfo('5. Đang gắn luồng vào thẻ Video...');
-      const video = videoRef.current;
-      video.srcObject = stream;
-      video.setAttribute('playsinline', 'true');
-      video.muted = true;
-      
-      setTimeout(() => {
-        if (isMounted) {
-          logInfo('6. Đang gọi lệnh Play video...');
-          video.play().then(() => {
-            logInfo('7. THÀNH CÔNG: Video đang phát!');
-          }).catch(e => {
-            logInfo(`[LỖI PHÁT VIDEO]: ${e.name} - ${e.message}`);
-          });
-        }
-      }, 300);
+  // --- HÀM TẮT CAMERA THỦ CÔNG ---
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
-    return () => { isMounted = false; };
-  }, [isScanning, stream]);
-
-  const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setIsScanning(false);
-    logInfo('Đã tắt Camera.');
-  }, [stream]);
+  };
 
+  // Chỉ dọn dẹp khi người dùng thoát hẳn khỏi tab "Scan Tài liệu"
   useEffect(() => {
-    return () => stopCamera();
-  }, [stopCamera]);
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   const capturePage = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
@@ -178,21 +159,11 @@ export default function Scanner() {
              <button 
                 onClick={startCamera} 
                 disabled={isInitializing}
-                className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70 mb-8"
+                className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70"
              >
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                {isInitializing ? 'ĐANG KẾT NỐI CAMERA...' : 'MỞ MÁY QUÉT'}
              </button>
-
-             {/* MÀN HÌNH CHẨN ĐOÁN LỖI */}
-             <div className="w-full max-w-md bg-black border border-slate-700 rounded-lg p-4 text-left">
-                <div className="flex items-center gap-2 mb-2 text-rose-400 text-xs font-bold uppercase tracking-widest border-b border-slate-800 pb-2">
-                   <AlertCircle size={14} /> Trình chẩn đoán lỗi Safari
-                </div>
-                <pre className="text-[10px] text-emerald-500 font-mono whitespace-pre-wrap h-40 overflow-y-auto">
-                   {debugLogs}
-                </pre>
-             </div>
           </div>
         ) : (
           <div className="absolute inset-0 z-20 flex flex-col bg-black pointer-events-none">
