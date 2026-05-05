@@ -315,7 +315,7 @@ export default function Scanner() {
                  </button>
 
                  <button 
-                    onClick={handlehandleDone}
+                    onClick={handleDone}
                     disabled={scannedPages.length === 0 && !previewImage}
                     className="w-16 h-12 flex flex-col items-center justify-center text-brand disabled:text-slate-600 transition-colors"
                  >
