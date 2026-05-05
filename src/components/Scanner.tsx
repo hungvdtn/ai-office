@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, X, Check, Scan, Save, Loader2 } from 'lucide-react';
+import { Camera, X, Check, Scan, Save, Loader2, AlertCircle } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -10,49 +10,78 @@ export default function Scanner() {
   
   const [scannedPages, setScannedPages] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  
   const [fileName, setFileName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
+  
+  // --- STATE LƯU TRỮ LOG CHẨN ĐOÁN LỖI ---
+  const [debugLogs, setDebugLogs] = useState<string>('Hệ thống sẵn sàng...');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 1. Chỉ lấy luồng dữ liệu (Không đụng chạm giao diện ở bước này)
+  // Hàm ghi log chẩn đoán
+  const logInfo = (msg: string) => {
+    setDebugLogs(prev => `${new Date().toLocaleTimeString()} - ${msg}\n${prev}`);
+  };
+
   const startCamera = async () => {
     if (isInitializing) return;
     setIsInitializing(true);
+    logInfo('1. Bắt đầu gọi Camera...');
 
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }, 
-        audio: false
-      });
+      logInfo('2. Đang xin quyền truy cập iOS...');
+      let mediaStream;
+      
+      try {
+        // Cố gắng mở Camera sau
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }, 
+          audio: false
+        });
+        logInfo('3a. Lấy thành công luồng Camera sau!');
+      } catch (e: any) {
+        logInfo(`[Lỗi Camera sau]: ${e.name}. Đang thử Camera mặc định...`);
+        // Nếu thất bại (do xung đột ống kính iPhone), mở Camera mặc định
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true, 
+          audio: false
+        });
+        logInfo('3b. Lấy thành công luồng Camera mặc định!');
+      }
       
       setStream(mediaStream);
-      setIsScanning(true); // Kích hoạt vẽ giao diện
+      setIsScanning(true);
       setScannedPages([]);
+      logInfo('4. Đã bật trạng thái isScanning = true');
+
     } catch (err: any) {
-      alert(`Thiết bị từ chối: ${err.message}. Vui lòng đảm bảo bạn đang mở bằng Safari gốc, không mở trong Zalo/Messenger.`);
+      logInfo(`[LỖI NGHIÊM TRỌNG]: ${err.name} - ${err.message}`);
+      alert(`Lỗi: ${err.message}`);
     } finally {
       setIsInitializing(false);
     }
   };
 
-  // 2. Chờ giao diện vẽ xong mới gắn Video (Tuyệt chiêu chống màn hình đen Safari)
   useEffect(() => {
     let isMounted = true;
     if (isScanning && stream && videoRef.current) {
+      logInfo('5. Đang gắn luồng vào thẻ Video...');
       const video = videoRef.current;
       video.srcObject = stream;
       video.setAttribute('playsinline', 'true');
       video.muted = true;
       
-      // Độ trễ siêu nhỏ để Safari kịp nhận diện khung hình HTML
       setTimeout(() => {
         if (isMounted) {
-          video.play().catch(e => console.log("Lỗi phát nền:", e));
+          logInfo('6. Đang gọi lệnh Play video...');
+          video.play().then(() => {
+            logInfo('7. THÀNH CÔNG: Video đang phát!');
+          }).catch(e => {
+            logInfo(`[LỖI PHÁT VIDEO]: ${e.name} - ${e.message}`);
+          });
         }
-      }, 100);
+      }, 300);
     }
     return () => { isMounted = false; };
   }, [isScanning, stream]);
@@ -63,6 +92,7 @@ export default function Scanner() {
       setStream(null);
     }
     setIsScanning(false);
+    logInfo('Đã tắt Camera.');
   }, [stream]);
 
   useEffect(() => {
@@ -73,7 +103,6 @@ export default function Scanner() {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
@@ -107,7 +136,6 @@ export default function Scanner() {
 
   const confirmSavePDF = () => {
     if (scannedPages.length === 0) return;
-    
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -150,16 +178,24 @@ export default function Scanner() {
              <button 
                 onClick={startCamera} 
                 disabled={isInitializing}
-                className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70"
+                className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70 mb-8"
              >
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                {isInitializing ? 'ĐANG KẾT NỐI CAMERA...' : 'MỞ MÁY QUÉT'}
              </button>
+
+             {/* MÀN HÌNH CHẨN ĐOÁN LỖI */}
+             <div className="w-full max-w-md bg-black border border-slate-700 rounded-lg p-4 text-left">
+                <div className="flex items-center gap-2 mb-2 text-rose-400 text-xs font-bold uppercase tracking-widest border-b border-slate-800 pb-2">
+                   <AlertCircle size={14} /> Trình chẩn đoán lỗi Safari
+                </div>
+                <pre className="text-[10px] text-emerald-500 font-mono whitespace-pre-wrap h-40 overflow-y-auto">
+                   {debugLogs}
+                </pre>
+             </div>
           </div>
         ) : (
           <div className="absolute inset-0 z-20 flex flex-col bg-black pointer-events-none">
-            
-            {/* THẺ VIDEO LUÔN NẰM Ở LỚP DƯỚI CÙNG KHI ĐANG SCAN */}
             <video 
                 ref={videoRef} 
                 autoPlay 
