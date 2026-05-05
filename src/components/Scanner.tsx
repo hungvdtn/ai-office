@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, X, Check, Scan, Save, Loader2, Image as ImageIcon, Wand2, FileText, Layers } from 'lucide-react';
+import { Camera, X, Check, Scan, Save, Loader2, FileText, Layers } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { AnimatePresence, motion } from 'motion/react';
 
-type FilterMode = 'original' | 'color' | 'bw' | 'magic';
+type FilterMode = 'color' | 'bw';
 
 export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
@@ -14,17 +14,18 @@ export default function Scanner() {
   const [fileName, setFileName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   
-  // Nâng cấp: 4 Chế độ chất lượng
-  const [filterMode, setFilterMode] = useState<FilterMode>('magic'); 
+  // Tùy chọn 2 chế độ chất lượng sắc nét
+  const [filterMode, setFilterMode] = useState<FilterMode>('bw'); 
+  
+  // Trạng thái nhận diện văn bản thông minh
+  const [isDocumentAligned, setIsDocumentAligned] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const analyzeCanvasRef = useRef<HTMLCanvasElement>(null); // Canvas ẩn dùng cho AI nhận diện
   const streamRef = useRef<MediaStream | null>(null);
-  
-  // Ref để lấy tọa độ khung Vàng cắt ảnh
   const scanBoxRef = useRef<HTMLDivElement>(null);
 
-  // --- ÉP ĐỘ PHÂN GIẢI 4K CHO CAMERA ---
   const startCamera = async () => {
     if (isInitializing) return;
     setIsInitializing(true);
@@ -32,13 +33,9 @@ export default function Scanner() {
     try {
       let mediaStream;
       try {
-        // Cố gắng ép lên 4K để lấy nét chữ tối đa
+        // Ưu tiên độ phân giải cao nhất để nét chữ không bị vỡ
         mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            facingMode: 'environment',
-            width: { ideal: 3840 }, 
-            height: { ideal: 2160 } 
-          }, 
+          video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } }, 
           audio: false
         });
       } catch (e: any) {
@@ -48,6 +45,7 @@ export default function Scanner() {
       streamRef.current = mediaStream;
       setIsScanning(true);
       setScannedPages([]);
+      setIsDocumentAligned(false);
 
       setTimeout(() => {
         if (videoRef.current && streamRef.current) {
@@ -59,13 +57,13 @@ export default function Scanner() {
       }, 100);
 
     } catch (err: any) {
-      alert(`Lỗi Camera: ${err.message}. Vui lòng kiểm tra quyền trên Safari.`);
+      alert(`Lỗi Camera: ${err.message}. Vui lòng kiểm tra quyền truy cập.`);
     } finally {
       setIsInitializing(false);
     }
   };
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -74,17 +72,70 @@ export default function Scanner() {
       videoRef.current.srcObject = null;
     }
     setIsScanning(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
+    setIsDocumentAligned(false);
   }, []);
 
-  // --- THUẬT TOÁN CẮT QUANG HỌC (OPTICAL CROP) CHÍNH XÁC 100% ---
+  useEffect(() => {
+    return () => stopCamera();
+  }, [stopCamera]);
+
+  // --- THUẬT TOÁN THỊ GIÁC MÁY TÍNH: NHẬN DIỆN VĂN BẢN ---
+  useEffect(() => {
+    if (!isScanning || previewImage || showSaveModal) return;
+
+    const analyzeInterval = setInterval(() => {
+      const video = videoRef.current;
+      const canvas = analyzeCanvasRef.current;
+      if (!video || !canvas || video.readyState !== 4) return;
+
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+
+      // Thu nhỏ khung hình để phân tích cho nhẹ máy (Giảm tải CPU cho iPhone)
+      canvas.width = 64;
+      canvas.height = 64;
+      ctx.drawImage(video, 0, 0, 64, 64);
+
+      const imageData = ctx.getImageData(0, 0, 64, 64);
+      const data = imageData.data;
+
+      let centerBrightness = 0;
+      let edgeBrightness = 0;
+      let centerPixels = 0;
+      let edgePixels = 0;
+
+      // Quét điểm ảnh: Giả định tờ giấy nằm giữa (sáng), mặt bàn nằm viền (tối)
+      for (let y = 0; y < 64; y += 2) {
+        for (let x = 0; x < 64; x += 2) {
+          const i = (y * 64 + x) * 4;
+          const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+
+          const isCenter = x > 16 && x < 48 && y > 16 && y < 48;
+          if (isCenter) {
+            centerBrightness += brightness;
+            centerPixels++;
+          } else {
+            edgeBrightness += brightness;
+            edgePixels++;
+          }
+        }
+      }
+
+      const avgCenter = centerBrightness / centerPixels;
+      const avgEdge = edgeBrightness / edgePixels;
+
+      // Nếu vùng giữa sáng hơn vùng viền một mức độ nhất định -> Đã đưa tờ giấy vào đúng khung
+      if (avgCenter > avgEdge + 25) {
+        setIsDocumentAligned(true);
+      } else {
+        setIsDocumentAligned(false);
+      }
+    }, 300); // Quét 3 lần/giây
+
+    return () => clearInterval(analyzeInterval);
+  }, [isScanning, previewImage, showSaveModal]);
+
+  // --- CHỤP VÀ XỬ LÝ ẢNH ---
   const capturePage = useCallback(() => {
     if (videoRef.current && canvasRef.current && scanBoxRef.current) {
       const video = videoRef.current;
@@ -93,42 +144,34 @@ export default function Scanner() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Lấy tỷ lệ kích thước thực tế của Video so với kích thước hiển thị trên màn hình
       const videoRect = video.getBoundingClientRect();
       const boxRect = scanBox.getBoundingClientRect();
 
       const scaleX = video.videoWidth / videoRect.width;
       const scaleY = video.videoHeight / videoRect.height;
 
-      // Tính tọa độ điểm cắt chính xác bám theo khung Vàng
       const cropX = (boxRect.left - videoRect.left) * scaleX;
       const cropY = (boxRect.top - videoRect.top) * scaleY;
       const cropW = boxRect.width * scaleX;
       const cropH = boxRect.height * scaleY;
 
-      // Đặt kích thước Canvas đúng bằng kích thước khung đã cắt
       canvas.width = cropW;
       canvas.height = cropH;
 
-      // --- BỘ LỌC CHẤT LƯỢNG CAO ---
-      if (filterMode === 'color') {
-        ctx.filter = 'contrast(1.3) brightness(1.1) saturate(1.4)'; // Giữ màu, tăng nét
-      } else if (filterMode === 'bw') {
-        ctx.filter = 'grayscale(100%) contrast(1.5) brightness(1.2)'; // Đen trắng cơ bản
-      } else if (filterMode === 'magic') {
-        ctx.filter = 'grayscale(100%) contrast(2.0) brightness(1.3)'; // Khử bóng cực mạnh, nền trắng tinh
+      // BỘ LỌC TỐI ƯU CỰC ĐẠI CHO VĂN BẢN (KHỬ ÁNH SÁNG VÀNG)
+      if (filterMode === 'bw') {
+        // Tẩy trắng nền giấy, ép chữ đen đậm
+        ctx.filter = 'grayscale(100%) contrast(300%) brightness(140%)'; 
       } else {
-        ctx.filter = 'none'; // Ảnh gốc
+        // Giữ màu thật nhưng tăng độ nét và khử bóng nhẹ
+        ctx.filter = 'contrast(1.4) brightness(1.1) saturate(1.2)'; 
       }
 
-      // Vẽ phần video lọt trong khung Vàng lên Canvas
       ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
       
-      // Xuất ảnh chất lượng cao 95%
       const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
       setPreviewImage(imageUrl);
       
-      // Tự động chuyển trang sau 1.5 giây
       setTimeout(() => {
         setScannedPages(prev => [...prev, imageUrl]);
         setPreviewImage(null);
@@ -194,115 +237,99 @@ export default function Scanner() {
                 className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70"
              >
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
-               {isInitializing ? 'ĐANG KHỞI ĐỘNG CẢM BIẾN...' : 'MỞ MÁY QUÉT'}
+               {isInitializing ? 'ĐANG KẾT NỐI ỐNG KÍNH...' : 'MỞ MÁY QUÉT'}
              </button>
-             <div className="mt-8 bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg max-w-sm text-left">
-                <h3 className="text-sm font-bold text-yellow-500 mb-2 flex items-center gap-2"><Scan size={16}/> Hướng dẫn mới:</h3>
-                <ul className="text-xs text-yellow-500/80 space-y-2 list-disc pl-4">
-                  <li>Canh mặt giấy nằm lọt lòng trong <b>khung Vàng</b> trên màn hình.</li>
-                  <li>Hệ thống sẽ <b>chỉ cắt và giữ lại</b> phần nằm trong khung Vàng. Không dính nền.</li>
-                  <li>Bấm chụp thủ công khi bạn đã căn chỉnh xong.</li>
-                </ul>
-             </div>
+             <p className="text-xs text-slate-500 mt-6">Đặt văn bản lên mặt bàn tối màu để nhận diện tốt nhất.</p>
           </div>
         ) : (
           <div className="absolute inset-0 z-20 flex flex-col bg-black">
             
-            {/* LỚP VIDEO NỀN - HIỂN THỊ ĐẦY ĐỦ ĐỂ ĐO TỌA ĐỘ CHÍNH XÁC */}
             <video 
                 ref={videoRef} 
                 autoPlay 
                 playsInline 
                 muted 
-                className="absolute inset-0 w-full h-full object-cover z-0"
+                className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
             />
             
-            {/* THANH TRẠNG THÁI & CHỌN CHẤT LƯỢNG */}
-            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/90 to-transparent flex flex-col items-center gap-3 z-10 pointer-events-auto">
-                <div className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border bg-yellow-500 text-black border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
-                  CANH VĂN BẢN VÀO KHUNG VÀNG
-                </div>
-                
-                {/* TÙY CHỌN 4 BỘ LỌC */}
-                <div className="flex bg-slate-900/90 backdrop-blur-md rounded-lg p-1 border border-slate-700 overflow-x-auto w-full max-w-md justify-center">
-                  <button onClick={() => setFilterMode('original')} className={`flex items-center gap-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${filterMode === 'original' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-                    <ImageIcon size={12}/> Ảnh gốc
-                  </button>
-                  <button onClick={() => setFilterMode('color')} className={`flex items-center gap-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${filterMode === 'color' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-                    <Layers size={12}/> Màu nét
-                  </button>
-                  <button onClick={() => setFilterMode('bw')} className={`flex items-center gap-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${filterMode === 'bw' ? 'bg-slate-300 text-black' : 'text-slate-500 hover:text-slate-300'}`}>
-                    <FileText size={12}/> Đen trắng
-                  </button>
-                  <button onClick={() => setFilterMode('magic')} className={`flex items-center gap-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${filterMode === 'magic' ? 'bg-yellow-500 text-black' : 'text-slate-500 hover:text-slate-300'}`}>
-                    <Wand2 size={12}/> Magic (Sạch nền)
-                  </button>
-                </div>
-            </div>
-            
-            {/* KHUNG NGẮM CẮT VIỀN (OPTICAL CROP BOX) */}
-            <div className="absolute inset-0 p-6 pb-32 flex items-center justify-center z-10 pointer-events-none">
-               {/* Vùng tối che mờ bên ngoài - Giúp tập trung vào văn bản */}
-               <div className="absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.7)]" />
+            {/* KHUNG NGẮM THÔNG MINH - CHỈ HIỆN KHI ĐƯA ĐÚNG VĂN BẢN VÀO */}
+            <div className="absolute inset-0 p-6 pb-40 flex items-center justify-center z-10 pointer-events-none">
+               <div className="absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]" />
                
-               {/* KHUNG VÀNG: Mọi thứ nằm trong ID này sẽ được cắt chính xác ra PDF */}
                <div 
                   ref={scanBoxRef}
-                  className="w-[85%] aspect-[1/1.414] max-h-full relative border border-yellow-500/50 bg-yellow-500/10 shadow-[0_0_20px_rgba(234,179,8,0.2)_inset]"
+                  className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 ${isDocumentAligned ? 'border-2 border-yellow-400 bg-yellow-400/10 shadow-[0_0_30px_rgba(250,204,21,0.3)_inset]' : 'border border-transparent'}`}
                >
-                  <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-l-4 border-yellow-400 rounded-tl-xl" />
-                  <div className="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-r-4 border-yellow-400 rounded-tr-xl" />
-                  <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-l-4 border-yellow-400 rounded-bl-xl" />
-                  <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-r-4 border-yellow-400 rounded-br-xl" />
+                  {isDocumentAligned && (
+                    <>
+                      <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow-400" />
+                      <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-yellow-400" />
+                      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-yellow-400" />
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-yellow-400" />
+                    </>
+                  )}
                </div>
             </div>
 
-            {/* MÀN HÌNH XEM TRƯỚC (REVIEW) */}
             <AnimatePresence>
               {previewImage && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }}
                   className="absolute inset-0 z-30 bg-[#05070a] flex flex-col items-center justify-center p-6 pointer-events-auto"
                 >
-                  {/* Hiển thị chính xác hình ảnh đã bị cắt */}
-                  <img src={previewImage} alt="Preview" className="max-w-full max-h-full object-contain shadow-2xl border border-slate-700" />
+                  <img src={previewImage} alt="Preview" className="max-w-full max-h-full object-contain shadow-2xl border border-slate-700 bg-white" />
                   <div className="absolute bottom-32 bg-emerald-500 text-bg-dark px-6 py-3 rounded-full font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)]">
-                    ĐÃ CẮT VÀ LƯU TRANG {scannedPages.length + 1}
+                    ĐÃ LƯU TRANG {scannedPages.length + 1}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* THANH ĐIỀU KHIỂN DƯỚI CÙNG */}
-            <div className="absolute bottom-0 left-0 right-0 h-28 bg-black/90 backdrop-blur-md z-40 flex items-center justify-between px-6 pb-4 pointer-events-auto border-t border-slate-800">
-               <button onClick={stopCamera} className="w-16 h-12 flex flex-col items-center justify-center text-slate-400 hover:text-rose-400 transition-colors">
-                  <X size={24} />
-                  <span className="text-[10px] mt-1 font-bold">HỦY</span>
-               </button>
-
-               <button 
-                  onClick={capturePage}
-                  disabled={!!previewImage}
-                  className="w-20 h-20 rounded-full border-4 border-yellow-400 flex items-center justify-center p-1 active:scale-95 transition-transform disabled:opacity-50"
-               >
-                  <div className="w-full h-full rounded-full bg-white transition-colors" />
-               </button>
-
-               <button 
-                  onClick={handleDone}
-                  disabled={scannedPages.length === 0 && !previewImage}
-                  className="w-16 h-12 flex flex-col items-center justify-center text-yellow-400 disabled:text-slate-600 transition-colors"
-               >
-                  <div className="relative">
-                    <Check size={24} />
-                    {scannedPages.length > 0 && (
-                      <span className="absolute -top-2 -right-3 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">
-                        {scannedPages.length}
-                      </span>
-                    )}
+            {/* THANH ĐIỀU KHIỂN & BỘ LỌC GỘP CHUNG BÊN DƯỚI */}
+            <div className="absolute bottom-0 left-0 right-0 h-36 bg-black/90 backdrop-blur-md z-40 flex flex-col justify-end px-6 pb-6 pointer-events-auto border-t border-slate-800">
+               
+               {/* 2 Nút chọn màu sắc dời xuống đây */}
+               <div className="flex justify-center mb-4">
+                  <div className="flex bg-slate-800 rounded-full p-1 border border-slate-700 shadow-xl">
+                    <button onClick={() => setFilterMode('color')} className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${filterMode === 'color' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                      <Layers size={14}/> Bản Màu sắc
+                    </button>
+                    <button onClick={() => setFilterMode('bw')} className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${filterMode === 'bw' ? 'bg-white text-black' : 'text-slate-400 hover:text-slate-200'}`}>
+                      <FileText size={14}/> Đen trắng Nét
+                    </button>
                   </div>
-                  <span className="text-[10px] mt-1 font-bold">XONG ({scannedPages.length})</span>
-               </button>
+               </div>
+
+               <div className="flex items-center justify-between w-full">
+                 <button onClick={stopCamera} className="w-16 h-12 flex flex-col items-center justify-center text-slate-400 hover:text-rose-400 transition-colors">
+                    <X size={24} />
+                    <span className="text-[10px] mt-1 font-bold">HỦY</span>
+                 </button>
+
+                 <button 
+                    onClick={capturePage}
+                    disabled={!!previewImage || !isDocumentAligned}
+                    className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${isDocumentAligned && !previewImage ? 'border-yellow-400 opacity-100' : 'border-slate-500 opacity-50'}`}
+                 >
+                    <div className={`w-full h-full rounded-full transition-colors ${isDocumentAligned ? 'bg-white' : 'bg-slate-500'}`} />
+                 </button>
+
+                 <button 
+                    onClick={handlehandleDone}
+                    disabled={scannedPages.length === 0 && !previewImage}
+                    className="w-16 h-12 flex flex-col items-center justify-center text-brand disabled:text-slate-600 transition-colors"
+                 >
+                    <div className="relative">
+                      <Check size={24} />
+                      {scannedPages.length > 0 && (
+                        <span className="absolute -top-2 -right-3 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">
+                          {scannedPages.length}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] mt-1 font-bold">XONG</span>
+                 </button>
+               </div>
             </div>
           </div>
         )}
@@ -336,6 +363,7 @@ export default function Scanner() {
         </AnimatePresence>
 
         <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={analyzeCanvasRef} className="hidden" />
       </div>
     </div>
   );
