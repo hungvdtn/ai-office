@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, X, Check, Scan, Save, Loader2, Maximize } from 'lucide-react';
+import { Camera, X, Check, Scan, Save, Loader2, Maximize, Settings2, Image as ImageIcon, Wand2, FileText } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { AnimatePresence, motion } from 'motion/react';
+
+type FilterMode = 'original' | 'enhance' | 'bw';
 
 export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
@@ -12,15 +14,13 @@ export default function Scanner() {
   const [fileName, setFileName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   
-  // CHẾ ĐỘ QUÉT
-  const [autoMode, setAutoMode] = useState(true);
-  const [scanState, setScanState] = useState<'idle' | 'detecting' | 'locked'>('idle');
+  // Tùy chọn chất lượng Scan
+  const [filterMode, setFilterMode] = useState<FilterMode>('bw'); // Mặc định là Trắng đen chuẩn văn bản
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // --- HÀM BẬT CAMERA ---
   const startCamera = async () => {
     if (isInitializing) return;
     setIsInitializing(true);
@@ -29,20 +29,16 @@ export default function Scanner() {
       let mediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }, 
+          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, 
           audio: false
         });
       } catch (e: any) {
-        mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: true, 
-          audio: false
-        });
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
       
       streamRef.current = mediaStream;
       setIsScanning(true);
       setScannedPages([]);
-      setAutoMode(true); // Mặc định bật Tự động bắt khung
 
       setTimeout(() => {
         if (videoRef.current && streamRef.current) {
@@ -52,7 +48,6 @@ export default function Scanner() {
           videoRef.current.play().catch(err => console.error("Lỗi phát video:", err));
         }
       }, 100);
-
     } catch (err: any) {
       alert(`Thiết bị từ chối truy cập: ${err.message}`);
     } finally {
@@ -69,7 +64,6 @@ export default function Scanner() {
       videoRef.current.srcObject = null;
     }
     setIsScanning(false);
-    setScanState('idle');
   };
 
   useEffect(() => {
@@ -80,67 +74,58 @@ export default function Scanner() {
     };
   }, []);
 
-  // --- LOGIC CHỤP ẢNH VÀ KHỬ BÓNG SÁNG ---
+  // --- THUẬT TOÁN CẮT KHUNG VÀ LỌC MÀU CHUYÊN SÂU ---
   const capturePage = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // 1. Lấy kích thước thật của video
+      const vWidth = video.videoWidth;
+      const vHeight = video.videoHeight;
       
-      if (ctx) {
-        // Tối ưu hóa: Khử bóng, tăng cường độ tương phản cao, ép về trắng đen chuẩn mực
-        ctx.filter = 'grayscale(100%) contrast(1.6) brightness(1.2)';
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
-        setPreviewImage(imageUrl);
-        setScanState('idle'); // Reset trạng thái khung
-        
-        // Hiện preview 1.5 giây rồi tự động cất vào mảng, tiếp tục vòng lặp
-        setTimeout(() => {
-          setScannedPages(prev => [...prev, imageUrl]);
-          setPreviewImage(null);
-        }, 1500);
+      // 2. Tính toán khung cắt (Crop Box) dựa trên tỷ lệ A4 (1 : 1.414)
+      // Giả sử khung ngắm chiếm 80% chiều rộng của luồng video
+      const cropWidth = vWidth * 0.8;
+      const cropHeight = cropWidth * 1.414;
+      
+      // Tính tọa độ điểm bắt đầu cắt (nằm giữa màn hình)
+      const startX = (vWidth - cropWidth) / 2;
+      const startY = (vHeight - cropHeight) / 2;
+
+      // Thiết lập kích thước Canvas bằng đúng kích thước khung đã cắt
+      canvas.width = cropWidth;
+      canvas.height = cropHeight;
+
+      // 3. Áp dụng Bộ lọc (Filter) dựa trên lựa chọn của người dùng
+      if (filterMode === 'enhance') {
+        // Tăng sáng, tăng tương phản, giữ màu
+        ctx.filter = 'contrast(1.2) brightness(1.1) saturate(1.2)';
+      } else if (filterMode === 'bw') {
+        // Trắng đen chuẩn văn bản, khử bóng
+        ctx.filter = 'grayscale(100%) contrast(1.5) brightness(1.2)';
+      } else {
+        // Ảnh gốc
+        ctx.filter = 'none';
       }
-    }
-  }, []);
 
-  // --- VÒNG LẶP TỰ ĐỘNG BẮT KHUNG (AUTO-SCAN LOOP) ---
-  useEffect(() => {
-    if (!isScanning || !autoMode || previewImage || showSaveModal) {
-      setScanState('idle');
-      return;
-    }
-
-    let timer1: NodeJS.Timeout, timer2: NodeJS.Timeout, timer3: NodeJS.Timeout;
-
-    // Chu kỳ 1: Chờ ổn định (1s)
-    timer1 = setTimeout(() => {
-      setScanState('detecting'); // Chuyển màu Vàng (Đang phân tích)
+      // 4. Vẽ phần video CẮT ĐƯỢC lên Canvas
+      ctx.drawImage(video, startX, startY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
       
-      // Chu kỳ 2: Khóa mục tiêu (1.5s)
-      timer2 = setTimeout(() => {
-        setScanState('locked'); // Chuyển màu Xanh (Đã bắt được)
-        
-        // Chu kỳ 3: Chụp tự động (0.5s sau khi khóa)
-        timer3 = setTimeout(() => {
-          capturePage();
-        }, 500);
-        
+      // 5. Xuất ra ảnh chất lượng cao
+      const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
+      setPreviewImage(imageUrl);
+      
+      // Hiện kết quả 1.5 giây rồi cất vào mảng
+      setTimeout(() => {
+        setScannedPages(prev => [...prev, imageUrl]);
+        setPreviewImage(null);
       }, 1500);
-    }, 1000);
+    }
+  }, [filterMode]);
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, [isScanning, autoMode, previewImage, showSaveModal, scannedPages.length, capturePage]);
-
-
-  // --- XUẤT FILE PDF ---
   const handleDone = () => {
     if (scannedPages.length === 0) {
       stopCamera();
@@ -175,21 +160,6 @@ export default function Scanner() {
     stopCamera();
   };
 
-  // --- RENDER GIAO DIỆN KHUNG NHẬN DIỆN MÀU SẮC ---
-  const getBoxStyles = () => {
-    if (!autoMode) return 'border-white bg-transparent';
-    if (scanState === 'detecting') return 'border-yellow-400 bg-yellow-400/10 scale-95 transition-all duration-1000';
-    if (scanState === 'locked') return 'border-emerald-500 bg-emerald-500/20 scale-100 transition-all duration-300';
-    return 'border-white/50 bg-transparent scale-100 transition-all duration-500';
-  };
-
-  const getBorderColor = () => {
-    if (!autoMode) return 'border-white';
-    if (scanState === 'detecting') return 'border-yellow-400';
-    if (scanState === 'locked') return 'border-emerald-500';
-    return 'border-white/50';
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 h-[calc(100vh-120px)] flex flex-col relative">
       
@@ -199,7 +169,7 @@ export default function Scanner() {
             <h1 className="text-3xl serif font-light text-slate-100 flex items-center gap-3">
               <Scan className="text-brand" size={32} /> Máy Scan Tài liệu
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Quét thông minh, tự động khử bóng nền và gộp PDF liên tục.</p>
+            <p className="text-slate-500 text-sm mt-1">Hỗ trợ Cắt viền chuẩn A4 và Bộ lọc văn bản sắc nét.</p>
           </div>
         </div>
       )}
@@ -216,50 +186,68 @@ export default function Scanner() {
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                {isInitializing ? 'ĐANG KHỞI ĐỘNG...' : 'MỞ MÁY QUÉT'}
              </button>
-             <p className="text-xs text-slate-500 mt-6 max-w-xs">
-               Lưu ý: Giữ camera song song với mặt giấy để đạt chất lượng chuẩn xác nhất.
-             </p>
+             <div className="mt-8 bg-slate-800/50 p-4 rounded-lg max-w-sm text-left">
+                <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2"><Scan size={16}/> Hướng dẫn quét:</h3>
+                <ul className="text-xs text-slate-400 space-y-1 list-disc pl-4">
+                  <li>Đặt văn bản trên mặt phẳng màu tối.</li>
+                  <li>Di chuyển điện thoại song song với mặt giấy.</li>
+                  <li>Canh mép giấy nằm lọt lòng trong khung ngắm.</li>
+                </ul>
+             </div>
           </div>
         ) : (
-          <div className="absolute inset-0 z-20 flex flex-col bg-black pointer-events-none">
+          <div className="absolute inset-0 z-20 flex flex-col bg-black">
+            
+            {/* LỚP VIDEO NỀN */}
             <video 
                 ref={videoRef} 
                 autoPlay 
                 playsInline 
                 muted 
-                className="absolute inset-0 w-full h-full object-cover z-0"
+                className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
             />
             
-            {/* THANH TRẠNG THÁI CHẾ ĐỘ QUÉT */}
-            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex justify-center z-10 pointer-events-auto">
-                <button 
-                  onClick={() => setAutoMode(!autoMode)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border transition-colors flex items-center gap-2 ${autoMode ? 'bg-brand/20 text-brand border-brand' : 'bg-black/50 text-slate-400 border-slate-600'}`}
-                >
-                  <Maximize size={14} /> {autoMode ? 'TỰ ĐỘNG BẮT KHUNG: BẬT' : 'CHỤP THỦ CÔNG'}
-                </button>
+            {/* THANH TRẠNG THÁI & BỘ LỌC */}
+            <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/90 to-transparent flex flex-col items-center gap-3 z-10 pointer-events-auto">
+                <div className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border bg-brand text-bg-dark border-brand shadow-lg">
+                  CHỤP THỦ CÔNG CHÍNH XÁC
+                </div>
+                
+                {/* THANH CHỌN BỘ LỌC CHẤT LƯỢNG */}
+                <div className="flex bg-slate-900/80 backdrop-blur-md rounded-lg p-1 border border-slate-700">
+                  <button onClick={() => setFilterMode('original')} className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-colors ${filterMode === 'original' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                    <ImageIcon size={12}/> Gốc
+                  </button>
+                  <button onClick={() => setFilterMode('enhance')} className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-colors ${filterMode === 'enhance' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                    <Wand2 size={12}/> Làm nét
+                  </button>
+                  <button onClick={() => setFilterMode('bw')} className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase transition-colors ${filterMode === 'bw' ? 'bg-white text-black' : 'text-slate-500 hover:text-slate-300'}`}>
+                    <FileText size={12}/> Trắng đen
+                  </button>
+                </div>
             </div>
             
-            {/* KHUNG NHẬN DIỆN THÔNG MINH */}
-            <div className="absolute inset-0 p-6 pb-32 flex items-center justify-center z-10">
-               <div className={`w-full h-full max-w-lg relative border-2 ${getBoxStyles()}`}>
-                  <div className={`absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 ${getBorderColor()} rounded-tl-xl transition-colors duration-300`} />
-                  <div className={`absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 ${getBorderColor()} rounded-tr-xl transition-colors duration-300`} />
-                  <div className={`absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 ${getBorderColor()} rounded-bl-xl transition-colors duration-300`} />
-                  <div className={`absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 ${getBorderColor()} rounded-br-xl transition-colors duration-300`} />
+            {/* KHUNG NGẮM CẮT VIỀN (Tỷ lệ A4) */}
+            <div className="absolute inset-0 p-6 pb-32 flex items-center justify-center z-10 pointer-events-none">
+               {/* Vùng tối che mờ bên ngoài */}
+               <div className="absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]" />
+               
+               {/* Khung sáng (Viewfinder) */}
+               <div className="w-[80%] aspect-[1/1.414] max-h-full relative border border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)_inset]">
+                  <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl" />
+                  <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl" />
+                  <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl" />
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-xl" />
                   
-                  {/* Chữ báo hiệu trạng thái nằm giữa khung */}
-                  {autoMode && scanState !== 'idle' && !previewImage && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest backdrop-blur-md transition-all duration-300 ${scanState === 'locked' ? 'bg-emerald-500/80 text-white scale-110' : 'bg-yellow-400/80 text-black'}`}>
-                        {scanState === 'detecting' ? 'Đang phân tích...' : 'GIỮ YÊN! ĐANG CHỤP...'}
-                      </span>
-                    </div>
-                  )}
+                  {/* Lưới định vị chéo mờ */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                     <div className="w-full h-[1px] bg-white absolute" />
+                     <div className="h-full w-[1px] bg-white absolute" />
+                  </div>
                </div>
             </div>
 
-            {/* MÀN HÌNH XEM TRƯỚC (HIỆN 1.5 GIÂY) */}
+            {/* MÀN HÌNH XEM TRƯỚC */}
             <AnimatePresence>
               {previewImage && (
                 <motion.div 
@@ -268,14 +256,14 @@ export default function Scanner() {
                 >
                   <img src={previewImage} alt="Preview" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-[#1e293b]" />
                   <div className="absolute bottom-32 bg-emerald-500 text-bg-dark px-6 py-3 rounded-full font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)]">
-                    ĐÃ LƯU TRANG {scannedPages.length + 1}
+                    ĐÃ CẮT VÀ LƯU TRANG {scannedPages.length + 1}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* THANH ĐIỀU KHIỂN DƯỚI CÙNG */}
-            <div className="absolute bottom-0 left-0 right-0 h-28 bg-black/80 backdrop-blur-md z-40 flex items-center justify-between px-6 pb-4 pointer-events-auto">
+            <div className="absolute bottom-0 left-0 right-0 h-28 bg-black/90 backdrop-blur-md z-40 flex items-center justify-between px-6 pb-4 pointer-events-auto border-t border-slate-800">
                <button onClick={stopCamera} className="w-16 h-12 flex flex-col items-center justify-center text-slate-400 hover:text-rose-400 transition-colors">
                   <X size={24} />
                   <span className="text-[10px] mt-1 font-bold">HỦY</span>
@@ -284,9 +272,9 @@ export default function Scanner() {
                <button 
                   onClick={capturePage}
                   disabled={!!previewImage}
-                  className="w-20 h-20 rounded-full border-4 border-slate-300 flex items-center justify-center p-1 active:scale-95 transition-transform disabled:opacity-50"
+                  className="w-20 h-20 rounded-full border-4 border-emerald-500 flex items-center justify-center p-1 active:scale-95 transition-transform disabled:opacity-50"
                >
-                  <div className={`w-full h-full rounded-full transition-colors ${autoMode ? 'bg-brand' : 'bg-white'}`} />
+                  <div className="w-full h-full rounded-full bg-white transition-colors" />
                </button>
 
                <button 
@@ -308,6 +296,7 @@ export default function Scanner() {
           </div>
         )}
 
+        {/* MODAL LƯU PDF */}
         <AnimatePresence>
           {showSaveModal && (
             <motion.div 
@@ -336,6 +325,7 @@ export default function Scanner() {
           )}
         </AnimatePresence>
 
+        {/* Canvas ẩn phục vụ cắt xén */}
         <canvas ref={canvasRef} className="hidden" />
       </div>
     </div>
