@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Mail } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3 } from 'lucide-react';
 
 const CAN = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'];
 const CHI = ['Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi'];
@@ -52,9 +52,11 @@ const HOLIDAYS: Record<string, HolidayInfo> = {
   '27/7': { name: 'Thương binh Liệt sĩ', isDayOff: false },
   '28/7': { name: 'Thành lập Công đoàn VN', isDayOff: false },
   '19/8': { name: 'Cách mạng Tháng Tám', isDayOff: false },
+  '28/8': { name: 'Truyền thống Tổ chức Nhà nước', isDayOff: false },
   '2/9': { name: 'Quốc khánh', isDayOff: true },
   '10/9': { name: 'Thành lập MTTQ VN', isDayOff: false },
   '1/10': { name: 'Quốc tế Người cao tuổi', isDayOff: false },
+  '4/10': { name: 'Kỹ năng nghề Việt Nam', isDayOff: false },
   '10/10': { name: 'Giải phóng Thủ đô', isDayOff: false },
   '13/10': { name: 'Doanh nhân Việt Nam', isDayOff: false },
   '20/10': { name: 'Phụ nữ Việt Nam', isDayOff: false },
@@ -86,7 +88,7 @@ const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
   '10/10': { name: 'Tết Trùng thập', isDayOff: false },
   '15/10': { name: 'Tết Hạ Nguyên', isDayOff: false },
   '23/12': { name: 'Ông Táo về trời', isDayOff: false },
-  '29/12': { name: 'Tết Nguyên đán', isDayOff: false },
+  '29/12': { name: 'Tết Nguyên đán', isDayOff: true },
   '30/12': { name: 'Tết Nguyên đán', isDayOff: true }
 };
 
@@ -97,7 +99,6 @@ interface UserEvent {
   time: string; 
   location?: string;
   reminderAdvance: number; 
-  email?: string;
 }
 
 export default function Calendar() {
@@ -111,7 +112,6 @@ export default function Calendar() {
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventTime, setNewEventTime] = useState('08:00');
   const [newEventLocation, setNewEventLocation] = useState('');
-  const [newEventEmail, setNewEventEmail] = useState('');
   const [newReminderAdvance, setNewReminderAdvance] = useState<number>(0);
 
   useEffect(() => {
@@ -160,7 +160,6 @@ export default function Calendar() {
     setEditingId(null);
     setNewEventTitle('');
     setNewEventLocation('');
-    setNewEventEmail('');
     setNewEventTime('08:00');
     setNewReminderAdvance(0);
     setShowEventModal(true);
@@ -171,7 +170,6 @@ export default function Calendar() {
     setNewEventTitle(ev.title);
     setNewEventTime(ev.time);
     setNewEventLocation(ev.location || '');
-    setNewEventEmail(ev.email || '');
     setNewReminderAdvance(ev.reminderAdvance || 0);
     setShowEventModal(true);
   };
@@ -182,7 +180,7 @@ export default function Calendar() {
     
     if (editingId) {
       const updatedEvents = events.map(e => e.id === editingId ? {
-        ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, email: newEventEmail, reminderAdvance: newReminderAdvance
+        ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance
       } : e);
       saveEvents(updatedEvents);
     } else {
@@ -192,7 +190,6 @@ export default function Calendar() {
         title: newEventTitle, 
         time: newEventTime, 
         location: newEventLocation,
-        email: newEventEmail,
         reminderAdvance: newReminderAdvance
       };
       saveEvents([...events, newEv]);
@@ -227,8 +224,8 @@ export default function Calendar() {
       grid.push(
         <div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-24 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
            <div className="flex justify-between items-start">
-            <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
-            <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
+            <span className="text-lg sm:text-xl font-bold text-slate-400">{d}</span>
+            <span className="text-xs font-medium text-slate-500">{lunar.day}</span>
           </div>
         </div>
       );
@@ -249,7 +246,15 @@ export default function Calendar() {
       const holidayInfo = HOLIDAYS[solarKey] || LUNAR_HOLIDAYS[lunarKey];
       
       const isDayOff = holidayInfo?.isDayOff;
-      const solarColor = (isSunday || isDayOff) ? 'text-red-500' : 'text-amber-500';
+      
+      // Thuật toán màu sắc theo yêu cầu: Đỏ (Chủ nhật/Nghỉ) - Vàng sậm (Lễ thường) - Trắng (Ngày thường)
+      let solarColor = 'text-white';
+      if (isSunday || isDayOff) {
+        solarColor = 'text-red-500';
+      } else if (holidayInfo) {
+        solarColor = 'text-amber-500';
+      }
+
       const eventTextColor = isDayOff ? 'text-red-500' : 'text-amber-500';
 
       grid.push(
@@ -257,7 +262,7 @@ export default function Calendar() {
           key={`cur-${d}`} 
           onClick={() => setSelectedDate(dateObj)}
           className={`h-20 sm:h-24 border border-[#1e293b] p-1 sm:p-2 cursor-pointer transition-all flex flex-col relative group
-            ${isSelected ? 'bg-amber-900/30 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'}
+            ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'}
             ${isToday ? 'ring-1 ring-sky-500/50' : ''}
           `}
         >
@@ -292,8 +297,8 @@ export default function Calendar() {
       grid.push(
         <div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-24 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
            <div className="flex justify-between items-start">
-            <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
-            <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
+            <span className="text-lg sm:text-xl font-bold text-slate-400">{d}</span>
+            <span className="text-xs font-medium text-slate-500">{lunar.day}</span>
           </div>
         </div>
       );
@@ -308,6 +313,14 @@ export default function Calendar() {
   const selHolidayInfo = HOLIDAYS[selSolarKey] || LUNAR_HOLIDAYS[selLunarKey];
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
   const selEvents = events.filter(e => e.dateStr === selDateStr);
+
+  // Đồng bộ màu của số lớn góc trên cùng bên trái
+  let topSolarColor = 'text-white';
+  if (selectedDate.getDay() === 0 || selHolidayInfo?.isDayOff) {
+    topSolarColor = 'text-red-500';
+  } else if (selHolidayInfo) {
+    topSolarColor = 'text-amber-500';
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto pb-10">
@@ -325,7 +338,7 @@ export default function Calendar() {
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800/50 p-6 sm:p-10">
           <div className="flex flex-col items-center justify-center p-4">
             <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Dương Lịch</span>
-            <div className={`text-8xl sm:text-9xl font-black mb-4 ${selectedDate.getDay() === 0 || selHolidayInfo?.isDayOff ? 'text-red-500' : 'text-amber-500'}`}>
+            <div className={`text-8xl sm:text-9xl font-black mb-4 ${topSolarColor}`}>
               {selectedDate.getDate()}
             </div>
             <span className="text-lg text-slate-300 font-semibold">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} Năm {selectedDate.getFullYear()}</span>
@@ -384,7 +397,6 @@ export default function Calendar() {
                       )}
                       <div className="text-[10px] text-slate-500 ml-6 mt-1 uppercase tracking-wider">
                         Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}
-                        {ev.email && ` | Thông báo gửi tới: ${ev.email}`}
                       </div>
                    </li>
                  ))}
@@ -476,13 +488,6 @@ export default function Calendar() {
                   <MapPin size={12}/> Địa điểm (Không bắt buộc)
                 </label>
                 <input type="text" value={newEventLocation} onChange={e => setNewEventLocation(e.target.value)} placeholder="VD: Phòng họp số 1..." className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
-              </div>
-              
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest block flex items-center gap-1">
-                  <Mail size={12}/> Email nhận thông báo (Chờ nâng cấp Backend)
-                </label>
-                <input type="email" value={newEventEmail} onChange={e => setNewEventEmail(e.target.value)} placeholder="example@email.com" className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
               </div>
 
               <button onClick={handleSaveEvent} className="w-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold py-3.5 rounded-lg mt-6 transition shadow-lg shadow-sky-900/50">
