@@ -21,6 +21,8 @@ export default function Scanner() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const analyzeCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  
+  const scanBoxRef = useRef<HTMLDivElement>(null);
 
   const startCamera = async () => {
     if (isInitializing) return;
@@ -74,7 +76,7 @@ export default function Scanner() {
     return () => stopCamera();
   }, [stopCamera]);
 
-  // --- AI NHẬN DIỆN VĂN BẢN (CHỈ HIỆN KHUNG VÀNG KHI CÓ GIẤY) ---
+  // --- AI NHẬN DIỆN VĂN BẢN (CHỈ BẬT KHUNG VÀNG KHI THẤY GIẤY TRẮNG) ---
   useEffect(() => {
     if (!isScanning || previewImage || showSaveModal) return;
 
@@ -98,6 +100,7 @@ export default function Scanner() {
         for (let x = 0; x < 64; x += 2) {
           const i = (y * 64 + x) * 4;
           const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          
           if (x > 16 && x < 48 && y > 16 && y < 48) {
             centerBrightness += brightness; centerPixels++;
           } else {
@@ -106,124 +109,91 @@ export default function Scanner() {
         }
       }
 
-      // Giấy trắng sáng hơn mặt bàn tối -> Đã vào khung
+      // Vùng giữa sáng hơn viền 20 đơn vị -> Có tờ giấy
       setIsDocumentAligned((centerBrightness / centerPixels) > (edgeBrightness / edgePixels) + 20);
     }, 300);
 
     return () => clearInterval(analyzeInterval);
   }, [isScanning, previewImage, showSaveModal]);
 
-  // --- THUẬT TOÁN TỰ ĐỘNG CẮT VIỀN (AUTO-CROP) VÀ BỘ LỌC CHUYÊN SÂU ---
+  // --- CẮT KHUNG TOÁN HỌC CHÍNH XÁC 100% & XỬ LÝ MÀU ---
   const capturePage = useCallback(() => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current && scanBoxRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      const scanBox = scanBoxRef.current;
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return;
 
-      // 1. Chụp toàn bộ khung hình thực tế của Video
+      // 1. TÍNH TOÁN CẮT CHÍNH XÁC THEO KHUNG VÀNG (STRICT CROP)
       const vw = video.videoWidth;
       const vh = video.videoHeight;
-      canvas.width = vw;
-      canvas.height = vh;
-      ctx.drawImage(video, 0, 0, vw, vh);
-
-      const imgData = ctx.getImageData(0, 0, vw, vh);
-      const data = imgData.data;
-
-      // 2. TÌM RANH GIỚI TỜ GIẤY (AUTO-CROP BOUNDING BOX)
-      let minX = vw, minY = vh, maxX = 0, maxY = 0;
-      let totalB = 0;
+      const vc = video.getBoundingClientRect(); // Kích thước video hiển thị trên màn hình
       
-      // Lấy độ sáng trung bình để làm mốc
-      for (let i = 0; i < data.length; i += 4) {
-        totalB += (data[i] + data[i+1] + data[i+2]) / 3;
-      }
-      const avgB = totalB / (vw * vh);
-      const threshold = Math.max(90, avgB * 0.8); // Điểm phân định Giấy và Bàn
+      const scale = Math.max(vc.width / vw, vc.height / vh);
+      const renderW = vw * scale;
+      const renderH = vh * scale;
 
-      for (let y = 0; y < vh; y += 4) {
-        for (let x = 0; x < vw; x += 4) {
-          const idx = (y * vw + x) * 4;
-          const b = (data[idx] + data[idx+1] + data[idx+2]) / 3;
-          if (b > threshold) { // Đây là giấy
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-          }
-        }
-      }
+      const offsetX = (renderW - vc.width) / 2;
+      const offsetY = (renderH - vc.height) / 2;
 
-      // Chừa lề an toàn 2%
-      const pad = Math.floor(vw * 0.02);
-      minX = Math.max(0, minX - pad);
-      minY = Math.max(0, minY - pad);
-      maxX = Math.min(vw, maxX + pad);
-      maxY = Math.min(vh, maxY + pad);
+      const boxRect = scanBox.getBoundingClientRect();
+      const boxLeft = boxRect.left - vc.left;
+      const boxTop = boxRect.top - vc.top;
 
-      let cropW = maxX - minX;
-      let cropH = maxY - minY;
+      // Tọa độ thực tế trên video gốc
+      const cropX = (boxLeft + offsetX) / scale;
+      const cropY = (boxTop + offsetY) / scale;
+      const cropW = boxRect.width / scale;
+      const cropH = boxRect.height / scale;
 
-      // Nếu không tìm thấy giấy (cắt lỗi), giữ nguyên toàn khung
-      if (cropW < vw * 0.4 || cropH < vh * 0.4) {
-        minX = 0; minY = 0; cropW = vw; cropH = vh;
-      }
-
-      // Tạo canvas tạm để chứa ảnh đã cắt viền
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = cropW;
-      tempCanvas.height = cropH;
-      const tempCtx = tempCanvas.getContext('2d');
-      if (!tempCtx) return;
-      tempCtx.putImageData(ctx.getImageData(minX, minY, cropW, cropH), 0, 0);
-
-      // Đưa ảnh đã xén gọn gàng về Canvas chính
+      // 2. CẮT PHẦN LÕI BÊN TRONG KHUNG VÀNG (LOẠI BỎ SẠCH BÀN GHẾ BÊN NGOÀI)
       canvas.width = cropW;
       canvas.height = cropH;
-      ctx.drawImage(tempCanvas, 0, 0);
+      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
-      // 3. ÁP DỤNG BỘ LỌC CHẤT LƯỢNG CAO
-      const finalImgData = ctx.getImageData(0, 0, cropW, cropH);
-      const finalData = finalImgData.data;
+      // 3. THUẬT TOÁN XỬ LÝ LỌC TRẮNG SÁNG & BẢO VỆ CON DẤU (MID-TONE PROTECTION)
+      const imgData = ctx.getImageData(0, 0, cropW, cropH);
+      const data = imgData.data;
 
       if (filterMode === 'bw') {
-        // CHẾ ĐỘ ĐEN TRẮNG 3 CẤP ĐỘ (CỨU CON DẤU)
-        for (let i = 0; i < finalData.length; i += 4) {
-          const gray = finalData[i]*0.299 + finalData[i+1]*0.587 + finalData[i+2]*0.114;
-          if (gray > 145) {
-            // Nền giấy -> Ép trắng tinh khiết
-            finalData[i] = finalData[i+1] = finalData[i+2] = 255;
-          } else if (gray < 85) {
-            // Chữ viết -> Ép đen tuyền
-            finalData[i] = finalData[i+1] = finalData[i+2] = 0;
-          } else {
-            // Con dấu, Quốc huy -> Giữ nguyên màu xám để nhận diện được đồ họa
-            finalData[i] = finalData[i+1] = finalData[i+2] = gray * 0.8;
-          }
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2];
+          let gray = r * 0.299 + g * 0.587 + b * 0.114;
+          
+          if (gray > 140) {
+            // Nền giấy (Xám sáng) -> Ép lên Trắng tinh khiết (Khử nền xám)
+            gray = Math.min(255, gray + (255 - gray) * 0.85);
+          } else if (gray < 90) {
+            // Chữ viết (Xám tối) -> Ép xuống Đen tuyền (Làm nét chữ)
+            gray = Math.max(0, gray * 0.8);
+          } 
+          // Còn lại (từ 90 đến 140) -> CHÍNH LÀ QUỐC HUY, CON DẤU: Giữ nguyên dải xám để không bị đen xì!
+
+          data[i] = data[i+1] = data[i+2] = gray;
         }
       } else {
-        // CHẾ ĐỘ MÀU (MAGIC WHITE-BALANCE: KHỬ XÁM, KHỬ BÓNG)
-        for (let i = 0; i < finalData.length; i += 4) {
-          const r = finalData[i], g = finalData[i+1], b = finalData[i+2];
-          const gray = r*0.299 + g*0.587 + b*0.114;
+        // CHẾ ĐỘ MÀU TỰ ĐỘNG CÂN BẰNG TRẮNG (AUTO WHITE-BALANCE)
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2];
+          const gray = r * 0.299 + g * 0.587 + b * 0.114;
           
-          if (gray > 130) {
-            // Những vùng màu nhợt nhạt (bóng râm, giấy xám) -> Kéo mạnh lên Trắng tinh
-            const blend = Math.min(1, (gray - 120) / 100);
-            finalData[i] = Math.min(255, r + (255 - r) * blend * 1.5);
-            finalData[i+1] = Math.min(255, g + (255 - g) * blend * 1.5);
-            finalData[i+2] = Math.min(255, b + (255 - b) * blend * 1.5);
+          if (gray > 135) {
+            // Khử ánh sáng đèn vàng / bóng râm nhạt trên mặt giấy
+            const blend = Math.min(1, (gray - 120) / 80);
+            data[i] = Math.min(255, r + (255 - r) * blend * 1.5);
+            data[i+1] = Math.min(255, g + (255 - g) * blend * 1.5);
+            data[i+2] = Math.min(255, b + (255 - b) * blend * 1.5);
           } else {
-            // Mực xanh, dấu đỏ -> Tăng nhẹ độ đậm
-            finalData[i] = Math.max(0, r * 0.9);
-            finalData[i+1] = Math.max(0, g * 0.9);
-            finalData[i+2] = Math.max(0, b * 0.9);
+            // Giữ lại và làm tươi màu mực thật (Xanh/Đỏ)
+            data[i] = Math.max(0, r * 0.95);
+            data[i+1] = Math.max(0, g * 0.95);
+            data[i+2] = Math.max(0, b * 0.95);
           }
         }
       }
       
-      ctx.putImageData(finalImgData, 0, 0);
+      ctx.putImageData(imgData, 0, 0);
       
       const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
       setPreviewImage(imageUrl);
@@ -278,7 +248,7 @@ export default function Scanner() {
             <h1 className="text-3xl serif font-light text-slate-100 flex items-center gap-3">
               <Scan className="text-brand" size={32} /> Máy Scan Tài liệu
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Cân bằng trắng tự động và Cắt viền bằng AI.</p>
+            <p className="text-slate-500 text-sm mt-1">Cắt viền quang học chính xác và bảo vệ chi tiết đồ họa.</p>
           </div>
         </div>
       )}
@@ -293,9 +263,9 @@ export default function Scanner() {
                 className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70"
              >
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
-               {isInitializing ? 'ĐANG KHỞI ĐỘNG...' : 'MỞ MÁY QUÉT'}
+               {isInitializing ? 'ĐANG KẾT NỐI ỐNG KÍNH...' : 'MỞ MÁY QUÉT'}
              </button>
-             <p className="text-xs text-slate-500 mt-6">Hệ thống sẽ tự động tìm giấy và cắt bỏ mặt bàn.</p>
+             <p className="text-xs text-slate-500 mt-6">Canh khít văn bản vào khung vàng, hệ thống sẽ tự động cắt bỏ viền thừa.</p>
           </div>
         ) : (
           <div className="absolute inset-0 z-20 flex flex-col bg-black">
@@ -308,16 +278,16 @@ export default function Scanner() {
                 className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
             />
             
-            {/* KHUNG VÀNG ĐỊNH VỊ (Chỉ hiện khi thấy giấy) */}
+            {/* KHUNG VÀNG ĐỊNH VỊ (Chỉ hiện khi đưa giấy trắng vào) */}
             <div className="absolute inset-0 p-6 pb-40 flex items-center justify-center z-10 pointer-events-none">
-               <div className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 ${isDocumentAligned ? 'shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]' : 'shadow-[0_0_0_9999px_rgba(0,0,0,0.1)]'}`}>
+               <div className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 ${isDocumentAligned ? 'shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]' : 'shadow-[0_0_0_9999px_rgba(0,0,0,0.1)]'}`}>
                   {isDocumentAligned && (
-                    <>
-                      <div className="absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 border-yellow-400 opacity-80" />
-                      <div className="absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 border-yellow-400 opacity-80" />
-                      <div className="absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 border-yellow-400 opacity-80" />
-                      <div className="absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 border-yellow-400 opacity-80" />
-                    </>
+                    <div ref={scanBoxRef} className="absolute inset-0">
+                      <div className="absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 border-yellow-400 opacity-90" />
+                      <div className="absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 border-yellow-400 opacity-90" />
+                      <div className="absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 border-yellow-400 opacity-90" />
+                      <div className="absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 border-yellow-400 opacity-90" />
+                    </div>
                   )}
                </div>
             </div>
@@ -330,19 +300,19 @@ export default function Scanner() {
                 >
                   <img src={previewImage} alt="Preview" className="max-w-full max-h-full object-contain shadow-2xl border border-slate-700 bg-white" />
                   <div className="absolute bottom-32 bg-emerald-500 text-bg-dark px-6 py-3 rounded-full font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)]">
-                    ĐÃ CẮT VÀ LƯU TRANG {scannedPages.length + 1}
+                    ĐÃ CẮT KHUNG VÀ LƯU TRANG {scannedPages.length + 1}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* THANH ĐIỀU KHIỂN & LỰA CHỌN MÀU (THIẾT KẾ MỚI GỌN GÀNG) */}
+            {/* THANH ĐIỀU KHIỂN BÊN DƯỚI */}
             <div className="absolute bottom-0 left-0 right-0 h-36 bg-black/90 backdrop-blur-md z-40 flex flex-col justify-end px-6 pb-6 pointer-events-auto border-t border-slate-800">
                
                <div className="flex justify-center mb-4">
                   <div className="flex bg-slate-800 rounded-full p-1 border border-slate-700 shadow-xl">
                     <button onClick={() => setFilterMode('color')} className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${filterMode === 'color' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-                      <Layers size={14}/> Bản Màu (Sạch nền)
+                      <Layers size={14}/> Bản Màu
                     </button>
                     <button onClick={() => setFilterMode('bw')} className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${filterMode === 'bw' ? 'bg-white text-black' : 'text-slate-400 hover:text-slate-200'}`}>
                       <FileText size={14}/> Đen Trắng Nét
@@ -358,8 +328,8 @@ export default function Scanner() {
 
                  <button 
                     onClick={capturePage}
-                    disabled={!!previewImage}
-                    className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${isDocumentAligned && !previewImage ? 'border-yellow-400' : 'border-slate-500'}`}
+                    disabled={!!previewImage || !isDocumentAligned}
+                    className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${isDocumentAligned && !previewImage ? 'border-yellow-400 opacity-100' : 'border-slate-500 opacity-50'}`}
                  >
                     <div className={`w-full h-full rounded-full transition-colors ${isDocumentAligned ? 'bg-white' : 'bg-slate-500'}`} />
                  </button>
