@@ -14,15 +14,12 @@ export default function Scanner() {
   const [fileName, setFileName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   
-  // Tùy chọn 2 chế độ chất lượng sắc nét
   const [filterMode, setFilterMode] = useState<FilterMode>('bw'); 
-  
-  // Trạng thái nhận diện văn bản thông minh
   const [isDocumentAligned, setIsDocumentAligned] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const analyzeCanvasRef = useRef<HTMLCanvasElement>(null); // Canvas ẩn dùng cho AI nhận diện
+  const analyzeCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scanBoxRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +30,6 @@ export default function Scanner() {
     try {
       let mediaStream;
       try {
-        // Ưu tiên độ phân giải cao nhất để nét chữ không bị vỡ
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } }, 
           audio: false
@@ -57,7 +53,7 @@ export default function Scanner() {
       }, 100);
 
     } catch (err: any) {
-      alert(`Lỗi Camera: ${err.message}. Vui lòng kiểm tra quyền truy cập.`);
+      alert(`Lỗi Camera: ${err.message}`);
     } finally {
       setIsInitializing(false);
     }
@@ -79,7 +75,7 @@ export default function Scanner() {
     return () => stopCamera();
   }, [stopCamera]);
 
-  // --- THUẬT TOÁN THỊ GIÁC MÁY TÍNH: NHẬN DIỆN VĂN BẢN ---
+  // --- THUẬT TOÁN NHẬN DIỆN VĂN BẢN (SMART FRAME DETECTOR) ---
   useEffect(() => {
     if (!isScanning || previewImage || showSaveModal) return;
 
@@ -91,7 +87,6 @@ export default function Scanner() {
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return;
 
-      // Thu nhỏ khung hình để phân tích cho nhẹ máy (Giảm tải CPU cho iPhone)
       canvas.width = 64;
       canvas.height = 64;
       ctx.drawImage(video, 0, 0, 64, 64);
@@ -104,7 +99,6 @@ export default function Scanner() {
       let centerPixels = 0;
       let edgePixels = 0;
 
-      // Quét điểm ảnh: Giả định tờ giấy nằm giữa (sáng), mặt bàn nằm viền (tối)
       for (let y = 0; y < 64; y += 2) {
         for (let x = 0; x < 64; x += 2) {
           const i = (y * 64 + x) * 4;
@@ -124,24 +118,24 @@ export default function Scanner() {
       const avgCenter = centerBrightness / centerPixels;
       const avgEdge = edgeBrightness / edgePixels;
 
-      // Nếu vùng giữa sáng hơn vùng viền một mức độ nhất định -> Đã đưa tờ giấy vào đúng khung
+      // Kích hoạt khung Vàng khi vùng giữa sáng hơn viền (tức là đã đặt đúng giấy lên nền tối)
       if (avgCenter > avgEdge + 25) {
         setIsDocumentAligned(true);
       } else {
         setIsDocumentAligned(false);
       }
-    }, 300); // Quét 3 lần/giây
+    }, 300);
 
     return () => clearInterval(analyzeInterval);
   }, [isScanning, previewImage, showSaveModal]);
 
-  // --- CHỤP VÀ XỬ LÝ ẢNH ---
+  // --- CHỤP VÀ THUẬT TOÁN NHỊ PHÂN HÓA (BINARIZATION) ---
   const capturePage = useCallback(() => {
     if (videoRef.current && canvasRef.current && scanBoxRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const scanBox = scanBoxRef.current;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return;
 
       const videoRect = video.getBoundingClientRect();
@@ -158,16 +152,40 @@ export default function Scanner() {
       canvas.width = cropW;
       canvas.height = cropH;
 
-      // BỘ LỌC TỐI ƯU CỰC ĐẠI CHO VĂN BẢN (KHỬ ÁNH SÁNG VÀNG)
-      if (filterMode === 'bw') {
-        // Tẩy trắng nền giấy, ép chữ đen đậm
-        ctx.filter = 'grayscale(100%) contrast(300%) brightness(140%)'; 
+      if (filterMode === 'color') {
+        // CHẾ ĐỘ MÀU: Giữ màu gốc, tăng độ nét và tương phản
+        ctx.filter = 'contrast(1.3) brightness(1.1) saturate(1.2)'; 
+        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
       } else {
-        // Giữ màu thật nhưng tăng độ nét và khử bóng nhẹ
-        ctx.filter = 'contrast(1.4) brightness(1.1) saturate(1.2)'; 
+        // CHẾ ĐỘ ĐEN TRẮNG ĐỘT PHÁ: Tẩy trắng nền, xóa bóng máy chụp
+        
+        // B1: Đưa ảnh về dạng xám đen cơ bản
+        ctx.filter = 'grayscale(100%) brightness(1.2)';
+        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        
+        // B2: Nội soi và can thiệp sâu vào điểm ảnh (Pixel Manipulation)
+        const imageData = ctx.getImageData(0, 0, cropW, cropH);
+        const data = imageData.data;
+        
+        for (let i = 0; i < data.length; i += 4) {
+          const gray = data[i]; // Ảnh đã grayscale nên giá trị R, G, B bằng nhau
+          
+          if (gray > 115) {
+            // Mức xám > 115 (bao gồm phần nền giấy tối màu do bóng râm) -> Ép lên Trắng tinh khiết
+            data[i] = data[i+1] = data[i+2] = 255;
+          } else if (gray < 75) {
+            // Mức xám < 75 (nét mực đậm) -> Ép về Đen tuyền
+            data[i] = data[i+1] = data[i+2] = 0;
+          } else {
+            // Khoảng chuyển tiếp (khử răng cưa cho viền chữ)
+            const val = (gray - 75) * (255 / 40);
+            data[i] = data[i+1] = data[i+2] = val;
+          }
+        }
+        
+        // Ghi đè bức ảnh đã được tẩy trắng lên Canvas
+        ctx.putImageData(imageData, 0, 0);
       }
-
-      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
       
       const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
       setPreviewImage(imageUrl);
@@ -222,7 +240,7 @@ export default function Scanner() {
             <h1 className="text-3xl serif font-light text-slate-100 flex items-center gap-3">
               <Scan className="text-brand" size={32} /> Máy Scan Tài liệu
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Lấy nét tự động, cắt viền quang học và khử bóng thông minh.</p>
+            <p className="text-slate-500 text-sm mt-1">Lấy nét tự động, cắt viền quang học và tẩy trắng nền.</p>
           </div>
         </div>
       )}
@@ -239,7 +257,7 @@ export default function Scanner() {
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                {isInitializing ? 'ĐANG KẾT NỐI ỐNG KÍNH...' : 'MỞ MÁY QUÉT'}
              </button>
-             <p className="text-xs text-slate-500 mt-6">Đặt văn bản lên mặt bàn tối màu để nhận diện tốt nhất.</p>
+             <p className="text-xs text-slate-500 mt-6">Hệ thống sẽ tự động hiển thị khung Vàng khi nhận diện đúng mặt giấy.</p>
           </div>
         ) : (
           <div className="absolute inset-0 z-20 flex flex-col bg-black">
@@ -252,14 +270,15 @@ export default function Scanner() {
                 className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
             />
             
-            {/* KHUNG NGẮM THÔNG MINH - CHỈ HIỆN KHI ĐƯA ĐÚNG VĂN BẢN VÀO */}
+            {/* KHUNG NGẮM THÔNG MINH (CHỈ HIỆN KHI ĐẶT ĐÚNG VĂN BẢN VÀO CAMERA) */}
             <div className="absolute inset-0 p-6 pb-40 flex items-center justify-center z-10 pointer-events-none">
-               <div className="absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]" />
+               <div className="absolute inset-0 shadow-[0_0_0_9999px_rgba(0,0,0,0.7)]" />
                
                <div 
                   ref={scanBoxRef}
                   className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 ${isDocumentAligned ? 'border-2 border-yellow-400 bg-yellow-400/10 shadow-[0_0_30px_rgba(250,204,21,0.3)_inset]' : 'border border-transparent'}`}
                >
+                  {/* Chỉ hiển thị góc Vàng khi thuật toán xác nhận có giấy trắng bên trong */}
                   {isDocumentAligned && (
                     <>
                       <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow-400" />
@@ -271,6 +290,7 @@ export default function Scanner() {
                </div>
             </div>
 
+            {/* MÀN HÌNH XEM TRƯỚC (REVIEW) */}
             <AnimatePresence>
               {previewImage && (
                 <motion.div 
@@ -285,17 +305,17 @@ export default function Scanner() {
               )}
             </AnimatePresence>
 
-            {/* THANH ĐIỀU KHIỂN & BỘ LỌC GỘP CHUNG BÊN DƯỚI */}
+            {/* THANH ĐIỀU KHIỂN & LỰA CHỌN MÀU SẮC DƯỚI CÙNG (GỌN GÀNG, KHÔNG BỊ CHE KHUẤT) */}
             <div className="absolute bottom-0 left-0 right-0 h-36 bg-black/90 backdrop-blur-md z-40 flex flex-col justify-end px-6 pb-6 pointer-events-auto border-t border-slate-800">
                
-               {/* 2 Nút chọn màu sắc dời xuống đây */}
+               {/* 2 LỰA CHỌN CHẤT LƯỢNG */}
                <div className="flex justify-center mb-4">
                   <div className="flex bg-slate-800 rounded-full p-1 border border-slate-700 shadow-xl">
                     <button onClick={() => setFilterMode('color')} className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${filterMode === 'color' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-                      <Layers size={14}/> Bản Màu sắc
+                      <Layers size={14}/> Màu Sắc
                     </button>
                     <button onClick={() => setFilterMode('bw')} className={`flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-bold uppercase transition-colors ${filterMode === 'bw' ? 'bg-white text-black' : 'text-slate-400 hover:text-slate-200'}`}>
-                      <FileText size={14}/> Đen trắng Nét
+                      <FileText size={14}/> Trắng Đen Nét
                     </button>
                   </div>
                </div>
