@@ -1,45 +1,64 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, Play, Square, Pause, Download, Upload, FileText, Settings2, FileUp } from 'lucide-react';
+import { Volume2, Play, Square, Pause, Download, Upload, FileText, Settings2, FileUp, AlertCircle } from 'lucide-react';
 
 export default function TextToSpeech() {
-  const [text, setText] = useState('Đây là hệ thống đọc văn bản tự động. Vui lòng nhập nội dung cần đọc vào đây...');
+  const [text, setText] = useState('Chào Tiến sĩ, đây là hệ thống đọc văn bản tự động. Nếu bạn nghe thấy giọng lơ lớ, vui lòng vào cài đặt điện thoại tải giọng Tiếng Việt nâng cao.');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>('');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [rate, setRate] = useState(1);
+  const [hasVietnameseVoice, setHasVietnameseVoice] = useState(true);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- TẢI DANH SÁCH GIỌNG ĐỌC VÀ ƯU TIÊN TIẾNG VIỆT ---
+  // --- TỐI ƯU HÓA: BẮT BUỘC TÌM GIỌNG TIẾNG VIỆT CHUẨN ---
   useEffect(() => {
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
       
-      // Sắp xếp: Ưu tiên giọng Tiếng Việt lên đầu
+      // Lọc riêng các giọng Tiếng Việt
+      const viVoices = availableVoices.filter(v => v.lang.includes('vi') || v.lang.includes('VN'));
+      
+      // Nếu không có giọng Tiếng Việt nào được cài đặt trên trình duyệt/máy
+      if (viVoices.length === 0 && availableVoices.length > 0) {
+        setHasVietnameseVoice(false);
+        setVoices(availableVoices); // Tạm dùng giọng ngoại quốc
+        setSelectedVoice(availableVoices[0]?.name);
+        return;
+      }
+
+      setHasVietnameseVoice(true);
+
+      // Sắp xếp ưu tiên: Giọng "Premium" hoặc "Enhanced" (Nâng cao) lên đầu tiên
       const sortedVoices = [...availableVoices].sort((a, b) => {
-        if (a.lang.includes('vi') && !b.lang.includes('vi')) return -1;
-        if (!a.lang.includes('vi') && b.lang.includes('vi')) return 1;
+        const aIsVi = a.lang.includes('vi');
+        const bIsVi = b.lang.includes('vi');
+        
+        if (aIsVi && !bIsVi) return -1;
+        if (!aIsVi && bIsVi) return 1;
+        
+        if (aIsVi && bIsVi) {
+           const aIsPremium = a.name.includes('Premium') || a.name.includes('Enhanced');
+           const bIsPremium = b.name.includes('Premium') || b.name.includes('Enhanced');
+           if (aIsPremium && !bIsPremium) return -1;
+           if (!aIsPremium && bIsPremium) return 1;
+        }
         return 0;
       });
       
       setVoices(sortedVoices);
       
-      // Mặc định chọn giọng Tiếng Việt đầu tiên tìm thấy
-      const viVoice = sortedVoices.find(v => v.lang.includes('vi'));
-      if (viVoice) {
-        setSelectedVoice(viVoice.name);
-      } else if (sortedVoices.length > 0) {
-        setSelectedVoice(sortedVoices[0].name);
+      const bestVoice = sortedVoices.find(v => v.lang.includes('vi'));
+      if (bestVoice) {
+        setSelectedVoice(bestVoice.name);
       }
     };
 
     loadVoices();
-    // Trình duyệt đôi khi tải giọng đọc bị trễ, cần lắng nghe sự kiện này
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }, []);
 
-  // --- ĐIỀU KHIỂN GIỌNG ĐỌC ---
   const handlePlay = () => {
     if (!text.trim()) return;
 
@@ -50,8 +69,11 @@ export default function TextToSpeech() {
       return;
     }
 
-    window.speechSynthesis.cancel(); // Hủy các luồng đọc cũ
+    window.speechSynthesis.cancel(); 
     const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Ép ngôn ngữ Tiếng Việt để tránh trình duyệt tự đổi sang tiếng Anh
+    utterance.lang = 'vi-VN'; 
     
     const voice = voices.find(v => v.name === selectedVoice);
     if (voice) utterance.voice = voice;
@@ -80,12 +102,10 @@ export default function TextToSpeech() {
     setIsPaused(false);
   };
 
-  // --- XỬ LÝ TẢI FILE VĂN BẢN (UPLOAD) ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Nếu là file txt thuần túy -> Đọc luôn
     if (file.type === "text/plain") {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -94,22 +114,17 @@ export default function TextToSpeech() {
         }
       };
       reader.readAsText(file);
-    } 
-    // Nếu là DOCX / PDF -> Thông báo giới hạn Frontend
-    else {
-      alert("Hệ thống Web Offline hiện tại chỉ hỗ trợ trích xuất chữ trực tiếp từ file văn bản (.txt).\n\nĐối với file Word (.docx) và PDF, trình duyệt cần tích hợp bộ giải mã Máy chủ (Backend). Trước mắt, Tiến sĩ vui lòng Copy nội dung từ file và Paste vào ô soạn thảo.");
+    } else {
+      alert("Hệ thống Web Offline hiện tại chỉ hỗ trợ trích xuất chữ trực tiếp từ file văn bản (.txt).\n\nĐối với file Word (.docx) và PDF, vui lòng Copy nội dung từ file và Paste vào ô soạn thảo.");
     }
     
-    // Reset thẻ input để có thể chọn lại cùng 1 file
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // --- XỬ LÝ TẢI FILE ÂM THANH (DOWNLOAD) ---
   const handleDownloadAudio = () => {
-    alert("Giới hạn Kiến trúc Web:\n\nGiọng đọc bạn đang nghe được tạo ra trực tiếp từ Phần cứng/Hệ điều hành của thiết bị, không sinh ra file MP3 trên trình duyệt.\n\nĐể tải file âm thanh, hệ thống cần nâng cấp kết nối với API Đám mây (Google Cloud / Zalo AI). Nút này đã được thiết kế sẵn chờ đợt nâng cấp tới.");
+    alert("Giới hạn Kiến trúc Web:\n\nGiọng đọc offline không sinh ra file MP3. Tính năng tải xuống sẽ khả dụng khi hệ thống nâng cấp tích hợp API Google Cloud AI.");
   };
 
-  // --- DỌN DẸP KHI THOÁT TRANG ---
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
@@ -129,11 +144,10 @@ export default function TextToSpeech() {
           </p>
         </div>
         
-        {/* THANH CÔNG CỤ TẢI LÊN / TẢI XUỐNG */}
         <div className="flex gap-3">
           <input 
             type="file" 
-            accept=".txt,.pdf,.docx" 
+            accept=".txt" 
             ref={fileInputRef} 
             onChange={handleFileUpload} 
             className="hidden" 
@@ -142,7 +156,7 @@ export default function TextToSpeech() {
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-bold text-slate-200 transition-colors shadow-lg"
           >
-            <FileUp size={16} /> Nhập File
+            <FileUp size={16} /> Nhập File (.txt)
           </button>
           
           <button 
@@ -154,9 +168,18 @@ export default function TextToSpeech() {
         </div>
       </div>
 
+      {!hasVietnameseVoice && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-xl flex items-start gap-3">
+          <AlertCircle className="text-yellow-500 flex-shrink-0 mt-0.5" size={20} />
+          <p className="text-sm text-yellow-500/90">
+            <strong>Cảnh báo:</strong> Trình duyệt hoặc thiết bị của bạn chưa cài đặt dữ liệu Giọng đọc Tiếng Việt. 
+            Hệ thống sẽ dùng tạm giọng Tiếng Anh để đọc (gây ra hiện tượng lơ lớ). Hãy vào <strong>Cài đặt thiết bị &gt; Trợ năng &gt; Giọng nói</strong> để tải gói Tiếng Việt.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* KHU VỰC SOẠN THẢO VĂN BẢN CHÍNH */}
         <div className="lg:col-span-2 space-y-4">
           <div className="office-card bg-[#05070a] border border-[#1e293b] p-1 h-[500px] flex flex-col rounded-2xl overflow-hidden shadow-2xl">
             <div className="px-4 py-3 border-b border-[#1e293b] bg-black flex items-center justify-between">
@@ -168,7 +191,6 @@ export default function TextToSpeech() {
               </span>
             </div>
             
-            {/* Đã tinh chỉnh: Chữ trắng sáng (text-slate-100), nền đen tương phản cao */}
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -178,7 +200,6 @@ export default function TextToSpeech() {
           </div>
         </div>
 
-        {/* KHU VỰC BẢNG ĐIỀU KHIỂN GIỌNG ĐỌC */}
         <div className="space-y-6">
           <div className="office-card p-6 bg-black border border-[#1e293b] rounded-2xl shadow-xl">
             <h3 className="text-sm font-bold text-slate-300 mb-6 flex items-center gap-2 uppercase tracking-widest">
@@ -186,7 +207,6 @@ export default function TextToSpeech() {
             </h3>
 
             <div className="space-y-6">
-              {/* Cài đặt Giọng */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Chọn Giọng Đọc
@@ -197,7 +217,7 @@ export default function TextToSpeech() {
                     onChange={(e) => setSelectedVoice(e.target.value)}
                     className="w-full bg-[#05070a] border border-[#1e293b] text-slate-200 text-sm rounded-lg p-3 appearance-none focus:outline-none focus:border-brand transition-colors"
                   >
-                    {voices.length === 0 && <option>Đang tải giọng đọc...</option>}
+                    {voices.length === 0 && <option>Đang tải danh sách giọng...</option>}
                     {voices.map((voice) => (
                       <option key={voice.name} value={voice.name}>
                         {voice.name} {voice.lang.includes('vi') ? '(Tiếng Việt)' : ''}
@@ -207,7 +227,6 @@ export default function TextToSpeech() {
                 </div>
               </div>
 
-              {/* Cài đặt Tốc độ */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -233,7 +252,6 @@ export default function TextToSpeech() {
             
             <hr className="border-[#1e293b] my-6" />
 
-            {/* CÁC NÚT ĐIỀU KHIỂN PHÁT */}
             <div className="grid grid-cols-2 gap-3">
               {!isSpeaking && !isPaused ? (
                 <button
