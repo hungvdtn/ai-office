@@ -8,38 +8,61 @@ import {
   FileText, 
   Scan, 
   Languages, 
-  Mic, 
-  Volume2, 
   LayoutDashboard, 
   Share2,
   ChevronRight,
   Settings,
   HelpCircle,
   Menu,
-  X
+  X,
+  CalendarDays, 
+  QrCode, 
+  Image as ImageIcon, 
+  BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
 import OCRStudio from './components/OCRStudio';
-import MeetingAssistant from './components/MeetingAssistant';
-import VoiceCenter from './components/VoiceCenter';
 import Scanner from './components/Scanner';
 import Dashboard from './components/Dashboard';
+import Calendar from './components/Calendar'; // Bổ sung import file Lịch
 
-type Module = 'dashboard' | 'pdf' | 'ocr' | 'meeting' | 'voice' | 'scanner';
+type Module = 'dashboard' | 'pdf' | 'ocr' | 'scanner' | 'calendar'; // Đã cập nhật Type
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<Module>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // --- MẢNG MENU ĐÃ ĐƯỢC CẬP NHẬT THEO YÊU CẦU MỚI ---
   const modules = [
     { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
     { id: 'pdf', label: 'Xử lý PDF', icon: FileText },
     { id: 'ocr', label: 'Trích xuất OCR', icon: Languages },
     { id: 'scanner', label: 'Scan Tài liệu', icon: Scan },
-    { id: 'meeting', label: 'Ghi âm & Biên bản', icon: Mic },
-    { id: 'voice', label: 'Văn bản - Giọng nói', icon: Volume2 },
+    { id: 'calendar', label: 'Lịch Vạn Niên', icon: CalendarDays },
+    // Các chức năng liên kết ra website ngoài
+    { 
+      id: 'qrcode', 
+      label: 'Tạo mã QR', 
+      icon: QrCode, 
+      isExternal: true, 
+      url: 'https://lamchuaigiaoduc.vn/qrcode/' 
+    },
+    { 
+      id: 'idphoto', 
+      label: 'Tạo ảnh thẻ', 
+      icon: ImageIcon, 
+      isExternal: true, 
+      url: 'https://lamchuaigiaoduc.vn/id-photo/' 
+    },
+    { 
+      id: 'handbook', 
+      label: 'Cẩm nang cấp xã', 
+      icon: BookOpen, 
+      isExternal: true, 
+      url: 'https://camnang.hungvdtn.vn/' 
+    },
   ];
 
   const handleModuleChange = (mod: Module) => {
@@ -97,15 +120,27 @@ export default function App() {
           </button>
         </div>
 
-        <nav className="flex-1 py-6 space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-6 space-y-1 overflow-y-auto custom-scrollbar">
           {modules.map((m) => (
             <button
               key={m.id}
-              onClick={() => handleModuleChange(m.id as Module)}
+              onClick={() => {
+                // Xử lý mở tab mới nếu là link ngoài
+                if (m.isExternal) {
+                  window.open(m.url, '_blank');
+                } else {
+                  handleModuleChange(m.id as Module);
+                }
+              }}
               className={activeModule === m.id ? 'sidebar-link-active w-full' : 'sidebar-link w-full'}
             >
               <m.icon size={18} className={activeModule === m.id ? 'text-brand' : ''} />
               {(isSidebarOpen || isMobileMenuOpen) && <span>{m.label}</span>}
+              
+              {/* Thêm mũi tên nhỏ cho các link ngoài để người dùng dễ nhận biết */}
+              {(isSidebarOpen || isMobileMenuOpen) && m.isExternal && (
+                <ChevronRight size={14} className="ml-auto opacity-50" />
+              )}
             </button>
           ))}
         </nav>
@@ -151,7 +186,7 @@ export default function App() {
               <span>Vị trí hiện tại:</span>
               <span className="text-brand flex items-center gap-2">
                 <ChevronRight size={12} className="text-slate-500" />
-                {modules.find(m => m.id === activeModule)?.label}
+                {modules.find(m => m.id === activeModule)?.label || 'Ứng dụng ngoài'}
               </span>
             </div>
 
@@ -167,11 +202,11 @@ export default function App() {
             </button>
             <div className="flex items-center gap-3 md:gap-4">
               <div className="text-right hidden lg:block">
-                <div className="text-sm font-bold text-slate-100">Chuyên viên Số hóa</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-tighter">Cục CNTT & Chuyển đổi số</div>
+                <div className="text-sm font-bold text-slate-100">Tiến sĩ Xuân Hùng</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-tighter">Chuyên gia Giáo dục</div>
               </div>
               <div className="w-8 h-8 md:w-10 md:h-10 bg-brand rounded-full flex items-center justify-center text-[#05070a] font-black cursor-pointer shadow-lg shadow-brand/20 hover:scale-105 transition-transform text-xs md:text-sm">
-                QT
+                XH
               </div>
             </div>
           </div>
@@ -194,8 +229,9 @@ export default function App() {
                 {activeModule === 'pdf' && <PDFProcessor />}
                 {activeModule === 'ocr' && <OCRStudio />}
                 {activeModule === 'scanner' && <Scanner />}
-                {activeModule === 'meeting' && <MeetingAssistant />}
-                {activeModule === 'voice' && <VoiceCenter />}
+                
+                {/* HIỂN THỊ CHỨC NĂNG LỊCH MỚI */}
+                {activeModule === 'calendar' && <Calendar />}
               </motion.div>
             </AnimatePresence>
           </div>
