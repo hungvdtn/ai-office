@@ -16,31 +16,74 @@ const getLunarDate = (date: Date) => {
       day: 'numeric', month: 'numeric'
     }).format(date);
     
-    // Tìm tất cả các con số trong chuỗi kết quả của trình duyệt (Bỏ qua chữ "Tháng", "Ngày", "/")
+    // Tìm tất cả các con số trong chuỗi kết quả của trình duyệt
     const numbers = lunarStr.match(/\d+/g); 
     
     if (numbers && numbers.length >= 2) {
       return { day: parseInt(numbers[0], 10), month: parseInt(numbers[1], 10) };
     }
-    // Backup an toàn nếu trình duyệt không hỗ trợ
+    // Backup an toàn
     return { day: date.getDate(), month: date.getMonth() + 1 }; 
   } catch (e) {
     return { day: date.getDate(), month: date.getMonth() + 1 };
   }
 };
 
-// --- DỮ LIỆU SỰ KIỆN LỄ TẾT ---
+// --- DỮ LIỆU SỰ KIỆN LỄ TẾT CHI TIẾT ---
 const HOLIDAYS: Record<string, string> = {
-  '1/1': 'Tết Dương Lịch', '14/2': 'Lễ Tình nhân', '8/3': 'Quốc tế Phụ nữ',
-  '30/4': 'Giải phóng miền Nam', '1/5': 'Quốc tế Lao động', '7/5': 'Chiến thắng Điện Biên Phủ',
-  '19/5': 'Sinh nhật Bác Hồ', '2/9': 'Quốc khánh', '20/10': 'Phụ nữ Việt Nam',
-  '20/11': 'Nhà giáo Việt Nam', '22/12': 'QĐND Việt Nam'
+  '1/1': 'Tết Dương lịch',
+  '9/1': 'Ngày HSSV Việt Nam',
+  '3/2': 'Ngày thành lập Đảng',
+  '14/2': 'Lễ Tình nhân',
+  '27/2': 'Ngày thầy thuốc VN',
+  '8/3': 'Quốc tế Phụ nữ',
+  '20/3': 'Quốc tế Hạnh phúc',
+  '26/3': 'Thành lập Đoàn TNCS HCM',
+  '1/4': 'Cá tháng Tư',
+  '30/4': 'Giải phóng miền Nam',
+  '1/5': 'Quốc tế Lao động',
+  '7/5': 'Chiến thắng Điện Biên Phủ',
+  '13/5': 'Ngày của Mẹ',
+  '19/5': 'Sinh nhật Chủ tịch Hồ Chí Minh',
+  '1/6': 'Quốc tế Thiếu nhi',
+  '17/6': 'Ngày của Cha',
+  '21/6': 'Ngày Báo chí VN',
+  '28/6': 'Ngày Gia đình VN',
+  '11/7': 'Dân số Thế giới',
+  '27/7': 'Thương binh Liệt sĩ',
+  '28/7': 'Thành lập Công đoàn VN',
+  '19/8': 'Cách mạng Tháng Tám',
+  '2/9': 'Quốc khánh',
+  '10/9': 'Thành lập MTTQ VN',
+  '1/10': 'Quốc tế Người cao tuổi',
+  '10/10': 'Giải phóng Thủ đô',
+  '13/10': 'Doanh nhân Việt Nam',
+  '20/10': 'Phụ nữ Việt Nam',
+  '31/10': 'Halloween',
+  '9/11': 'Pháp luật Việt Nam',
+  '19/11': 'Quốc tế Nam giới',
+  '20/11': 'Nhà giáo Việt Nam',
+  '22/12': 'Thành lập QĐND VN',
+  '23/11': 'Thành lập Hội Chữ thập đỏ VN',
+  '1/12': 'Thế giới phòng chống AIDS',
+  '19/12': 'Toàn quốc Kháng chiến',
+  '24/12': 'Lễ Giáng sinh'
 };
 
 const LUNAR_HOLIDAYS: Record<string, string> = {
-  '1/1': 'Tết Nguyên Đán', '15/1': 'Tết Nguyên Tiêu', '10/3': 'Giỗ tổ Hùng Vương',
-  '15/4': 'Lễ Phật Đản', '5/5': 'Tết Đoan Ngọ', '15/7': 'Lễ Vu Lan',
-  '15/8': 'Tết Trung Thu', '23/12': 'Ông Công Ông Táo'
+  '1/1': 'Tết Nguyên đán',
+  '15/1': 'Tết Nguyên Tiêu',
+  '3/3': 'Tết Hàn thực',
+  '10/3': 'Giỗ tổ Hùng Vương',
+  '15/4': 'Lễ Phật Đản',
+  '5/5': 'Tết Đoan ngọ',
+  '7/7': 'Lễ Thất tịch',
+  '15/7': 'Lễ Vu Lan',
+  '15/8': 'Tết Trung thu',
+  '9/9': 'Tết Trùng cửu',
+  '10/10': 'Tết Trùng thập',
+  '15/10': 'Tết Hạ Nguyên',
+  '23/12': 'Ông Táo về trời'
 };
 
 interface UserEvent {
@@ -82,15 +125,12 @@ export default function Calendar() {
       const now = new Date();
       
       events.forEach(ev => {
-        // Tái tạo lại thời điểm diễn ra sự kiện
         const [evY, evMo, evD] = ev.dateStr.split('-').map(Number);
         const [evH, evM] = ev.time.split(':').map(Number);
         const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
         
-        // Trừ đi thời gian muốn báo trước
         const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
         
-        // So sánh thời gian báo thức với thời gian hiện tại (bỏ qua giây)
         if (remindTime.getFullYear() === now.getFullYear() &&
             remindTime.getMonth() === now.getMonth() &&
             remindTime.getDate() === now.getDate() &&
@@ -137,13 +177,11 @@ export default function Calendar() {
     const dateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
     
     if (editingId) {
-      // Cập nhật
       const updatedEvents = events.map(e => e.id === editingId ? {
         ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance
       } : e);
       saveEvents(updatedEvents);
     } else {
-      // Thêm mới
       const newEv: UserEvent = { 
         id: Date.now().toString(), 
         dateStr, 
@@ -158,7 +196,7 @@ export default function Calendar() {
   };
 
   const handleDeleteEvent = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Ngăn click nhầm vào sửa
+    e.stopPropagation(); 
     saveEvents(events.filter(e => e.id !== id));
   };
 
@@ -239,7 +277,7 @@ export default function Calendar() {
       );
     }
 
-    // Ngày tháng sau (Làm mờ) để lấp đầy ô
+    // Ngày tháng sau (Làm mờ)
     const totalCells = firstDay + daysInMonth;
     const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (let i = 0; i < remainingCells; i++) {
@@ -281,7 +319,6 @@ export default function Calendar() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800/50 p-6 sm:p-10">
-          {/* Dương Lịch - Xanh da trời nhạt */}
           <div className="flex flex-col items-center justify-center p-4">
             <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Dương Lịch</span>
             <div className="text-8xl sm:text-9xl font-black text-sky-400 mb-4">{selectedDate.getDate()}</div>
@@ -289,7 +326,6 @@ export default function Calendar() {
             <span className="text-sm text-slate-500 mt-2 tracking-widest uppercase">Thứ {['Chủ nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'][selectedDate.getDay()]}</span>
           </div>
 
-          {/* Âm Lịch - Xanh da trời đậm */}
           <div className="flex flex-col items-center justify-center p-4">
             <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Âm Lịch</span>
             <div className="text-8xl sm:text-9xl font-black text-blue-500 mb-4">{selLunar.day}</div>
@@ -333,7 +369,6 @@ export default function Calendar() {
                           <button onClick={(e) => handleDeleteEvent(ev.id, e)} className="text-slate-400 hover:text-red-400 p-1"><Trash2 size={16}/></button>
                         </div>
                       </div>
-                      {/* Chỉ hiện địa điểm nếu có nội dung */}
                       {ev.location && (
                         <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400 ml-6">
                           <MapPin size={12} /> {ev.location}
