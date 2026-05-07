@@ -86,12 +86,11 @@ const renderStars = (scoreStr: string) => {
   )
 }
 
-// --- DỮ LIỆU LỄ TẾT KÈM THEO NĂM LỊCH SỬ BẮT ĐẦU ---
 interface HolidayInfo { 
   name: string; 
   isDayOff: boolean; 
-  startYear: number;       // Năm bắt đầu có sự kiện
-  dayOffStartYear?: number; // Năm bắt đầu được tính là ngày nghỉ (nếu khác startYear)
+  startYear: number;       
+  dayOffStartYear?: number; 
 }
 
 const HOLIDAYS: Record<string, HolidayInfo> = {
@@ -215,6 +214,25 @@ export default function Calendar() {
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => { let day = new Date(year, month, 1).getDay(); return day === 0 ? 6 : day - 1; };
 
+  // --- HÀM ĐIỀU HƯỚNG TỚI LÙI MỘT NGÀY ---
+  const goToPrevDay = () => {
+    const prevDate = new Date(selectedDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    setSelectedDate(prevDate);
+    if (prevDate.getMonth() !== currentDate.getMonth() || prevDate.getFullYear() !== currentDate.getFullYear()) {
+      setCurrentDate(new Date(prevDate.getFullYear(), prevDate.getMonth(), 1));
+    }
+  };
+
+  const goToNextDay = () => {
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    setSelectedDate(nextDate);
+    if (nextDate.getMonth() !== currentDate.getMonth() || nextDate.getFullYear() !== currentDate.getFullYear()) {
+      setCurrentDate(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1));
+    }
+  };
+
   const doConvert = () => {
     const d = parseInt(cDay), m = parseInt(cMonth), y = parseInt(cYear);
     if (!d || !m || !y) { setCResult("Vui lòng nhập đầy đủ Ngày, Tháng, Năm!"); return; }
@@ -264,7 +282,6 @@ export default function Calendar() {
       
       const solarKey = `${d}/${month+1}`; const lunarKey = `${lunar.day}/${lunar.month}`;
       
-      // KIỂM TRA LỊCH SỬ SỰ KIỆN: Chỉ hiện nếu năm hiện tại >= năm bắt đầu
       const rawSolarHoliday = HOLIDAYS[solarKey]; 
       const rawLunarHoliday = LUNAR_HOLIDAYS[lunarKey];
       
@@ -336,41 +353,53 @@ export default function Calendar() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/50 p-6 sm:p-10 lg:p-14">
-          <div className="flex flex-col items-center justify-center p-4">
-            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans flex items-center gap-2">
-               <Sun size={24} className="text-amber-400" /> Dương Lịch
-            </span>
-            <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 font-sans ${topSolarColor}`}>
-              {selectedDate.getDate()}
-            </div>
-            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} năm {selectedDate.getFullYear()}</span>
-            <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium font-sans">
-              {['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][selectedDate.getDay()]}
-            </span>
-            
-            {selSolarHoliday && (
-              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${isSelSolarDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
-                {selSolarHoliday.name}
+        {/* THIẾT KẾ CÓ NÚT LÙI/TIẾN NGÀY HAI BÊN */}
+        <div className="relative flex items-center group">
+          
+          <button onClick={goToPrevDay} className="absolute left-2 sm:left-4 lg:left-6 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-[#1e293b] bg-[#0f172a]/80 text-slate-400 hover:text-sky-400 hover:border-sky-500 hover:bg-sky-500/10 flex items-center justify-center transition-all shadow-lg backdrop-blur-sm">
+            <ChevronLeft size={24} className="-ml-0.5" />
+          </button>
+
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/50 p-6 sm:p-10 lg:p-14">
+            <div className="flex flex-col items-center justify-center p-4">
+              <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans flex items-center gap-2">
+                <Sun size={24} className="text-amber-400" /> Dương Lịch
               </span>
-            )}
+              <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 font-sans ${topSolarColor}`}>
+                {selectedDate.getDate()}
+              </div>
+              <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} năm {selectedDate.getFullYear()}</span>
+              <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium font-sans">
+                {['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][selectedDate.getDay()]}
+              </span>
+              
+              {selSolarHoliday && (
+                <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${isSelSolarDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                  {selSolarHoliday.name}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-4">
+              <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans flex items-center gap-2">
+                <Moon size={24} className="text-slate-200 fill-slate-300" /> Âm Lịch
+              </span>
+              <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4 font-sans">{selLunar.day}</div>
+              <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} năm {getCanChiYear(selectedDate.getFullYear())}</span>
+              
+              {selLunarHoliday ? (
+                <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${isSelLunarDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                  {selLunarHoliday.name}
+                </span>
+              ) : (
+                <span className="text-sm lg:text-base text-slate-500 mt-4 tracking-widest uppercase font-medium font-sans">Bình thường</span>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center p-4">
-            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans flex items-center gap-2">
-               <Moon size={24} className="text-slate-200 fill-slate-300" /> Âm Lịch
-            </span>
-            <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4 font-sans">{selLunar.day}</div>
-            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} năm {getCanChiYear(selectedDate.getFullYear())}</span>
-            
-            {selLunarHoliday ? (
-              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${isSelLunarDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
-                {selLunarHoliday.name}
-              </span>
-            ) : (
-              <span className="text-sm lg:text-base text-slate-500 mt-4 tracking-widest uppercase font-medium font-sans">Bình thường</span>
-            )}
-          </div>
+          <button onClick={goToNextDay} className="absolute right-2 sm:right-4 lg:right-6 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-[#1e293b] bg-[#0f172a]/80 text-slate-400 hover:text-sky-400 hover:border-sky-500 hover:bg-sky-500/10 flex items-center justify-center transition-all shadow-lg backdrop-blur-sm">
+            <ChevronRight size={24} className="ml-0.5" />
+          </button>
         </div>
 
         <div className="bg-slate-900/40 p-6 lg:p-8 border-t border-[#1e293b] text-sm lg:text-base text-slate-300 font-sans">
@@ -402,7 +431,11 @@ export default function Calendar() {
                <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm lg:text-base uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}:</strong>
                <ul className="space-y-3">
                  {selEvents.map(ev => (
-                   <li key={ev.id} onClick={() => openModalForEdit(ev)} className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group">
+                   <li 
+                      key={ev.id} 
+                      onClick={() => openModalForEdit(ev)}
+                      className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group"
+                   >
                       <div className="flex items-center justify-between">
                         <span className="text-slate-200 font-medium flex items-center gap-2 text-base">
                           <Clock size={16} className="text-sky-400" /> <span className="text-sky-400 font-bold">{ev.time}</span> {ev.title}
@@ -412,8 +445,14 @@ export default function Calendar() {
                           <button onClick={(e) => handleDeleteEvent(ev.id, e)} className="text-slate-400 hover:text-red-400 p-2"><Trash2 size={18}/></button>
                         </div>
                       </div>
-                      {ev.location && <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7"><MapPin size={14} /> {ev.location}</div>}
-                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}</div>
+                      {ev.location && (
+                        <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7">
+                          <MapPin size={14} /> {ev.location}
+                        </div>
+                      )}
+                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">
+                        Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}
+                      </div>
                    </li>
                  ))}
                </ul>
@@ -425,17 +464,28 @@ export default function Calendar() {
       <div className="bg-[#05070a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl font-sans">
         <div className="bg-[#0a0f18] px-6 py-5 flex flex-col sm:flex-row items-center justify-between border-b border-[#1e293b] gap-4">
           <div className="flex items-center gap-4">
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition"><ChevronLeft size={20} /></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
+              <ChevronLeft size={20} />
+            </button>
             <span className="text-lg lg:text-xl font-bold text-sky-400 uppercase tracking-widest w-32 lg:w-40 text-center">Tháng {currentDate.getMonth() + 1}</span>
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition"><ChevronRight size={20} /></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
+              <ChevronRight size={20} />
+            </button>
           </div>
           
           <div className="flex gap-2 w-full sm:w-auto">
-            <select value={currentDate.getMonth()} onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
+            <select 
+              value={currentDate.getMonth()} 
+              onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))}
+              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
+            >
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
-            {/* CẬP NHẬT TỪ 1900 ĐẾN 2100 (201 năm) */}
-            <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
+            <select 
+              value={currentDate.getFullYear()} 
+              onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))}
+              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
+            >
               {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}>năm {1900 + i}</option>)}
             </select>
           </div>
@@ -443,7 +493,8 @@ export default function Calendar() {
 
         <div className="p-4 sm:p-6 lg:p-8 bg-[#05070a]">
           <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
-            <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
+            <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div>
+            <div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
           </div>
           <div className="grid grid-cols-7 gap-px bg-[#1e293b] border border-[#1e293b] rounded-lg overflow-hidden">
             {generateMonthGrid()}
@@ -451,6 +502,7 @@ export default function Calendar() {
         </div>
       </div>
 
+      {/* --- CÔNG CỤ CHUYỂN ĐỔI ÂM DƯƠNG --- */}
       <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl mt-8">
          <h3 className="text-lg font-bold text-brand flex items-center gap-2 mb-6"><ArrowRightLeft size={20} /> Cỗ máy thời gian (Đổi lịch Âm - Dương)</h3>
          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
