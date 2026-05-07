@@ -8,8 +8,6 @@ import {
   FileText, 
   Scan, 
   Languages, 
-  LayoutDashboard, 
-  Share2,
   ChevronRight,
   Settings,
   HelpCircle,
@@ -18,30 +16,28 @@ import {
   CalendarDays, 
   QrCode, 
   Image as ImageIcon, 
-  BookOpen
+  Search // Dùng icon Search cho Tra cứu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
 import OCRStudio from './components/OCRStudio';
 import Scanner from './components/Scanner';
-import Dashboard from './components/Dashboard';
-import Calendar from './components/Calendar'; // Bổ sung import file Lịch
+import Calendar from './components/Calendar';
 
-type Module = 'dashboard' | 'pdf' | 'ocr' | 'scanner' | 'calendar'; // Đã cập nhật Type
+type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner'; 
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState<Module>('dashboard');
+  // Mặc định khởi động vào Lịch Vạn Niên
+  const [activeModule, setActiveModule] = useState<Module>('calendar');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // --- MẢNG MENU ĐÃ ĐƯỢC CẬP NHẬT THEO YÊU CẦU MỚI ---
+  // --- THỰC ĐƠN ĐÃ ĐƯỢC CẬP NHẬT ---
   const modules = [
-    { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
+    { id: 'calendar', label: 'Lịch Vạn Niên', icon: CalendarDays },
     { id: 'pdf', label: 'Xử lý PDF', icon: FileText },
     { id: 'ocr', label: 'Trích xuất OCR', icon: Languages },
     { id: 'scanner', label: 'Scan Tài liệu', icon: Scan },
-    { id: 'calendar', label: 'Lịch Vạn Niên', icon: CalendarDays },
-    // Các chức năng liên kết ra website ngoài
     { 
       id: 'qrcode', 
       label: 'Tạo mã QR', 
@@ -57,11 +53,11 @@ export default function App() {
       url: 'https://lamchuaigiaoduc.vn/id-photo/' 
     },
     { 
-      id: 'handbook', 
-      label: 'Cẩm nang cấp xã', 
-      icon: BookOpen, 
+      id: 'search', 
+      label: 'Tra cứu thông tin địa phương', 
+      icon: Search, 
       isExternal: true, 
-      url: 'https://camnang.hungvdtn.vn/' 
+      url: 'https://tracuu.hungvdtn.vn/' 
     },
   ];
 
@@ -72,7 +68,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[#05070a] text-[#e2e8f0] font-sans selection:bg-brand/30 selection:text-brand overflow-hidden">
-      {/* Mobile Backdrop */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
@@ -85,7 +80,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar - Desktop & Mobile */}
+      {/* Sidebar */}
       <aside 
         className={`
           fixed inset-y-0 left-0 z-40 md:relative md:z-20
@@ -97,13 +92,17 @@ export default function App() {
         <div className="p-6 flex items-center justify-between border-b border-[#1e293b]">
           {(isSidebarOpen || isMobileMenuOpen) ? (
             <div className="flex flex-col">
-              <h1 className="serif text-xl font-bold tracking-widest text-brand">
-                EDUPRO
+              <h1 className="text-xl font-black tracking-widest text-brand uppercase">
+                DIGITALOFFICE
               </h1>
-              <span className="text-[10px] font-sans tracking-normal font-normal text-slate-400 uppercase mt-1">Trợ lý Số Chuyên biệt</span>
+              <span className="text-[10px] font-sans tracking-normal font-normal text-slate-400 uppercase mt-1">
+                Văn phòng Số Chuyên biệt
+              </span>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded bg-brand/10 flex items-center justify-center text-brand font-bold text-xs">ED</div>
+            <div className="w-8 h-8 rounded bg-brand/10 flex items-center justify-center text-brand font-bold text-xs">
+              DO
+            </div>
           )}
           <button 
             onClick={() => {
@@ -125,7 +124,6 @@ export default function App() {
             <button
               key={m.id}
               onClick={() => {
-                // Xử lý mở tab mới nếu là link ngoài
                 if (m.isExternal) {
                   window.open(m.url, '_blank');
                 } else {
@@ -135,9 +133,8 @@ export default function App() {
               className={activeModule === m.id ? 'sidebar-link-active w-full' : 'sidebar-link w-full'}
             >
               <m.icon size={18} className={activeModule === m.id ? 'text-brand' : ''} />
-              {(isSidebarOpen || isMobileMenuOpen) && <span>{m.label}</span>}
+              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">{m.label}</span>}
               
-              {/* Thêm mũi tên nhỏ cho các link ngoài để người dùng dễ nhận biết */}
               {(isSidebarOpen || isMobileMenuOpen) && m.isExternal && (
                 <ChevronRight size={14} className="ml-auto opacity-50" />
               )}
@@ -146,25 +143,14 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-[#1e293b] space-y-4">
-          {(isSidebarOpen || isMobileMenuOpen) && (
-            <div className="bg-[#05070a]/50 p-4 border border-[#1e293b] rounded-xl text-[10px]">
-              <div className="flex justify-between mb-2">
-                <span className="text-slate-500 uppercase tracking-wider">Mã hóa SSL/TLS</span>
-                <span className="text-emerald-500">Hoạt động</span>
-              </div>
-              <div className="w-full bg-[#1e293b] h-1 rounded-full overflow-hidden">
-                <div className="bg-brand w-full h-full" />
-              </div>
-            </div>
-          )}
           <div className="space-y-1">
             <button className="sidebar-link w-full">
               <Settings size={18} />
-              {(isSidebarOpen || isMobileMenuOpen) && <span>Cài đặt</span>}
+              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Cài đặt</span>}
             </button>
             <button className="sidebar-link w-full">
               <HelpCircle size={18} />
-              {(isSidebarOpen || isMobileMenuOpen) && <span>Trợ giúp</span>}
+              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Trợ giúp</span>}
             </button>
           </div>
         </div>
@@ -182,7 +168,7 @@ export default function App() {
               <Menu size={24} />
             </button>
             
-            <div className="hidden sm:flex items-center gap-3 text-[11px] tracking-widest uppercase">
+            <div className="hidden sm:flex items-center gap-3 text-[11px] tracking-widest uppercase font-semibold">
               <span>Vị trí hiện tại:</span>
               <span className="text-brand flex items-center gap-2">
                 <ChevronRight size={12} className="text-slate-500" />
@@ -196,27 +182,19 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4 md:gap-8">
-            <button className="office-button-secondary border-none bg-brand/10 text-brand hover:bg-brand/20 py-2 hidden sm:flex">
-              <Share2 size={16} />
-              <span className="text-xs font-bold uppercase tracking-wider">Gửi Zalo OA</span>
-            </button>
-            <div className="flex items-center gap-3 md:gap-4">
-              <div className="text-right hidden lg:block">
-                <div className="text-sm font-bold text-slate-100">Tiến sĩ Xuân Hùng</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-tighter">Chuyên gia Giáo dục</div>
-              </div>
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-brand rounded-full flex items-center justify-center text-[#05070a] font-black cursor-pointer shadow-lg shadow-brand/20 hover:scale-105 transition-transform text-xs md:text-sm">
-                XH
-              </div>
+            {/* THƯƠNG HIỆU AIBTeM GÓC PHẢI */}
+            <div className="text-xl md:text-2xl font-black text-brand tracking-widest uppercase drop-shadow-[0_0_10px_rgba(var(--brand-color),0.5)]">
+              AIBTeM
             </div>
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-10 relative">
+        {/* Content Area - Đã bỏ giới hạn max-w-6xl để giãn toàn màn hình */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative">
           <div className="absolute inset-0 dot-grid opacity-10 pointer-events-none" />
           
-          <div className="max-w-6xl mx-auto relative z-10 overflow-x-hidden">
+          {/* w-full thay cho max-w-6xl */}
+          <div className="w-full mx-auto relative z-10 overflow-x-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeModule}
@@ -224,13 +202,11 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
+                className="w-full"
               >
-                {activeModule === 'dashboard' && <Dashboard onNav={setActiveModule} />}
                 {activeModule === 'pdf' && <PDFProcessor />}
                 {activeModule === 'ocr' && <OCRStudio />}
                 {activeModule === 'scanner' && <Scanner />}
-                
-                {/* HIỂN THỊ CHỨC NĂNG LỊCH MỚI */}
                 {activeModule === 'calendar' && <Calendar />}
               </motion.div>
             </AnimatePresence>
