@@ -1,60 +1,103 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf } from 'lucide-react';
 
-const CAN = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'];
-const CHI = ['Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi'];
+// --- THUẬT TOÁN CAN CHI VÀ PHONG THỦY ---
+const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
 
-// Tính Can Chi Năm
 const getCanChiYear = (year: number) => {
-  return `${CAN[year % 10]} ${CHI[year % 12]}`;
+  const can = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'][year % 10];
+  const chi = ['Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi'][year % 12];
+  return `${can} ${chi}`;
 };
 
-// Tính Can Chi Ngày (Dựa trên chu kỳ Julian Date thu gọn)
 const getCanChiDay = (date: Date) => {
-  const anchor = Date.UTC(2024, 0, 1); // 1/1/2024 là Giáp Tý (0,0)
+  const anchor = Date.UTC(2024, 0, 1); // 1/1/2024 là Giáp Tý
   const target = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const diffDays = Math.floor((target - anchor) / 86400000);
-  let canIdx = (diffDays % 10 + 10) % 10;
-  let chiIdx = (diffDays % 12 + 12) % 12;
-  const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
-  const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
-  return `${CAN_CHU[canIdx]} ${CHI_CHU[chiIdx]}`;
+  const canIdx = (diffDays % 10 + 10) % 10;
+  const chiIdx = (diffDays % 12 + 12) % 12;
+  return { text: `${CAN_CHU[canIdx]} ${CHI_CHU[chiIdx]}`, chiIdx };
 };
 
-// Tính Can Chi Tháng Âm lịch (Dựa trên Can của Năm)
 const getCanChiMonth = (lMonth: number, year: number) => {
-  const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
-  const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
   const yearCanIndexForMonth = (year % 10);
   const stdYearCan = (yearCanIndexForMonth + 6) % 10; 
   const month1Can = ((stdYearCan % 5) * 2 + 2) % 10;
   const targetMonthCan = (month1Can + lMonth - 1) % 10;
-  const targetMonthChi = (2 + lMonth - 1) % 12; // Tháng 1 luôn là Dần (index 2)
-  return `${CAN_CHU[targetMonthCan]} ${CHI_CHU[targetMonthChi]}`;
+  const targetMonthChi = (2 + lMonth - 1) % 12; // Tháng 1 Âm luôn là tháng Dần (index 2)
+  return { text: `${CAN_CHU[targetMonthCan]} ${CHI_CHU[targetMonthChi]}`, chiIdx: targetMonthChi };
 };
 
-// Khắc phục lỗi NaN Lịch Âm
 const getLunarDate = (date: Date) => {
   try {
-    const lunarStr = new Intl.DateTimeFormat('vi-VN-u-ca-chinese', {
-      day: 'numeric', month: 'numeric'
-    }).format(date);
-    
+    const lunarStr = new Intl.DateTimeFormat('vi-VN-u-ca-chinese', { day: 'numeric', month: 'numeric' }).format(date);
     const numbers = lunarStr.match(/\d+/g); 
-    if (numbers && numbers.length >= 2) {
-      return { day: parseInt(numbers[0], 10), month: parseInt(numbers[1], 10) };
-    }
+    if (numbers && numbers.length >= 2) return { day: parseInt(numbers[0], 10), month: parseInt(numbers[1], 10) };
     return { day: date.getDate(), month: date.getMonth() + 1 }; 
-  } catch (e) {
-    return { day: date.getDate(), month: date.getMonth() + 1 };
-  }
+  } catch (e) { return { day: date.getDate(), month: date.getMonth() + 1 }; }
 };
 
-// Tạo sao đánh giá ngẫu nhiên nhưng cố định theo ngày
-const getDayRating = (date: Date) => {
-  const num = date.getFullYear() + date.getMonth() * 10 + date.getDate();
-  const score = 3.0 + (num % 21) / 10; 
-  return score.toFixed(1);
+// ĐỘNG CƠ TÍNH TOÁN NGÀY TỐT XẤU (FENG SHUI ENGINE)
+const getDayEvaluation = (date: Date) => {
+  const lunar = getLunarDate(date);
+  const dayInfo = getCanChiDay(date);
+  const monthInfo = getCanChiMonth(lunar.month, date.getFullYear());
+  
+  const mChi = monthInfo.chiIdx; // Chi của tháng
+  const dChi = dayInfo.chiIdx;   // Chi của ngày
+
+  // 1. Tính Hoàng Đạo / Hắc Đạo
+  // Bảng Hoàng Đạo dựa trên Tháng và Ngày
+  const hoangDaoMap: Record<number, number[]> = {
+    2: [0, 1, 4, 5, 7, 10], // Tháng Dần (2), Thân (8) -> Tý, Sửu, Thìn, Tỵ, Mùi, Tuất
+    8: [0, 1, 4, 5, 7, 10],
+    3: [2, 3, 6, 7, 9, 0],  // Tháng Mão (3), Dậu (9) -> Dần, Mão, Ngọ, Mùi, Dậu, Tý
+    9: [2, 3, 6, 7, 9, 0],
+    4: [4, 5, 8, 9, 11, 2], // Tháng Thìn (4), Tuất (10) -> Thìn, Tỵ, Thân, Dậu, Hợi, Dần
+    10: [4, 5, 8, 9, 11, 2],
+    5: [6, 7, 10, 11, 1, 4], // Tháng Tỵ (5), Hợi (11) -> Ngọ, Mùi, Tuất, Hợi, Sửu, Thìn
+    11: [6, 7, 10, 11, 1, 4],
+    0: [8, 9, 0, 1, 3, 6],   // Tháng Tý (0), Ngọ (6) -> Thân, Dậu, Tý, Sửu, Mão, Ngọ
+    6: [8, 9, 0, 1, 3, 6],
+    1: [10, 11, 2, 3, 5, 8], // Tháng Sửu (1), Mùi (7) -> Tuất, Hợi, Dần, Mão, Tỵ, Thân
+    7: [10, 11, 2, 3, 5, 8]
+  };
+
+  const isHoangDao = hoangDaoMap[mChi]?.includes(dChi);
+  
+  // 2. Tính ngày xấu (Nguyệt Kỵ, Tam Nương)
+  const isNguyetKy = [5, 14, 23].includes(lunar.day);
+  const isTamNuong = [3, 7, 13, 18, 22, 27].includes(lunar.day);
+
+  // 3. Tính điểm (Thang 5 sao)
+  let score = 3.0; // Điểm cơ bản
+  let notes = [];
+
+  if (isHoangDao) {
+    score += 1.5;
+    notes.push("Ngày Hoàng đạo");
+  } else {
+    score -= 0.5;
+    notes.push("Ngày Hắc đạo");
+  }
+
+  if (isNguyetKy) {
+    score -= 1.5;
+    notes.push("Phạm Nguyệt Kỵ");
+  }
+  if (isTamNuong) {
+    score -= 1.5;
+    notes.push("Phạm Tam Nương");
+  }
+
+  // Khống chế điểm từ 1.0 đến 5.0
+  score = Math.max(1.0, Math.min(5.0, score));
+
+  return {
+    score: score.toFixed(1),
+    description: notes.join(' - ')
+  };
 };
 
 const renderStars = (scoreStr: string) => {
@@ -73,11 +116,8 @@ const renderStars = (scoreStr: string) => {
   )
 }
 
-interface HolidayInfo {
-  name: string;
-  isDayOff: boolean;
-}
-
+// --- DỮ LIỆU LỄ TẾT ---
+interface HolidayInfo { name: string; isDayOff: boolean; }
 const HOLIDAYS: Record<string, HolidayInfo> = {
   '1/1': { name: 'Tết Dương lịch', isDayOff: true },
   '9/1': { name: 'Ngày truyền thống HSSV', isDayOff: false },
@@ -142,21 +182,14 @@ const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
 };
 
 interface UserEvent {
-  id: string;
-  dateStr: string; 
-  title: string;
-  time: string; 
-  location?: string;
-  reminderAdvance: number; 
+  id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; 
 }
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
   const [events, setEvents] = useState<UserEvent[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
-  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventTime, setNewEventTime] = useState('08:00');
@@ -174,12 +207,10 @@ export default function Calendar() {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
-      
       events.forEach(ev => {
         const [evY, evMo, evD] = ev.dateStr.split('-').map(Number);
         const [evH, evM] = ev.time.split(':').map(Number);
         const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
-        
         const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
         
         if (remindTime.getFullYear() === now.getFullYear() &&
@@ -206,20 +237,13 @@ export default function Calendar() {
   };
 
   const openModalForAdd = () => {
-    setEditingId(null);
-    setNewEventTitle('');
-    setNewEventLocation('');
-    setNewEventTime('08:00');
-    setNewReminderAdvance(0);
-    setShowEventModal(true);
+    setEditingId(null); setNewEventTitle(''); setNewEventLocation('');
+    setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true);
   };
 
   const openModalForEdit = (ev: UserEvent) => {
-    setEditingId(ev.id);
-    setNewEventTitle(ev.title);
-    setNewEventTime(ev.time);
-    setNewEventLocation(ev.location || '');
-    setNewReminderAdvance(ev.reminderAdvance || 0);
+    setEditingId(ev.id); setNewEventTitle(ev.title); setNewEventTime(ev.time);
+    setNewEventLocation(ev.location || ''); setNewReminderAdvance(ev.reminderAdvance || 0);
     setShowEventModal(true);
   };
 
@@ -228,27 +252,17 @@ export default function Calendar() {
     const dateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
     
     if (editingId) {
-      const updatedEvents = events.map(e => e.id === editingId ? {
-        ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance
-      } : e);
+      const updatedEvents = events.map(e => e.id === editingId ? { ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance } : e);
       saveEvents(updatedEvents);
     } else {
-      const newEv: UserEvent = { 
-        id: Date.now().toString(), 
-        dateStr, 
-        title: newEventTitle, 
-        time: newEventTime, 
-        location: newEventLocation,
-        reminderAdvance: newReminderAdvance
-      };
+      const newEv: UserEvent = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance };
       saveEvents([...events, newEv]);
     }
     setShowEventModal(false);
   };
 
   const handleDeleteEvent = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); 
-    saveEvents(events.filter(e => e.id !== id));
+    e.stopPropagation(); saveEvents(events.filter(e => e.id !== id));
   };
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -374,6 +388,8 @@ export default function Calendar() {
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
   const selEvents = events.filter(e => e.dateStr === selDateStr);
 
+  const evaluation = getDayEvaluation(selectedDate);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans">
       
@@ -393,7 +409,6 @@ export default function Calendar() {
             <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 font-sans ${topSolarColor}`}>
               {selectedDate.getDate()}
             </div>
-            {/* SỬA "Năm" THÀNH "năm" VÀ LOẠI BỎ CHỮ "Thứ" TRƯỚC CHỦ NHẬT */}
             <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} năm {selectedDate.getFullYear()}</span>
             <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium font-sans">
               {['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][selectedDate.getDay()]}
@@ -424,16 +439,18 @@ export default function Calendar() {
         <div className="bg-slate-900/40 p-6 lg:p-8 border-t border-[#1e293b] text-sm lg:text-base text-slate-300 font-sans">
            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-2">
-                {/* BỔ SUNG ĐẦY ĐỦ THÔNG TIN NGÀY THÁNG ÂM VÀ ĐÁNH GIÁ CHUNG */}
                 <p className="text-base text-slate-200">
-                  Ngày: <strong className="text-sky-400">{getCanChiDay(selectedDate)}</strong>, 
-                  tháng: <strong className="text-sky-400">{getCanChiMonth(selLunar.month, selectedDate.getFullYear())}</strong>, 
+                  Ngày: <strong className="text-sky-400">{getCanChiDay(selectedDate).text}</strong>, 
+                  tháng: <strong className="text-sky-400">{getCanChiMonth(selLunar.month, selectedDate.getFullYear()).text}</strong>, 
                   năm: <strong className="text-sky-400">{getCanChiYear(selectedDate.getFullYear())}</strong>
                 </p>
                 <div className="flex items-center gap-2 mt-2 mb-2">
                   <span className="text-slate-300 font-semibold">Đánh giá chung:</span>
-                  <strong className="text-amber-400 font-black">[{getDayRating(selectedDate)}]</strong>
-                  {renderStars(getDayRating(selectedDate))}
+                  <strong className="text-amber-400 font-black">[{evaluation.score}]</strong>
+                  {renderStars(evaluation.score)}
+                  <span className="ml-2 text-xs font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                    {evaluation.description}
+                  </span>
                 </div>
                 <p><span className="text-slate-400 font-semibold">Giờ Hoàng Đạo:</span> Tý (23-1h), Dần (3-5h), Mão (5-7h), Ngọ (11-13h), Mùi (13-15h), Dậu (17-19h)</p>
               </div>
