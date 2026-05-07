@@ -10,103 +10,38 @@ import JSZip from 'jszip';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import Tesseract from 'tesseract.js';
 import { motion, AnimatePresence } from 'motion/react';
-
-// DnD Kit Imports
-import {
-  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay,
-} from '@dnd-kit/core';
-import {
-  arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable
-} from '@dnd-kit/sortable';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// PDFJS Worker Setup
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
-interface PDFPageItem {
-  id: string; 
-  originalFile: File; 
-  originalFileName: string;
-  originalPageIndex: number; 
-  thumbnailUrl: string;
-  isSelected?: boolean;
-}
+interface PDFPageItem { id: string; originalFile: File; originalFileName: string; originalPageIndex: number; thumbnailUrl: string; isSelected?: boolean; }
 
-// --- HÀM BỘ LỌC LÀM SẠCH VĂN BẢN (Text Sanitizer) ---
 const cleanExtractedText = (rawText: string) => {
   if (!rawText) return "";
-  
-  // 1. Chỉ giữ lại Chữ cái (gồm tiếng Việt), Số, Khoảng trắng, và Dấu câu cơ bản.
-  // Loại bỏ các ký hiệu rác từ chữ ký, con dấu, viền bảng...
   let cleaned = rawText.replace(/[^\w\s\dàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ.,:;?!\(\)"'/%-]/g, ' ');
-  
-  // 2. Xóa các khoảng trắng thừa do việc xóa ký tự để lại
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
-  
-  // 3. Nếu một dòng chỉ có 1-2 ký tự rác (không phải chữ hoặc số), loại bỏ luôn dòng đó
-  if (cleaned.length < 2 && !/[a-zA-Z0-9à-ỹÀ-Ỹ]/.test(cleaned)) {
-      return "";
-  }
-  
+  if (cleaned.length < 2 && !/[a-zA-Z0-9à-ỹÀ-Ỹ]/.test(cleaned)) return "";
   return cleaned;
 };
 
-// --- Component Thẻ hiển thị ---
-const PageCard = React.forwardRef<HTMLDivElement, any>(({ 
-  page, index, isOverlay, onDelete, onDuplicate, onSelect, attributes, listeners, style 
-}, ref) => {
+const PageCard = React.forwardRef<HTMLDivElement, any>(({ page, index, isOverlay, onDelete, onDuplicate, onSelect, attributes, listeners, style }, ref) => {
   return (
-    <div
-      ref={ref}
-      style={style}
-      onClick={() => onSelect && onSelect(page.id)}
-      className={`relative group bg-[#0f172a] border rounded-xl overflow-hidden transition-all ${
-        isOverlay ? 'scale-105 shadow-2xl ring-4 ring-brand/50 z-50 cursor-grabbing' : 'cursor-pointer shadow-lg'
-      } ${
-        page.isSelected && !isOverlay ? 'border-brand ring-2 ring-brand/50 scale-[0.98]' : 'border-[#1e293b] hover:border-brand/50'
-      }`}
-    >
+    <div ref={ref} style={style} onClick={() => onSelect && onSelect(page.id)} className={`relative group bg-[#0f172a] border rounded-xl overflow-hidden transition-all ${isOverlay ? 'scale-105 shadow-2xl ring-4 ring-brand/50 z-50 cursor-grabbing' : 'cursor-pointer shadow-lg'} ${page.isSelected && !isOverlay ? 'border-brand ring-2 ring-brand/50 scale-[0.98]' : 'border-[#1e293b] hover:border-brand/50'}`}>
       <div className="aspect-[3/4] relative overflow-hidden bg-black/40">
         <img src={page.thumbnailUrl} alt={`Trang ${index + 1}`} className="w-full h-full object-contain pointer-events-none bg-white" />
-        
-        {page.isSelected && !isOverlay && (
-          <div className="absolute top-2 right-2 z-10 bg-brand text-bg-dark rounded-full p-0.5 shadow-lg">
-            <CheckCircle2 size={16} fill="currentColor" className="text-white" />
-          </div>
-        )}
-
+        {page.isSelected && !isOverlay && <div className="absolute top-2 right-2 z-10 bg-brand text-bg-dark rounded-full p-0.5 shadow-lg"><CheckCircle2 size={16} fill="currentColor" className="text-white" /></div>}
         {!isOverlay && (
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <div 
-                  {...attributes} {...listeners}
-                  onClick={(e) => e.stopPropagation()}
-                  className="p-2 bg-brand text-bg-dark rounded-full cursor-grab active:cursor-grabbing hover:scale-110 transition-transform touch-none"
-                  style={{ touchAction: 'none' }}
-                  title="Kéo thả thay đổi vị trí"
-              >
-                  <GripVertical size={16} />
-              </div>
-              <button 
-                  onClick={(e) => { e.stopPropagation(); onDuplicate(page.id); }}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition hover:scale-110"
-                  title="Nhân bản trang"
-              >
-                  <Copy size={16} />
-              </button>
-              <button 
-                  onClick={(e) => { e.stopPropagation(); onDelete(page.id); }}
-                  className="p-2 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition hover:scale-110"
-                  title="Xóa trang"
-              >
-                  <Trash2 size={16} />
-              </button>
+              <div {...attributes} {...listeners} onClick={(e) => e.stopPropagation()} className="p-2 bg-brand text-bg-dark rounded-full cursor-grab active:cursor-grabbing hover:scale-110 transition-transform touch-none" style={{ touchAction: 'none' }} title="Kéo thả"><GripVertical size={16} /></div>
+              <button onClick={(e) => { e.stopPropagation(); onDuplicate(page.id); }} className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition hover:scale-110" title="Nhân bản"><Copy size={16} /></button>
+              <button onClick={(e) => { e.stopPropagation(); onDelete(page.id); }} className="p-2 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition hover:scale-110" title="Xóa"><Trash2 size={16} /></button>
           </div>
         )}
       </div>
       <div className="p-2 flex justify-between items-center text-[10px] bg-[#0f172a]">
-        <div className="flex items-center gap-1.5">
-           <span className="bg-brand/20 text-brand px-1.5 py-0.5 rounded font-bold">P {index + 1}</span>
-        </div>
+        <div className="flex items-center gap-1.5"><span className="bg-brand/20 text-brand px-1.5 py-0.5 rounded font-bold">P {index + 1}</span></div>
         <span className="text-slate-500 italic truncate max-w-[60px]">{page.originalFileName}</span>
       </div>
     </div>
@@ -115,121 +50,68 @@ const PageCard = React.forwardRef<HTMLDivElement, any>(({
 
 function SortablePage(props: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.page.id });
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.3 : 1,
-  };
+  const style = { transform: CSS.Translate.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
   return <PageCard ref={setNodeRef} style={style} attributes={attributes} listeners={listeners} {...props} />;
 }
 
-// --- Component Chính ---
 export default function PDFProcessor() {
   const [activeTab, setActiveTab] = useState<'cut' | 'merge' | 'word'>('cut');
   const [pages, setPages] = useState<PDFPageItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStatus, setProcessStatus] = useState<string>(''); 
   const [processProgress, setProcessProgress] = useState(0);
   const [wordFileReady, setWordFileReady] = useState<{ blob: Blob, name: string } | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  
   const [splitInterval, setSplitInterval] = useState<number>(2);
   const [forceOCR, setForceOCR] = useState<boolean>(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const extractPagesFromFiles = async (files: File[]) => {
-    setIsProcessing(true);
-    setProcessStatus('Đang bóc tách dữ liệu trang...');
-    await new Promise(resolve => setTimeout(resolve, 50)); 
-
+    setIsProcessing(true); setProcessStatus('Đang bóc tách dữ liệu trang...'); await new Promise(resolve => setTimeout(resolve, 50)); 
     const newPages: PDFPageItem[] = [];
-
     for (const file of files) {
       if (!file || file.type !== 'application/pdf') continue;
       try {
         const arrayBuffer = await file.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
         const pdf = await loadingTask.promise;
-
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const viewport = page.getViewport({ scale: 0.8 });
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
+          canvas.height = viewport.height; canvas.width = viewport.width;
           if (context) {
             await page.render({ canvasContext: context, viewport }).promise;
-            newPages.push({
-              id: `p-${Date.now()}-${file.name}-${i}-${Math.random()}`,
-              originalFile: file,
-              originalFileName: file.name,
-              originalPageIndex: i - 1,
-              thumbnailUrl: canvas.toDataURL('image/jpeg', 0.8),
-              isSelected: false
-            });
+            newPages.push({ id: `p-${Date.now()}-${file.name}-${i}-${Math.random()}`, originalFile: file, originalFileName: file.name, originalPageIndex: i - 1, thumbnailUrl: canvas.toDataURL('image/jpeg', 0.8), isSelected: false });
           }
         }
-      } catch (error) {
-        console.error("Lỗi xử lý file:", file.name, error);
-      }
+      } catch (error) { console.error("Lỗi xử lý file:", file.name, error); }
     }
-
     setPages(prev => activeTab === 'merge' ? [...prev, ...newPages] : newPages);
     setIsProcessing(false);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      extractPagesFromFiles(Array.from(e.target.files));
-      e.target.value = ''; 
-    }
-  };
-
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files && e.target.files.length > 0) { extractPagesFromFiles(Array.from(e.target.files)); e.target.value = ''; } };
   const preventDefaults = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); };
   const handleDragEnter = (e: React.DragEvent) => { preventDefaults(e); setIsDraggingOver(true); };
   const handleDragLeave = (e: React.DragEvent) => { preventDefaults(e); setIsDraggingOver(false); };
-  const handleDrop = (e: React.DragEvent) => {
-    preventDefaults(e); setIsDraggingOver(false);
-    const droppedFiles = Array.from(e.dataTransfer.files) as File[];
-    if (droppedFiles.length > 0) extractPagesFromFiles(droppedFiles);
-  };
+  const handleDrop = (e: React.DragEvent) => { preventDefaults(e); setIsDraggingOver(false); const droppedFiles = Array.from(e.dataTransfer.files) as File[]; if (droppedFiles.length > 0) extractPagesFromFiles(droppedFiles); };
 
   const deletePage = (id: string) => setPages(prev => prev.filter(p => p.id !== id));
-  const duplicatePage = (id: string) => {
-    setPages(prev => {
-      const idx = prev.findIndex(p => p.id === id);
-      if (idx === -1) return prev;
-      const copy = { ...prev[idx], id: `copy-${Date.now()}-${Math.random()}`, isSelected: false };
-      const newList = [...prev];
-      newList.splice(idx + 1, 0, copy);
-      return newList;
-    });
-  };
+  const duplicatePage = (id: string) => { setPages(prev => { const idx = prev.findIndex(p => p.id === id); if (idx === -1) return prev; const copy = { ...prev[idx], id: `copy-${Date.now()}-${Math.random()}`, isSelected: false }; const newList = [...prev]; newList.splice(idx + 1, 0, copy); return newList; }); };
   const toggleSelectPage = (id: string) => setPages(prev => prev.map(p => p.id === id ? { ...p, isSelected: !p.isSelected } : p));
   const deleteSelected = () => setPages(prev => prev.filter(p => !p.isSelected));
   const deselectAll = () => setPages(prev => prev.map(p => ({ ...p, isSelected: false })));
 
   const handleDragStart = (event: any) => setActiveId(event.active.id);
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setPages((items) => arrayMove(items, items.findIndex(i => i.id === active.id), items.findIndex(i => i.id === over.id)));
-    }
-    setActiveId(null);
-  };
+  const handleDragEnd = (event: any) => { const { active, over } = event; if (over && active.id !== over.id) { setPages((items) => arrayMove(items, items.findIndex(i => i.id === active.id), items.findIndex(i => i.id === over.id))); } setActiveId(null); };
 
   const buildPdfFromPages = async (targetPages: PDFPageItem[]) => {
     const newPdf = await PDFDocument.create();
     const loadedPdfs = new Map<File, any>();
-
     for (const pageItem of targetPages) {
       let sourcePdf = loadedPdfs.get(pageItem.originalFile);
       if (!sourcePdf) {
@@ -248,7 +130,7 @@ export default function PDFProcessor() {
     setIsProcessing(true); setProcessStatus('Đang đóng gói file PDF...');
     try {
       const pdfBytes = await buildPdfFromPages(pages);
-      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), activeTab === 'cut' ? 'EduPro_Cut.pdf' : 'EduPro_Merged.pdf');
+      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), activeTab === 'cut' ? 'AIBTeM_Cut.pdf' : 'AIBTeM_Merged.pdf');
     } catch (error) { alert("Lỗi khi đóng gói PDF."); } 
     finally { setIsProcessing(false); }
   };
@@ -259,7 +141,7 @@ export default function PDFProcessor() {
     setIsProcessing(true); setProcessStatus('Đang đóng gói các trang được chọn...');
     try {
       const pdfBytes = await buildPdfFromPages(selectedPages);
-      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `EduPro_${selectedPages.length}_Trang_Chon.pdf`);
+      saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `AIBTeM_Cut_${selectedPages.length}_Trang.pdf`);
     } catch (error) { alert("Lỗi khi xuất file."); } 
     finally { setIsProcessing(false); }
   };
@@ -271,49 +153,29 @@ export default function PDFProcessor() {
       const zip = new JSZip();
       const chunkSize = Math.max(1, splitInterval);
       let fileIndex = 1;
-
       for (let i = 0; i < pages.length; i += chunkSize) {
         const chunk = pages.slice(i, i + chunkSize);
         const pdfBytes = await buildPdfFromPages(chunk);
-        zip.file(`Phan_${fileIndex}_(${chunk.length}_Trang).pdf`, pdfBytes);
+        zip.file(`AIBTeM_Phan_${fileIndex}_(${chunk.length}_Trang).pdf`, pdfBytes);
         fileIndex++;
       }
-
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      saveAs(zipBlob, `EduPro_Tach_Hang_Loat.zip`);
+      saveAs(zipBlob, `AIBTeM_Tach_Hang_Loat.zip`);
     } catch (error) { alert("Lỗi khi nén file ZIP."); } 
     finally { setIsProcessing(false); }
   };
 
-  // --- XỬ LÝ CHUYỂN ĐỔI SANG WORD ---
   const convertToWord = async (file: File) => {
-    setIsProcessing(true); 
-    setProcessProgress(0); 
-    setWordFileReady(null);
-    
+    setIsProcessing(true); setProcessProgress(0); setWordFileReady(null);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const loadingTask = pdfjsLib.getDocument({ data: bytes });
       const pdf = await loadingTask.promise;
       const paragraphs: Paragraph[] = [];
 
-      // Hàm con để thêm đoạn văn sạch vào mảng
       const addCleanParagraph = (text: string) => {
           const cleanedText = cleanExtractedText(text);
-          if (cleanedText) {
-              paragraphs.push(
-                  new Paragraph({ 
-                      children: [
-                          new TextRun({ 
-                              text: cleanedText, 
-                              size: 28, 
-                              font: "Times New Roman" // ÉP BUỘC FONT CHỮ TRỰC TIẾP TRÊN TỪNG DÒNG
-                          })
-                      ], 
-                      spacing: { after: 200 } 
-                  })
-              );
-          }
+          if (cleanedText) paragraphs.push(new Paragraph({ children: [new TextRun({ text: cleanedText, size: 28, font: "Times New Roman" })], spacing: { after: 200 } }));
       };
 
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -325,55 +187,30 @@ export default function PDFProcessor() {
         if (!forceOCR && textContent.items.length > 0) {
             let lastY = -1;
             textContent.items.forEach((item: any) => {
-              if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 5) {
-                addCleanParagraph(pageText);
-                pageText = item.str;
-              } else { 
-                pageText += " " + item.str; 
-              }
+              if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 5) { addCleanParagraph(pageText); pageText = item.str; } 
+              else { pageText += " " + item.str; }
               lastY = item.transform[5];
             });
             addCleanParagraph(pageText);
-        } 
-        else {
+        } else {
             setProcessStatus(`Đang chạy AI OCR quét ảnh trang ${i}/${pdf.numPages}...`);
             const viewport = page.getViewport({ scale: 2.0 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
+            const canvas = document.createElement('canvas'); const context = canvas.getContext('2d');
+            canvas.height = viewport.height; canvas.width = viewport.width;
             if (context) {
                 await page.render({ canvasContext: context, viewport }).promise;
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                
                 const { data: { text } } = await Tesseract.recognize(imgData, 'vie', { logger: m => console.log(m) });
-                
                 const lines = text.split('\n');
                 lines.forEach(line => addCleanParagraph(line));
             }
         }
-        
         setProcessProgress(Math.round((i / pdf.numPages) * 100));
       }
-      
-      setProcessStatus('Đang đóng gói file Word (Đã được làm sạch và chuẩn hóa Font)...');
-      
-      const doc = new Document({ 
-          styles: {
-              default: {
-                  document: { run: { font: "Times New Roman" } }
-              }
-          },
-          sections: [{ children: paragraphs }] 
-      });
-      setWordFileReady({ blob: await Packer.toBlob(doc), name: file.name.replace('.pdf', '.docx') });
-    } catch (error) { 
-      console.error(error);
-      alert("Lỗi trích xuất Word. Xin kiểm tra lại định dạng tệp."); 
-    } finally { 
-      setIsProcessing(false); 
-    }
+      setProcessStatus('Đang đóng gói file Word...');
+      const doc = new Document({ styles: { default: { document: { run: { font: "Times New Roman" } } } }, sections: [{ children: paragraphs }] });
+      setWordFileReady({ blob: await Packer.toBlob(doc), name: `AIBTeM_${file.name.replace('.pdf', '.docx')}` });
+    } catch (error) { console.error(error); alert("Lỗi trích xuất Word."); } finally { setIsProcessing(false); }
   };
 
   const activePage = activeId ? pages.find(p => p.id === activeId) : null;
@@ -384,7 +221,8 @@ export default function PDFProcessor() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl serif font-light text-slate-100 flex items-center gap-3">
+          {/* ĐỔI FONT CHỮ SANG SANS BOLD */}
+          <h1 className="text-3xl font-sans font-bold text-slate-100 flex items-center gap-3">
             <FileText className="text-brand" size={32} /> Studio Xử lý PDF
           </h1>
           <p className="text-slate-500 text-sm mt-1">Trình biên tập tài liệu PDF đa năng với xem trước thời gian thực.</p>
@@ -463,7 +301,7 @@ export default function PDFProcessor() {
                   <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-[#1e293b]/20 p-4 rounded-xl border border-[#1e293b]">
                     <div className="flex flex-col">
                        <h3 className="text-[10px] font-black text-brand uppercase tracking-[0.2em] mb-1">Bàn làm việc trực quan</h3>
-                       <p className="text-xs text-slate-500">Kéo thả để sắp xếp, nhấp vào trang để chọn (select).</p>
+                       <p className="text-xs text-slate-500">Kéo thả để sắp xếp, nhấp vào trang để chọn.</p>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-3">
@@ -508,11 +346,8 @@ export default function PDFProcessor() {
                         ))}
                       </div>
                     </SortableContext>
-                    
                     <DragOverlay>
-                      {activePage ? (
-                        <PageCard page={activePage} index={activePageIndex} isOverlay={true} />
-                      ) : null}
+                      {activePage ? <PageCard page={activePage} index={activePageIndex} isOverlay={true} /> : null}
                     </DragOverlay>
                   </DndContext>
                 </div>
@@ -527,7 +362,7 @@ export default function PDFProcessor() {
                     <FileType className="text-blue-500" size={40} />
                  </div>
                  <h2 className="text-xl font-bold text-slate-100">Chuyển đổi PDF sang Word (.docx)</h2>
-                 <p className="text-slate-500 text-sm leading-relaxed">Đã tích hợp Bộ lọc rác thông minh (Loại bỏ ký hiệu con dấu, viền) và Ép buộc chuẩn Font Times New Roman.</p>
+                 <p className="text-slate-500 text-sm leading-relaxed">Bộ lọc rác thông minh (Loại bỏ ký hiệu con dấu) & Ép buộc Font Times New Roman.</p>
               </div>
 
               {!isProcessing && !wordFileReady && (

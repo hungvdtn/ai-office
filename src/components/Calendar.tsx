@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
 
 // --- THUẬT TOÁN CAN CHI VÀ PHONG THỦY ---
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
@@ -12,7 +12,7 @@ const getCanChiYear = (year: number) => {
 };
 
 const getCanChiDay = (date: Date) => {
-  const anchor = Date.UTC(2024, 0, 1); // 1/1/2024 là Giáp Tý
+  const anchor = Date.UTC(2024, 0, 1);
   const target = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const diffDays = Math.floor((target - anchor) / 86400000);
   const canIdx = (diffDays % 10 + 10) % 10;
@@ -21,11 +21,10 @@ const getCanChiDay = (date: Date) => {
 };
 
 const getCanChiMonth = (lMonth: number, year: number) => {
-  const yearCanIndexForMonth = (year % 10);
-  const stdYearCan = (yearCanIndexForMonth + 6) % 10; 
+  const stdYearCan = ((year % 10) + 6) % 10; 
   const month1Can = ((stdYearCan % 5) * 2 + 2) % 10;
   const targetMonthCan = (month1Can + lMonth - 1) % 10;
-  const targetMonthChi = (2 + lMonth - 1) % 12; // Tháng 1 Âm luôn là tháng Dần (index 2)
+  const targetMonthChi = (2 + lMonth - 1) % 12;
   return { text: `${CAN_CHU[targetMonthCan]} ${CHI_CHU[targetMonthChi]}`, chiIdx: targetMonthChi };
 };
 
@@ -38,66 +37,38 @@ const getLunarDate = (date: Date) => {
   } catch (e) { return { day: date.getDate(), month: date.getMonth() + 1 }; }
 };
 
-// ĐỘNG CƠ TÍNH TOÁN NGÀY TỐT XẤU (FENG SHUI ENGINE)
 const getDayEvaluation = (date: Date) => {
   const lunar = getLunarDate(date);
   const dayInfo = getCanChiDay(date);
   const monthInfo = getCanChiMonth(lunar.month, date.getFullYear());
   
-  const mChi = monthInfo.chiIdx; // Chi của tháng
-  const dChi = dayInfo.chiIdx;   // Chi của ngày
+  const mChi = monthInfo.chiIdx; 
+  const dChi = dayInfo.chiIdx;   
 
-  // 1. Tính Hoàng Đạo / Hắc Đạo
-  // Bảng Hoàng Đạo dựa trên Tháng và Ngày
   const hoangDaoMap: Record<number, number[]> = {
-    2: [0, 1, 4, 5, 7, 10], // Tháng Dần (2), Thân (8) -> Tý, Sửu, Thìn, Tỵ, Mùi, Tuất
-    8: [0, 1, 4, 5, 7, 10],
-    3: [2, 3, 6, 7, 9, 0],  // Tháng Mão (3), Dậu (9) -> Dần, Mão, Ngọ, Mùi, Dậu, Tý
-    9: [2, 3, 6, 7, 9, 0],
-    4: [4, 5, 8, 9, 11, 2], // Tháng Thìn (4), Tuất (10) -> Thìn, Tỵ, Thân, Dậu, Hợi, Dần
-    10: [4, 5, 8, 9, 11, 2],
-    5: [6, 7, 10, 11, 1, 4], // Tháng Tỵ (5), Hợi (11) -> Ngọ, Mùi, Tuất, Hợi, Sửu, Thìn
-    11: [6, 7, 10, 11, 1, 4],
-    0: [8, 9, 0, 1, 3, 6],   // Tháng Tý (0), Ngọ (6) -> Thân, Dậu, Tý, Sửu, Mão, Ngọ
-    6: [8, 9, 0, 1, 3, 6],
-    1: [10, 11, 2, 3, 5, 8], // Tháng Sửu (1), Mùi (7) -> Tuất, Hợi, Dần, Mão, Tỵ, Thân
-    7: [10, 11, 2, 3, 5, 8]
+    2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10],
+    3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],
+    4: [4, 5, 8, 9, 11, 2], 10: [4, 5, 8, 9, 11, 2],
+    5: [6, 7, 10, 11, 1, 4], 11: [6, 7, 10, 11, 1, 4],
+    0: [8, 9, 0, 1, 3, 6],   6: [8, 9, 0, 1, 3, 6],
+    1: [10, 11, 2, 3, 5, 8], 7: [10, 11, 2, 3, 5, 8]
   };
 
   const isHoangDao = hoangDaoMap[mChi]?.includes(dChi);
-  
-  // 2. Tính ngày xấu (Nguyệt Kỵ, Tam Nương)
   const isNguyetKy = [5, 14, 23].includes(lunar.day);
   const isTamNuong = [3, 7, 13, 18, 22, 27].includes(lunar.day);
 
-  // 3. Tính điểm (Thang 5 sao)
-  let score = 3.0; // Điểm cơ bản
+  let score = 3.0; 
   let notes = [];
 
-  if (isHoangDao) {
-    score += 1.5;
-    notes.push("Ngày Hoàng đạo");
-  } else {
-    score -= 0.5;
-    notes.push("Ngày Hắc đạo");
-  }
+  if (isHoangDao) { score += 1.5; notes.push("Ngày Hoàng đạo"); } 
+  else { score -= 0.5; notes.push("Ngày Hắc đạo"); }
+  if (isNguyetKy) { score -= 1.5; notes.push("Phạm Nguyệt Kỵ"); }
+  if (isTamNuong) { score -= 1.5; notes.push("Phạm Tam Nương"); }
 
-  if (isNguyetKy) {
-    score -= 1.5;
-    notes.push("Phạm Nguyệt Kỵ");
-  }
-  if (isTamNuong) {
-    score -= 1.5;
-    notes.push("Phạm Tam Nương");
-  }
-
-  // Khống chế điểm từ 1.0 đến 5.0
   score = Math.max(1.0, Math.min(5.0, score));
 
-  return {
-    score: score.toFixed(1),
-    description: notes.join(' - ')
-  };
+  return { score: score.toFixed(1), description: notes.join(' - ') };
 };
 
 const renderStars = (scoreStr: string) => {
@@ -116,74 +87,72 @@ const renderStars = (scoreStr: string) => {
   )
 }
 
-// --- DỮ LIỆU LỄ TẾT ---
-interface HolidayInfo { name: string; isDayOff: boolean; }
+// --- DỮ LIỆU LỄ TẾT ĐÃ PHÂN VÙNG DƯƠNG/ÂM ---
+interface HolidayInfo { name: string; isDayOff: boolean; isSolar: boolean; }
 const HOLIDAYS: Record<string, HolidayInfo> = {
-  '1/1': { name: 'Tết Dương lịch', isDayOff: true },
-  '9/1': { name: 'Ngày truyền thống HSSV', isDayOff: false },
-  '3/2': { name: 'Ngày thành lập Đảng', isDayOff: false },
-  '14/2': { name: 'Lễ Tình nhân', isDayOff: false },
-  '27/2': { name: 'Ngày thầy thuốc VN', isDayOff: false },
-  '8/3': { name: 'Quốc tế Phụ nữ', isDayOff: false },
-  '20/3': { name: 'Quốc tế Hạnh phúc', isDayOff: false },
-  '26/3': { name: 'Thành lập Đoàn TNCS HCM', isDayOff: false },
-  '1/4': { name: 'Cá tháng Tư', isDayOff: false },
-  '30/4': { name: 'Giải phóng miền Nam', isDayOff: true },
-  '1/5': { name: 'Quốc tế Lao động', isDayOff: true },
-  '7/5': { name: 'Chiến thắng Điện Biên Phủ', isDayOff: false },
-  '13/5': { name: 'Ngày của Mẹ', isDayOff: false },
-  '19/5': { name: 'Sinh nhật Chủ tịch Hồ Chí Minh', isDayOff: false },
-  '1/6': { name: 'Quốc tế Thiếu nhi', isDayOff: false },
-  '17/6': { name: 'Ngày của Cha', isDayOff: false },
-  '21/6': { name: 'Ngày Báo chí VN', isDayOff: false },
-  '28/6': { name: 'Ngày Gia đình VN', isDayOff: false },
-  '11/7': { name: 'Dân số Thế giới', isDayOff: false },
-  '27/7': { name: 'Thương binh Liệt sĩ', isDayOff: false },
-  '28/7': { name: 'Thành lập Công đoàn VN', isDayOff: false },
-  '19/8': { name: 'Cách mạng Tháng Tám', isDayOff: false },
-  '28/8': { name: 'Truyền thống Tổ chức Nhà nước', isDayOff: false },
-  '2/9': { name: 'Quốc khánh', isDayOff: true },
-  '10/9': { name: 'Thành lập MTTQ VN', isDayOff: false },
-  '1/10': { name: 'Quốc tế Người cao tuổi', isDayOff: false },
-  '4/10': { name: 'Kỹ năng nghề Việt Nam', isDayOff: false },
-  '10/10': { name: 'Giải phóng Thủ đô', isDayOff: false },
-  '13/10': { name: 'Doanh nhân Việt Nam', isDayOff: false },
-  '20/10': { name: 'Phụ nữ Việt Nam', isDayOff: false },
-  '31/10': { name: 'Halloween', isDayOff: false },
-  '9/11': { name: 'Pháp luật Việt Nam', isDayOff: false },
-  '19/11': { name: 'Quốc tế Nam giới', isDayOff: false },
-  '20/11': { name: 'Nhà giáo Việt Nam', isDayOff: false },
-  '23/11': { name: 'Thành lập Hội Chữ thập đỏ VN', isDayOff: false },
-  '24/11': { name: 'Ngày Văn hóa Việt Nam', isDayOff: true },
-  '1/12': { name: 'Thế giới phòng chống AIDS', isDayOff: false },
-  '19/12': { name: 'Toàn quốc Kháng chiến', isDayOff: false },
-  '24/12': { name: 'Lễ Giáng sinh', isDayOff: false },
-  '22/12': { name: 'Thành lập QĐND VN', isDayOff: false }
+  '1/1': { name: 'Tết Dương lịch', isDayOff: true, isSolar: true },
+  '9/1': { name: 'Ngày truyền thống HSSV', isDayOff: false, isSolar: true },
+  '3/2': { name: 'Ngày thành lập Đảng', isDayOff: false, isSolar: true },
+  '14/2': { name: 'Lễ Tình nhân', isDayOff: false, isSolar: true },
+  '27/2': { name: 'Ngày thầy thuốc VN', isDayOff: false, isSolar: true },
+  '8/3': { name: 'Quốc tế Phụ nữ', isDayOff: false, isSolar: true },
+  '20/3': { name: 'Quốc tế Hạnh phúc', isDayOff: false, isSolar: true },
+  '26/3': { name: 'Thành lập Đoàn TNCS HCM', isDayOff: false, isSolar: true },
+  '1/4': { name: 'Cá tháng Tư', isDayOff: false, isSolar: true },
+  '30/4': { name: 'Giải phóng miền Nam', isDayOff: true, isSolar: true },
+  '1/5': { name: 'Quốc tế Lao động', isDayOff: true, isSolar: true },
+  '7/5': { name: 'Chiến thắng Điện Biên Phủ', isDayOff: false, isSolar: true },
+  '13/5': { name: 'Ngày của Mẹ', isDayOff: false, isSolar: true },
+  '19/5': { name: 'Sinh nhật Bác Hồ', isDayOff: false, isSolar: true },
+  '1/6': { name: 'Quốc tế Thiếu nhi', isDayOff: false, isSolar: true },
+  '17/6': { name: 'Ngày của Cha', isDayOff: false, isSolar: true },
+  '21/6': { name: 'Ngày Báo chí VN', isDayOff: false, isSolar: true },
+  '28/6': { name: 'Ngày Gia đình VN', isDayOff: false, isSolar: true },
+  '11/7': { name: 'Dân số Thế giới', isDayOff: false, isSolar: true },
+  '27/7': { name: 'Thương binh Liệt sĩ', isDayOff: false, isSolar: true },
+  '28/7': { name: 'Thành lập Công đoàn VN', isDayOff: false, isSolar: true },
+  '19/8': { name: 'Cách mạng Tháng Tám', isDayOff: false, isSolar: true },
+  '28/8': { name: 'Truyền thống Tổ chức Nhà nước', isDayOff: false, isSolar: true },
+  '2/9': { name: 'Quốc khánh', isDayOff: true, isSolar: true },
+  '10/9': { name: 'Thành lập MTTQ VN', isDayOff: false, isSolar: true },
+  '1/10': { name: 'Quốc tế Người cao tuổi', isDayOff: false, isSolar: true },
+  '4/10': { name: 'Kỹ năng nghề Việt Nam', isDayOff: false, isSolar: true },
+  '10/10': { name: 'Giải phóng Thủ đô', isDayOff: false, isSolar: true },
+  '13/10': { name: 'Doanh nhân Việt Nam', isDayOff: false, isSolar: true },
+  '20/10': { name: 'Phụ nữ Việt Nam', isDayOff: false, isSolar: true },
+  '31/10': { name: 'Halloween', isDayOff: false, isSolar: true },
+  '9/11': { name: 'Pháp luật Việt Nam', isDayOff: false, isSolar: true },
+  '19/11': { name: 'Quốc tế Nam giới', isDayOff: false, isSolar: true },
+  '20/11': { name: 'Nhà giáo Việt Nam', isDayOff: false, isSolar: true },
+  '23/11': { name: 'Thành lập Hội Chữ thập đỏ VN', isDayOff: false, isSolar: true },
+  '24/11': { name: 'Ngày Văn hóa Việt Nam', isDayOff: true, isSolar: true },
+  '1/12': { name: 'Thế giới phòng chống AIDS', isDayOff: false, isSolar: true },
+  '19/12': { name: 'Toàn quốc Kháng chiến', isDayOff: false, isSolar: true },
+  '24/12': { name: 'Lễ Giáng sinh', isDayOff: false, isSolar: true },
+  '22/12': { name: 'Thành lập QĐND VN', isDayOff: false, isSolar: true }
 };
 
 const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
-  '1/1': { name: 'Tết Nguyên đán', isDayOff: true },
-  '2/1': { name: 'Tết Nguyên đán', isDayOff: true },
-  '3/1': { name: 'Tết Nguyên đán', isDayOff: true },
-  '15/1': { name: 'Tết Nguyên Tiêu', isDayOff: false },
-  '3/3': { name: 'Tết Hàn thực', isDayOff: false },
-  '10/3': { name: 'Giỗ tổ Hùng Vương', isDayOff: true },
-  '15/4': { name: 'Lễ Phật Đản', isDayOff: false },
-  '5/5': { name: 'Tết Đoan ngọ', isDayOff: false },
-  '7/7': { name: 'Lễ Thất tịch', isDayOff: false },
-  '15/7': { name: 'Lễ Vu Lan', isDayOff: false },
-  '15/8': { name: 'Tết Trung thu', isDayOff: false },
-  '9/9': { name: 'Tết Trùng cửu', isDayOff: false },
-  '10/10': { name: 'Tết Trùng thập', isDayOff: false },
-  '15/10': { name: 'Tết Hạ Nguyên', isDayOff: false },
-  '23/12': { name: 'Ông Táo về trời', isDayOff: false },
-  '29/12': { name: 'Tết Nguyên đán', isDayOff: true },
-  '30/12': { name: 'Tết Nguyên đán', isDayOff: true }
+  '1/1': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
+  '2/1': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
+  '3/1': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
+  '15/1': { name: 'Tết Nguyên Tiêu', isDayOff: false, isSolar: false },
+  '3/3': { name: 'Tết Hàn thực', isDayOff: false, isSolar: false },
+  '10/3': { name: 'Giỗ tổ Hùng Vương', isDayOff: true, isSolar: false },
+  '15/4': { name: 'Lễ Phật Đản', isDayOff: false, isSolar: false },
+  '5/5': { name: 'Tết Đoan ngọ', isDayOff: false, isSolar: false },
+  '7/7': { name: 'Lễ Thất tịch', isDayOff: false, isSolar: false },
+  '15/7': { name: 'Lễ Vu Lan', isDayOff: false, isSolar: false },
+  '15/8': { name: 'Tết Trung thu', isDayOff: false, isSolar: false },
+  '9/9': { name: 'Tết Trùng cửu', isDayOff: false, isSolar: false },
+  '10/10': { name: 'Tết Trùng thập', isDayOff: false, isSolar: false },
+  '15/10': { name: 'Tết Hạ Nguyên', isDayOff: false, isSolar: false },
+  '23/12': { name: 'Ông Táo về trời', isDayOff: false, isSolar: false },
+  '29/12': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
+  '30/12': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false }
 };
 
-interface UserEvent {
-  id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; 
-}
+interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; }
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -196,102 +165,87 @@ export default function Calendar() {
   const [newEventLocation, setNewEventLocation] = useState('');
   const [newReminderAdvance, setNewReminderAdvance] = useState<number>(0);
 
+  // --- TRẠNG THÁI BỘ CHUYỂN ĐỔI NGÀY ---
+  const [convType, setConvType] = useState<'S2L' | 'L2S'>('S2L');
+  const [cDay, setCDay] = useState('');
+  const [cMonth, setCMonth] = useState('');
+  const [cYear, setCYear] = useState(new Date().getFullYear().toString());
+  const [cResult, setCResult] = useState('');
+  const [cResultDate, setCResultDate] = useState<Date | null>(null);
+
   useEffect(() => {
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-      Notification.requestPermission();
-    }
-    const saved = localStorage.getItem('user_events');
-    if (saved) setEvents(JSON.parse(saved));
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') { Notification.requestPermission(); }
+    const saved = localStorage.getItem('user_events'); if (saved) setEvents(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
       events.forEach(ev => {
-        const [evY, evMo, evD] = ev.dateStr.split('-').map(Number);
-        const [evH, evM] = ev.time.split(':').map(Number);
+        const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); const [evH, evM] = ev.time.split(':').map(Number);
         const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
         const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
         
-        if (remindTime.getFullYear() === now.getFullYear() &&
-            remindTime.getMonth() === now.getMonth() &&
-            remindTime.getDate() === now.getDate() &&
-            remindTime.getHours() === now.getHours() &&
-            remindTime.getMinutes() === now.getMinutes()) {
-            
+        if (remindTime.getFullYear() === now.getFullYear() && remindTime.getMonth() === now.getMonth() && remindTime.getDate() === now.getDate() && remindTime.getHours() === now.getHours() && remindTime.getMinutes() === now.getMinutes()) {
             const msg = `SỰ KIỆN: ${ev.title} ${ev.location ? `\n📍 Địa điểm: ${ev.location}` : ''}\n⏰ Lúc: ${ev.time}`;
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('Lịch Vạn Niên', { body: msg, icon: '/favicon.ico' });
-            } else {
-              alert(msg);
-            }
+            if ('Notification' in window && Notification.permission === 'granted') { new Notification('Lịch Vạn Niên', { body: msg, icon: '/favicon.ico' }); } 
+            else { alert(msg); }
         }
       });
     }, 60000); 
     return () => clearInterval(interval);
   }, [events]);
 
-  const saveEvents = (newEvents: UserEvent[]) => {
-    setEvents(newEvents);
-    localStorage.setItem('user_events', JSON.stringify(newEvents));
-  };
-
-  const openModalForAdd = () => {
-    setEditingId(null); setNewEventTitle(''); setNewEventLocation('');
-    setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true);
-  };
-
-  const openModalForEdit = (ev: UserEvent) => {
-    setEditingId(ev.id); setNewEventTitle(ev.title); setNewEventTime(ev.time);
-    setNewEventLocation(ev.location || ''); setNewReminderAdvance(ev.reminderAdvance || 0);
-    setShowEventModal(true);
-  };
-
+  const saveEvents = (newEvents: UserEvent[]) => { setEvents(newEvents); localStorage.setItem('user_events', JSON.stringify(newEvents)); };
+  const openModalForAdd = () => { setEditingId(null); setNewEventTitle(''); setNewEventLocation(''); setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true); };
+  const openModalForEdit = (ev: UserEvent) => { setEditingId(ev.id); setNewEventTitle(ev.title); setNewEventTime(ev.time); setNewEventLocation(ev.location || ''); setNewReminderAdvance(ev.reminderAdvance || 0); setShowEventModal(true); };
   const handleSaveEvent = () => {
     if (!newEventTitle) return;
     const dateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
-    
-    if (editingId) {
-      const updatedEvents = events.map(e => e.id === editingId ? { ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance } : e);
-      saveEvents(updatedEvents);
-    } else {
-      const newEv: UserEvent = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance };
-      saveEvents([...events, newEv]);
-    }
+    if (editingId) { const updatedEvents = events.map(e => e.id === editingId ? { ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance } : e); saveEvents(updatedEvents); } 
+    else { const newEv: UserEvent = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance }; saveEvents([...events, newEv]); }
     setShowEventModal(false);
   };
-
-  const handleDeleteEvent = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); saveEvents(events.filter(e => e.id !== id));
-  };
+  const handleDeleteEvent = (id: string, e: React.MouseEvent) => { e.stopPropagation(); saveEvents(events.filter(e => e.id !== id)); };
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    let day = new Date(year, month, 1).getDay();
-    return day === 0 ? 6 : day - 1; 
+  const getFirstDayOfMonth = (year: number, month: number) => { let day = new Date(year, month, 1).getDay(); return day === 0 ? 6 : day - 1; };
+
+  // --- HÀM TÌM NGÀY THÔNG MINH ---
+  const doConvert = () => {
+    const d = parseInt(cDay), m = parseInt(cMonth), y = parseInt(cYear);
+    if (!d || !m || !y) { setCResult("Vui lòng nhập đầy đủ Ngày, Tháng, Năm!"); return; }
+    if (convType === 'S2L') {
+        const sDate = new Date(y, m - 1, d); const lunar = getLunarDate(sDate);
+        setCResult(`Ngày Âm: ${lunar.day}/${lunar.month}/${getCanChiYear(y)}`); setCResultDate(sDate);
+    } else {
+        let found = null; const start = new Date(y, 0, 1);
+        for(let i=0; i<380; i++) {
+            const td = new Date(start.getTime() + i*86400000); const ln = getLunarDate(td);
+            if (ln.day === d && ln.month === m) { found = td; break; }
+        }
+        if (found) {
+            setCResult(`Ngày Dương: ${found.getDate()}/${found.getMonth()+1}/${found.getFullYear()}`); setCResultDate(found);
+        } else {
+            setCResult("Không tìm thấy ngày Âm lịch hợp lệ trong năm này!"); setCResultDate(null);
+        }
+    }
+  };
+  const goToDate = () => {
+    if(cResultDate) {
+        setSelectedDate(cResultDate); setCurrentDate(cResultDate);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const generateMonthGrid = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysInMonth = getDaysInMonth(year, month);
-    const daysInPrevMonth = getDaysInMonth(year, month - 1);
-    const firstDay = getFirstDayOfMonth(year, month);
-    
+    const year = currentDate.getFullYear(); const month = currentDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month); const daysInPrevMonth = getDaysInMonth(year, month - 1); const firstDay = getFirstDayOfMonth(year, month);
     const grid = [];
     
     for (let i = 0; i < firstDay; i++) {
-      const d = daysInPrevMonth - firstDay + i + 1;
-      const prevDate = new Date(year, month - 1, d);
-      const lunar = getLunarDate(prevDate);
-      grid.push(
-        <div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
-           <div className="flex justify-between items-start font-sans">
-            <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
-            <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
-          </div>
-        </div>
-      );
+      const d = daysInPrevMonth - firstDay + i + 1; const prevDate = new Date(year, month - 1, d); const lunar = getLunarDate(prevDate);
+      grid.push(<div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]"><div className="flex justify-between items-start font-sans"><span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span><span className="text-xs font-medium text-slate-600">{lunar.day}</span></div></div>);
     }
     
     for (let d = 1; d <= daysInMonth; d++) {
@@ -304,70 +258,34 @@ export default function Calendar() {
       const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
       const dayEvents = events.filter(e => e.dateStr === dateStr);
       
-      const solarKey = `${d}/${month+1}`;
-      const lunarKey = `${lunar.day}/${lunar.month}`;
-      const solarHoliday = HOLIDAYS[solarKey];
-      const lunarHoliday = LUNAR_HOLIDAYS[lunarKey];
-      const displayHoliday = solarHoliday || lunarHoliday;
-      
+      const solarKey = `${d}/${month+1}`; const lunarKey = `${lunar.day}/${lunar.month}`;
+      const solarHoliday = HOLIDAYS[solarKey]; const lunarHoliday = LUNAR_HOLIDAYS[lunarKey];
       const isDayOff = solarHoliday?.isDayOff || lunarHoliday?.isDayOff;
       
       let solarColor = 'text-white';
-      if (isSunday || isDayOff) {
-        solarColor = 'text-red-500';
-      } else if (displayHoliday) {
-        solarColor = 'text-amber-500';
-      }
-
+      if (isSunday || isDayOff) { solarColor = 'text-red-500'; } else if (solarHoliday || lunarHoliday) { solarColor = 'text-amber-500'; }
       const eventTextColor = isDayOff ? 'text-red-500' : 'text-amber-500';
 
       grid.push(
-        <div 
-          key={`cur-${d}`} 
-          onClick={() => setSelectedDate(dateObj)}
-          className={`h-20 sm:h-28 lg:h-32 border border-[#1e293b] p-1 sm:p-2 lg:p-3 cursor-pointer transition-all flex flex-col relative group
-            ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'}
-            ${isToday ? 'ring-1 ring-sky-500/50' : ''}
-          `}
-        >
+        <div key={`cur-${d}`} onClick={() => setSelectedDate(dateObj)} className={`h-20 sm:h-28 lg:h-32 border border-[#1e293b] p-1 sm:p-2 lg:p-3 cursor-pointer transition-all flex flex-col relative group ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'} ${isToday ? 'ring-1 ring-sky-500/50' : ''}`}>
           <div className="flex justify-between items-start font-sans">
-            <span className={`text-lg sm:text-2xl font-bold ${solarColor}`}>
-              {d}
-            </span>
-            <span className={`text-[11px] sm:text-sm font-medium ${lunar.day === 1 || lunar.day === 15 ? 'text-blue-400 font-bold' : 'text-slate-500'}`}>
-              {lunar.day === 1 ? `${lunar.day}/${lunar.month}` : lunar.day}
-            </span>
+            <span className={`text-lg sm:text-2xl font-bold ${solarColor}`}>{d}</span>
+            <span className={`text-[11px] sm:text-sm font-medium ${lunar.day === 1 || lunar.day === 15 ? 'text-blue-400 font-bold' : 'text-slate-500'}`}>{lunar.day === 1 ? `${lunar.day}/${lunar.month}` : lunar.day}</span>
           </div>
-          
           <div className="mt-auto overflow-hidden font-sans">
-            {displayHoliday && <div className={`text-[9px] sm:text-xs ${eventTextColor} leading-tight truncate font-semibold`}>{displayHoliday.name}</div>}
-            {dayEvents.length > 0 && (
-              <div className="flex gap-1 mt-1 items-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-sky-400"></div>
-                <span className="text-[9px] sm:text-xs text-sky-400 truncate hidden sm:block">{dayEvents.length} sự kiện</span>
-              </div>
-            )}
+            {solarHoliday && <div className={`text-[9px] sm:text-xs ${solarHoliday.isDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold`}>{solarHoliday.name}</div>}
+            {lunarHoliday && <div className={`text-[9px] sm:text-xs ${lunarHoliday.isDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold mt-0.5`}>{lunarHoliday.name}</div>}
+            {dayEvents.length > 0 && <div className="flex gap-1 mt-1 items-center"><div className="w-1.5 h-1.5 rounded-full bg-sky-400"></div><span className="text-[9px] sm:text-xs text-sky-400 truncate hidden sm:block">{dayEvents.length} sự kiện</span></div>}
           </div>
         </div>
       );
     }
 
-    const totalCells = firstDay + daysInMonth;
-    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    const totalCells = firstDay + daysInMonth; const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (let i = 0; i < remainingCells; i++) {
-      const d = i + 1;
-      const nextDate = new Date(year, month + 1, d);
-      const lunar = getLunarDate(nextDate);
-      grid.push(
-        <div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
-           <div className="flex justify-between items-start font-sans">
-            <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
-            <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
-          </div>
-        </div>
-      );
+      const d = i + 1; const nextDate = new Date(year, month + 1, d); const lunar = getLunarDate(nextDate);
+      grid.push(<div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]"><div className="flex justify-between items-start font-sans"><span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span><span className="text-xs font-medium text-slate-600">{lunar.day}</span></div></div>);
     }
-    
     return grid;
   };
 
@@ -379,15 +297,11 @@ export default function Calendar() {
   const selLunarHoliday = LUNAR_HOLIDAYS[selLunarKey];
 
   let topSolarColor = 'text-white';
-  if (selectedDate.getDay() === 0 || selSolarHoliday?.isDayOff || selLunarHoliday?.isDayOff) {
-    topSolarColor = 'text-red-500';
-  } else if (selSolarHoliday || selLunarHoliday) {
-    topSolarColor = 'text-amber-500';
-  }
+  if (selectedDate.getDay() === 0 || selSolarHoliday?.isDayOff || selLunarHoliday?.isDayOff) { topSolarColor = 'text-red-500'; } 
+  else if (selSolarHoliday || selLunarHoliday) { topSolarColor = 'text-amber-500'; }
 
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
   const selEvents = events.filter(e => e.dateStr === selDateStr);
-
   const evaluation = getDayEvaluation(selectedDate);
 
   return (
@@ -405,7 +319,9 @@ export default function Calendar() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/50 p-6 sm:p-10 lg:p-14">
           <div className="flex flex-col items-center justify-center p-4">
-            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans">Dương Lịch</span>
+            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans flex items-center gap-2">
+               <Sun size={24} className="text-amber-400" /> Dương Lịch
+            </span>
             <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 font-sans ${topSolarColor}`}>
               {selectedDate.getDate()}
             </div>
@@ -422,7 +338,9 @@ export default function Calendar() {
           </div>
 
           <div className="flex flex-col items-center justify-center p-4">
-            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans">Âm Lịch</span>
+            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans flex items-center gap-2">
+               <Moon size={24} className="text-slate-200 fill-slate-300" /> Âm Lịch
+            </span>
             <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4 font-sans">{selLunar.day}</div>
             <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} năm {getCanChiYear(selectedDate.getFullYear())}</span>
             
@@ -465,11 +383,7 @@ export default function Calendar() {
                <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm lg:text-base uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}:</strong>
                <ul className="space-y-3">
                  {selEvents.map(ev => (
-                   <li 
-                      key={ev.id} 
-                      onClick={() => openModalForEdit(ev)}
-                      className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group"
-                   >
+                   <li key={ev.id} onClick={() => openModalForEdit(ev)} className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-200 font-medium flex items-center gap-2 text-base">
                           <Clock size={16} className="text-sky-400" /> <span className="text-sky-400 font-bold">{ev.time}</span> {ev.title}
@@ -479,14 +393,8 @@ export default function Calendar() {
                           <button onClick={(e) => handleDeleteEvent(ev.id, e)} className="text-slate-400 hover:text-red-400 p-2"><Trash2 size={18}/></button>
                         </div>
                       </div>
-                      {ev.location && (
-                        <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7">
-                          <MapPin size={14} /> {ev.location}
-                        </div>
-                      )}
-                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">
-                        Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}
-                      </div>
+                      {ev.location && <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7"><MapPin size={14} /> {ev.location}</div>}
+                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}</div>
                    </li>
                  ))}
                </ul>
@@ -498,28 +406,16 @@ export default function Calendar() {
       <div className="bg-[#05070a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl font-sans">
         <div className="bg-[#0a0f18] px-6 py-5 flex flex-col sm:flex-row items-center justify-between border-b border-[#1e293b] gap-4">
           <div className="flex items-center gap-4">
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
-              <ChevronLeft size={20} />
-            </button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition"><ChevronLeft size={20} /></button>
             <span className="text-lg lg:text-xl font-bold text-sky-400 uppercase tracking-widest w-32 lg:w-40 text-center">Tháng {currentDate.getMonth() + 1}</span>
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
-              <ChevronRight size={20} />
-            </button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition"><ChevronRight size={20} /></button>
           </div>
           
           <div className="flex gap-2 w-full sm:w-auto">
-            <select 
-              value={currentDate.getMonth()} 
-              onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))}
-              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
-            >
+            <select value={currentDate.getMonth()} onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
-            <select 
-              value={currentDate.getFullYear()} 
-              onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))}
-              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
-            >
+            <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
               {Array.from({length: 101}).map((_, i) => <option key={i} value={1950 + i}>năm {1950 + i}</option>)}
             </select>
           </div>
@@ -527,13 +423,43 @@ export default function Calendar() {
 
         <div className="p-4 sm:p-6 lg:p-8 bg-[#05070a]">
           <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
-            <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div>
-            <div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
+            <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
           </div>
           <div className="grid grid-cols-7 gap-px bg-[#1e293b] border border-[#1e293b] rounded-lg overflow-hidden">
             {generateMonthGrid()}
           </div>
         </div>
+      </div>
+
+      {/* --- CÔNG CỤ CHUYỂN ĐỔI ÂM DƯƠNG --- */}
+      <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl mt-8">
+         <h3 className="text-lg font-bold text-brand flex items-center gap-2 mb-6"><ArrowRightLeft size={20} /> Cỗ máy thời gian (Đổi lịch Âm - Dương)</h3>
+         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-3">
+              <select value={convType} onChange={e => {setConvType(e.target.value as 'S2L' | 'L2S'); setCResult(''); setCResultDate(null);}} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm font-semibold focus:outline-none focus:border-brand h-full">
+                 <option value="S2L">Dương ➔ Âm</option>
+                 <option value="L2S">Âm ➔ Dương</option>
+              </select>
+            </div>
+            <div className="md:col-span-6 flex gap-2">
+               <input type="number" placeholder="Ngày" value={cDay} onChange={e=>setCDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
+               <input type="number" placeholder="Tháng" value={cMonth} onChange={e=>setCMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
+               <input type="number" placeholder="Năm" value={cYear} onChange={e=>setCYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
+            </div>
+            <div className="md:col-span-3">
+               <button onClick={doConvert} className="w-full h-full bg-brand text-bg-dark font-bold rounded-lg hover:bg-brand/90 transition shadow-lg">XEM KẾT QUẢ</button>
+            </div>
+         </div>
+         {cResult && (
+            <div className="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-between">
+               <span className="text-emerald-400 font-bold text-lg">{cResult}</span>
+               {cResultDate && (
+                 <button onClick={goToDate} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold transition">
+                   <CalendarIcon size={16}/> Xem Lịch ngày
+                 </button>
+               )}
+            </div>
+         )}
       </div>
 
       {showEventModal && (
@@ -565,7 +491,7 @@ export default function Calendar() {
                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Báo trước</label>
                   <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors">
                     <option value={0}>Đúng giờ</option>
-                    <option value={15}>15 phút</option>
+                    <option value={15}>30 phút</option>
                     <option value={60}>1 tiếng</option>
                     <option value={1440}>1 ngày (24h)</option>
                   </select>
