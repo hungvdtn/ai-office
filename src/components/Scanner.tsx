@@ -240,7 +240,7 @@ export default function Scanner() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 h-[calc(100vh-120px)] flex flex-col relative">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 h-[calc(100vh-120px)] flex flex-col relative w-full">
       
       {!isScanning && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0 z-10">

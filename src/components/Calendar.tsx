@@ -222,10 +222,10 @@ export default function Calendar() {
       const prevDate = new Date(year, month - 1, d);
       const lunar = getLunarDate(prevDate);
       grid.push(
-        <div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-24 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
+        <div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
            <div className="flex justify-between items-start">
-            <span className="text-lg sm:text-xl font-bold text-slate-400">{d}</span>
-            <span className="text-xs font-medium text-slate-500">{lunar.day}</span>
+            <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
+            <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
           </div>
         </div>
       );
@@ -247,7 +247,6 @@ export default function Calendar() {
       
       const isDayOff = holidayInfo?.isDayOff;
       
-      // Thuật toán màu sắc theo yêu cầu: Đỏ (Chủ nhật/Nghỉ) - Vàng sậm (Lễ thường) - Trắng (Ngày thường)
       let solarColor = 'text-white';
       if (isSunday || isDayOff) {
         solarColor = 'text-red-500';
@@ -261,13 +260,13 @@ export default function Calendar() {
         <div 
           key={`cur-${d}`} 
           onClick={() => setSelectedDate(dateObj)}
-          className={`h-20 sm:h-24 border border-[#1e293b] p-1 sm:p-2 cursor-pointer transition-all flex flex-col relative group
+          className={`h-20 sm:h-28 lg:h-32 border border-[#1e293b] p-1 sm:p-2 lg:p-3 cursor-pointer transition-all flex flex-col relative group
             ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'}
             ${isToday ? 'ring-1 ring-sky-500/50' : ''}
           `}
         >
           <div className="flex justify-between items-start">
-            <span className={`text-lg sm:text-xl font-bold ${solarColor}`}>
+            <span className={`text-lg sm:text-2xl font-bold ${solarColor}`}>
               {d}
             </span>
             <span className={`text-[11px] sm:text-sm font-medium ${lunar.day === 1 || lunar.day === 15 ? 'text-blue-400 font-bold' : 'text-slate-500'}`}>
@@ -276,11 +275,11 @@ export default function Calendar() {
           </div>
           
           <div className="mt-auto overflow-hidden">
-            {holidayInfo && <div className={`text-[9px] sm:text-[10px] ${eventTextColor} leading-tight truncate font-semibold`}>{holidayInfo.name}</div>}
+            {holidayInfo && <div className={`text-[9px] sm:text-xs ${eventTextColor} leading-tight truncate font-semibold`}>{holidayInfo.name}</div>}
             {dayEvents.length > 0 && (
               <div className="flex gap-1 mt-1 items-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-sky-400"></div>
-                <span className="text-[9px] sm:text-[10px] text-sky-400 truncate hidden sm:block">{dayEvents.length} sự kiện</span>
+                <span className="text-[9px] sm:text-xs text-sky-400 truncate hidden sm:block">{dayEvents.length} sự kiện</span>
               </div>
             )}
           </div>
@@ -295,10 +294,10 @@ export default function Calendar() {
       const nextDate = new Date(year, month + 1, d);
       const lunar = getLunarDate(nextDate);
       grid.push(
-        <div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-24 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
+        <div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
            <div className="flex justify-between items-start">
-            <span className="text-lg sm:text-xl font-bold text-slate-400">{d}</span>
-            <span className="text-xs font-medium text-slate-500">{lunar.day}</span>
+            <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
+            <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
           </div>
         </div>
       );
@@ -314,7 +313,6 @@ export default function Calendar() {
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
   const selEvents = events.filter(e => e.dateStr === selDateStr);
 
-  // Đồng bộ màu của số lớn góc trên cùng bên trái
   let topSolarColor = 'text-white';
   if (selectedDate.getDay() === 0 || selHolidayInfo?.isDayOff) {
     topSolarColor = 'text-red-500';
@@ -323,7 +321,7 @@ export default function Calendar() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl mx-auto pb-10">
+    <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans">
       
       <div className="bg-[#05070a] border border-sky-900/50 rounded-2xl overflow-hidden shadow-2xl">
         <div className="bg-sky-700 px-6 py-4 flex justify-between items-center">
@@ -335,67 +333,67 @@ export default function Calendar() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800/50 p-6 sm:p-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/50 p-6 sm:p-10 lg:p-14">
           <div className="flex flex-col items-center justify-center p-4">
             <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Dương Lịch</span>
-            <div className={`text-8xl sm:text-9xl font-black mb-4 ${topSolarColor}`}>
+            <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 ${topSolarColor}`}>
               {selectedDate.getDate()}
             </div>
-            <span className="text-lg text-slate-300 font-semibold">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} Năm {selectedDate.getFullYear()}</span>
-            <span className="text-sm text-slate-500 mt-2 tracking-widest uppercase">Thứ {['Chủ nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'][selectedDate.getDay()]}</span>
+            <span className="text-lg lg:text-xl text-slate-300 font-semibold">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} Năm {selectedDate.getFullYear()}</span>
+            <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium">Thứ {['Chủ nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'][selectedDate.getDay()]}</span>
           </div>
 
           <div className="flex flex-col items-center justify-center p-4">
             <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Âm Lịch</span>
-            <div className="text-8xl sm:text-9xl font-black text-blue-500 mb-4">{selLunar.day}</div>
-            <span className="text-lg text-slate-300 font-semibold">Tháng {selLunar.month} Năm {getCanChiYear(selectedDate.getFullYear())}</span>
+            <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4">{selLunar.day}</div>
+            <span className="text-lg lg:text-xl text-slate-300 font-semibold">Tháng {selLunar.month} Năm {getCanChiYear(selectedDate.getFullYear())}</span>
             {selHolidayInfo ? (
-              <span className={`text-sm font-bold mt-2 px-4 py-1.5 rounded-full border ${selHolidayInfo.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+              <span className={`text-sm lg:text-base font-bold mt-2 px-5 py-2 rounded-full border ${selHolidayInfo.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                 {selHolidayInfo.name}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 mt-2 tracking-widest uppercase">Bình thường</span>
+              <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium">Bình thường</span>
             )}
           </div>
         </div>
 
-        <div className="bg-slate-900/40 p-6 border-t border-[#1e293b] text-sm text-slate-300">
+        <div className="bg-slate-900/40 p-6 lg:p-8 border-t border-[#1e293b] text-sm lg:text-base text-slate-300">
            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-1">
                 <p><strong className="text-sky-400 font-semibold">Năm Can Chi:</strong> {getCanChiYear(selectedDate.getFullYear())}</p>
                 <p><strong className="text-sky-400 font-semibold">Giờ Hoàng Đạo:</strong> Tý (23-1h), Dần (3-5h), Mão (5-7h), Ngọ (11-13h), Mùi (13-15h), Dậu (17-19h)</p>
               </div>
               
-              <button onClick={openModalForAdd} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm font-bold transition shadow-lg shadow-sky-900/50">
+              <button onClick={openModalForAdd} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm lg:text-base font-bold transition shadow-lg shadow-sky-900/50">
                 <Plus size={18} /> Thêm sự kiện
               </button>
            </div>
 
            {selEvents.length > 0 && (
              <div className="mt-6 pt-4 border-t border-[#1e293b]">
-               <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}:</strong>
-               <ul className="space-y-2">
+               <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm lg:text-base uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}:</strong>
+               <ul className="space-y-3">
                  {selEvents.map(ev => (
                    <li 
                       key={ev.id} 
                       onClick={() => openModalForEdit(ev)}
-                      className="flex flex-col bg-black/60 px-4 py-3 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group"
+                      className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group"
                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-200 font-medium flex items-center gap-2">
-                          <Clock size={14} className="text-sky-400" /> <span className="text-sky-400 font-bold">{ev.time}</span> {ev.title}
+                        <span className="text-slate-200 font-medium flex items-center gap-2 text-base">
+                          <Clock size={16} className="text-sky-400" /> <span className="text-sky-400 font-bold">{ev.time}</span> {ev.title}
                         </span>
-                        <div className="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                          <button className="text-slate-400 hover:text-sky-400 p-1"><Edit3 size={16}/></button>
-                          <button onClick={(e) => handleDeleteEvent(ev.id, e)} className="text-slate-400 hover:text-red-400 p-1"><Trash2 size={16}/></button>
+                        <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                          <button className="text-slate-400 hover:text-sky-400 p-2"><Edit3 size={18}/></button>
+                          <button onClick={(e) => handleDeleteEvent(ev.id, e)} className="text-slate-400 hover:text-red-400 p-2"><Trash2 size={18}/></button>
                         </div>
                       </div>
                       {ev.location && (
-                        <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-400 ml-6">
-                          <MapPin size={12} /> {ev.location}
+                        <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7">
+                          <MapPin size={14} /> {ev.location}
                         </div>
                       )}
-                      <div className="text-[10px] text-slate-500 ml-6 mt-1 uppercase tracking-wider">
+                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">
                         Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}
                       </div>
                    </li>
@@ -407,12 +405,12 @@ export default function Calendar() {
       </div>
 
       <div className="bg-[#05070a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl">
-        <div className="bg-[#0a0f18] px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-b border-[#1e293b] gap-4">
+        <div className="bg-[#0a0f18] px-6 py-5 flex flex-col sm:flex-row items-center justify-between border-b border-[#1e293b] gap-4">
           <div className="flex items-center gap-4">
             <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
               <ChevronLeft size={20} />
             </button>
-            <span className="text-lg font-bold text-sky-400 uppercase tracking-widest w-32 text-center">Tháng {currentDate.getMonth() + 1}</span>
+            <span className="text-lg lg:text-xl font-bold text-sky-400 uppercase tracking-widest w-32 lg:w-40 text-center">Tháng {currentDate.getMonth() + 1}</span>
             <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
               <ChevronRight size={20} />
             </button>
@@ -422,22 +420,22 @@ export default function Calendar() {
             <select 
               value={currentDate.getMonth()} 
               onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))}
-              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:border-sky-500"
+              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
             >
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
             <select 
               value={currentDate.getFullYear()} 
               onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))}
-              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:border-sky-500"
+              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
             >
               {Array.from({length: 101}).map((_, i) => <option key={i} value={1950 + i}>Năm {1950 + i}</option>)}
             </select>
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 bg-[#05070a]">
-          <div className="grid grid-cols-7 gap-px mb-2 text-center text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-3 rounded-lg border border-[#1e293b]">
+        <div className="p-4 sm:p-6 lg:p-8 bg-[#05070a]">
+          <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
             <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div>
             <div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">CN</div>
           </div>
@@ -449,32 +447,32 @@ export default function Calendar() {
 
       {showEventModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 w-full max-w-md lg:max-w-lg shadow-2xl font-sans">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-sky-400 flex items-center gap-2">
-                <Bell size={18} /> {editingId ? 'Sửa Lịch trình' : 'Ghi chú công việc'}
+              <h3 className="text-lg lg:text-xl font-bold text-sky-400 flex items-center gap-2">
+                <Bell size={20} /> {editingId ? 'Sửa Lịch trình' : 'Ghi chú công việc'}
               </h3>
-              <button onClick={() => setShowEventModal(false)} className="text-slate-500 hover:text-slate-300 bg-slate-800 p-1.5 rounded-md"><X size={18}/></button>
+              <button onClick={() => setShowEventModal(false)} className="text-slate-500 hover:text-slate-300 bg-slate-800 p-2 rounded-md"><X size={20}/></button>
             </div>
             
-            <p className="text-sm font-semibold text-slate-300 mb-4 bg-slate-800/50 p-3 rounded-lg border border-[#1e293b]">
+            <p className="text-sm lg:text-base font-semibold text-slate-300 mb-6 bg-slate-800/50 p-3 lg:p-4 rounded-lg border border-[#1e293b]">
               Ngày: {selectedDate.toLocaleDateString('vi-VN')}
             </p>
             
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest block">Nội dung <span className="text-red-400">*</span></label>
-                <input type="text" value={newEventTitle} onChange={e => setNewEventTitle(e.target.value)} placeholder="VD: Báo cáo công tác tuần..." className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
+                <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Nội dung <span className="text-red-400">*</span></label>
+                <input type="text" value={newEventTitle} onChange={e => setNewEventTitle(e.target.value)} placeholder="VD: Báo cáo công tác tuần..." className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors" />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest block">Thời gian</label>
-                  <input type="time" value={newEventTime} onChange={e => setNewEventTime(e.target.value)} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
+                  <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Thời gian</label>
+                  <input type="time" value={newEventTime} onChange={e => setNewEventTime(e.target.value)} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors" />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest block">Báo trước</label>
-                  <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-colors">
+                  <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Báo trước</label>
+                  <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors">
                     <option value={0}>Đúng giờ</option>
                     <option value={15}>15 phút</option>
                     <option value={60}>1 tiếng</option>
@@ -484,13 +482,13 @@ export default function Calendar() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest block flex items-center gap-1">
-                  <MapPin size={12}/> Địa điểm (Không bắt buộc)
+                <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block flex items-center gap-1">
+                  <MapPin size={14}/> Địa điểm (Không bắt buộc)
                 </label>
-                <input type="text" value={newEventLocation} onChange={e => setNewEventLocation(e.target.value)} placeholder="VD: Phòng họp số 1..." className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm focus:outline-none focus:border-sky-500 transition-colors" />
+                <input type="text" value={newEventLocation} onChange={e => setNewEventLocation(e.target.value)} placeholder="VD: Phòng họp số 1..." className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors" />
               </div>
 
-              <button onClick={handleSaveEvent} className="w-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold py-3.5 rounded-lg mt-6 transition shadow-lg shadow-sky-900/50">
+              <button onClick={handleSaveEvent} className="w-full bg-sky-600 hover:bg-sky-500 text-white text-sm lg:text-base font-bold py-4 rounded-lg mt-8 transition shadow-lg shadow-sky-900/50">
                 {editingId ? 'CẬP NHẬT SỰ KIỆN' : 'LƯU SỰ KIỆN'}
               </button>
             </div>
