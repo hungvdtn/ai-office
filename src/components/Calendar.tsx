@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf } from 'lucide-react';
 
 const CAN = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'];
 const CHI = ['Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi'];
 
+// Tính Can Chi Năm
 const getCanChiYear = (year: number) => {
   return `${CAN[year % 10]} ${CHI[year % 12]}`;
 };
 
+// Tính Can Chi Ngày (Dựa trên chu kỳ Julian Date thu gọn)
+const getCanChiDay = (date: Date) => {
+  const anchor = Date.UTC(2024, 0, 1); // 1/1/2024 là Giáp Tý (0,0)
+  const target = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.floor((target - anchor) / 86400000);
+  let canIdx = (diffDays % 10 + 10) % 10;
+  let chiIdx = (diffDays % 12 + 12) % 12;
+  const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+  const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+  return `${CAN_CHU[canIdx]} ${CHI_CHU[chiIdx]}`;
+};
+
+// Tính Can Chi Tháng Âm lịch (Dựa trên Can của Năm)
+const getCanChiMonth = (lMonth: number, year: number) => {
+  const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+  const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+  const yearCanIndexForMonth = (year % 10);
+  const stdYearCan = (yearCanIndexForMonth + 6) % 10; 
+  const month1Can = ((stdYearCan % 5) * 2 + 2) % 10;
+  const targetMonthCan = (month1Can + lMonth - 1) % 10;
+  const targetMonthChi = (2 + lMonth - 1) % 12; // Tháng 1 luôn là Dần (index 2)
+  return `${CAN_CHU[targetMonthCan]} ${CHI_CHU[targetMonthChi]}`;
+};
+
+// Khắc phục lỗi NaN Lịch Âm
 const getLunarDate = (date: Date) => {
   try {
     const lunarStr = new Intl.DateTimeFormat('vi-VN-u-ca-chinese', {
@@ -23,6 +49,29 @@ const getLunarDate = (date: Date) => {
     return { day: date.getDate(), month: date.getMonth() + 1 };
   }
 };
+
+// Tạo sao đánh giá ngẫu nhiên nhưng cố định theo ngày
+const getDayRating = (date: Date) => {
+  const num = date.getFullYear() + date.getMonth() * 10 + date.getDate();
+  const score = 3.0 + (num % 21) / 10; 
+  return score.toFixed(1);
+};
+
+const renderStars = (scoreStr: string) => {
+  const score = parseFloat(scoreStr);
+  const fullStars = Math.floor(score);
+  const hasHalf = score - fullStars >= 0.5;
+  
+  return (
+      <div className="flex items-center gap-0.5 ml-2">
+          {[1, 2, 3, 4, 5].map(i => {
+              if (i <= fullStars) return <Star key={i} size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />;
+              if (i === fullStars + 1 && hasHalf) return <StarHalf key={i} size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />;
+              return <Star key={i} size={16} className="text-slate-600" />;
+          })}
+      </div>
+  )
+}
 
 interface HolidayInfo {
   name: string;
@@ -43,7 +92,7 @@ const HOLIDAYS: Record<string, HolidayInfo> = {
   '1/5': { name: 'Quốc tế Lao động', isDayOff: true },
   '7/5': { name: 'Chiến thắng Điện Biên Phủ', isDayOff: false },
   '13/5': { name: 'Ngày của Mẹ', isDayOff: false },
-  '19/5': { name: 'Sinh nhật Bác Hồ', isDayOff: false },
+  '19/5': { name: 'Sinh nhật Chủ tịch Hồ Chí Minh', isDayOff: false },
   '1/6': { name: 'Quốc tế Thiếu nhi', isDayOff: false },
   '17/6': { name: 'Ngày của Cha', isDayOff: false },
   '21/6': { name: 'Ngày Báo chí VN', isDayOff: false },
@@ -344,10 +393,12 @@ export default function Calendar() {
             <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 font-sans ${topSolarColor}`}>
               {selectedDate.getDate()}
             </div>
-            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} Năm {selectedDate.getFullYear()}</span>
-            <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium font-sans">Thứ {['Chủ nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'][selectedDate.getDay()]}</span>
+            {/* SỬA "Năm" THÀNH "năm" VÀ LOẠI BỎ CHỮ "Thứ" TRƯỚC CHỦ NHẬT */}
+            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} năm {selectedDate.getFullYear()}</span>
+            <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium font-sans">
+              {['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][selectedDate.getDay()]}
+            </span>
             
-            {/* VỊ TRÍ GHI CHÚ LỄ DƯƠNG LỊCH */}
             {selSolarHoliday && (
               <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${selSolarHoliday.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                 {selSolarHoliday.name}
@@ -358,9 +409,8 @@ export default function Calendar() {
           <div className="flex flex-col items-center justify-center p-4">
             <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans">Âm Lịch</span>
             <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4 font-sans">{selLunar.day}</div>
-            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} Năm {getCanChiYear(selectedDate.getFullYear())}</span>
+            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} năm {getCanChiYear(selectedDate.getFullYear())}</span>
             
-            {/* VỊ TRÍ GHI CHÚ LỄ ÂM LỊCH */}
             {selLunarHoliday ? (
               <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${selLunarHoliday.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                 {selLunarHoliday.name}
@@ -373,12 +423,22 @@ export default function Calendar() {
 
         <div className="bg-slate-900/40 p-6 lg:p-8 border-t border-[#1e293b] text-sm lg:text-base text-slate-300 font-sans">
            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="space-y-1">
-                <p><strong className="text-sky-400 font-semibold">Năm Can Chi:</strong> {getCanChiYear(selectedDate.getFullYear())}</p>
-                <p><strong className="text-sky-400 font-semibold">Giờ Hoàng Đạo:</strong> Tý (23-1h), Dần (3-5h), Mão (5-7h), Ngọ (11-13h), Mùi (13-15h), Dậu (17-19h)</p>
+              <div className="space-y-2">
+                {/* BỔ SUNG ĐẦY ĐỦ THÔNG TIN NGÀY THÁNG ÂM VÀ ĐÁNH GIÁ CHUNG */}
+                <p className="text-base text-slate-200">
+                  Ngày: <strong className="text-sky-400">{getCanChiDay(selectedDate)}</strong>, 
+                  tháng: <strong className="text-sky-400">{getCanChiMonth(selLunar.month, selectedDate.getFullYear())}</strong>, 
+                  năm: <strong className="text-sky-400">{getCanChiYear(selectedDate.getFullYear())}</strong>
+                </p>
+                <div className="flex items-center gap-2 mt-2 mb-2">
+                  <span className="text-slate-300 font-semibold">Đánh giá chung:</span>
+                  <strong className="text-amber-400 font-black">[{getDayRating(selectedDate)}]</strong>
+                  {renderStars(getDayRating(selectedDate))}
+                </div>
+                <p><span className="text-slate-400 font-semibold">Giờ Hoàng Đạo:</span> Tý (23-1h), Dần (3-5h), Mão (5-7h), Ngọ (11-13h), Mùi (13-15h), Dậu (17-19h)</p>
               </div>
               
-              <button onClick={openModalForAdd} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm lg:text-base font-bold transition shadow-lg shadow-sky-900/50">
+              <button onClick={openModalForAdd} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm lg:text-base font-bold transition shadow-lg shadow-sky-900/50 flex-shrink-0">
                 <Plus size={18} /> Thêm sự kiện
               </button>
            </div>
@@ -443,7 +503,7 @@ export default function Calendar() {
               onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))}
               className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
             >
-              {Array.from({length: 101}).map((_, i) => <option key={i} value={1950 + i}>Năm {1950 + i}</option>)}
+              {Array.from({length: 101}).map((_, i) => <option key={i} value={1950 + i}>năm {1950 + i}</option>)}
             </select>
           </div>
         </div>
@@ -451,7 +511,7 @@ export default function Calendar() {
         <div className="p-4 sm:p-6 lg:p-8 bg-[#05070a]">
           <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
             <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div>
-            <div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">CN</div>
+            <div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
           </div>
           <div className="grid grid-cols-7 gap-px bg-[#1e293b] border border-[#1e293b] rounded-lg overflow-hidden">
             {generateMonthGrid()}
