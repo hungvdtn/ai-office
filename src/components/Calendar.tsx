@@ -43,7 +43,7 @@ const HOLIDAYS: Record<string, HolidayInfo> = {
   '1/5': { name: 'Quốc tế Lao động', isDayOff: true },
   '7/5': { name: 'Chiến thắng Điện Biên Phủ', isDayOff: false },
   '13/5': { name: 'Ngày của Mẹ', isDayOff: false },
-  '19/5': { name: 'Sinh nhật Chủ tịch Hồ Chí Minh', isDayOff: false },
+  '19/5': { name: 'Sinh nhật Bác Hồ', isDayOff: false },
   '1/6': { name: 'Quốc tế Thiếu nhi', isDayOff: false },
   '17/6': { name: 'Ngày của Cha', isDayOff: false },
   '21/6': { name: 'Ngày Báo chí VN', isDayOff: false },
@@ -223,7 +223,7 @@ export default function Calendar() {
       const lunar = getLunarDate(prevDate);
       grid.push(
         <div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
-           <div className="flex justify-between items-start">
+           <div className="flex justify-between items-start font-sans">
             <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
             <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
           </div>
@@ -243,14 +243,16 @@ export default function Calendar() {
       
       const solarKey = `${d}/${month+1}`;
       const lunarKey = `${lunar.day}/${lunar.month}`;
-      const holidayInfo = HOLIDAYS[solarKey] || LUNAR_HOLIDAYS[lunarKey];
+      const solarHoliday = HOLIDAYS[solarKey];
+      const lunarHoliday = LUNAR_HOLIDAYS[lunarKey];
+      const displayHoliday = solarHoliday || lunarHoliday;
       
-      const isDayOff = holidayInfo?.isDayOff;
+      const isDayOff = solarHoliday?.isDayOff || lunarHoliday?.isDayOff;
       
       let solarColor = 'text-white';
       if (isSunday || isDayOff) {
         solarColor = 'text-red-500';
-      } else if (holidayInfo) {
+      } else if (displayHoliday) {
         solarColor = 'text-amber-500';
       }
 
@@ -265,7 +267,7 @@ export default function Calendar() {
             ${isToday ? 'ring-1 ring-sky-500/50' : ''}
           `}
         >
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start font-sans">
             <span className={`text-lg sm:text-2xl font-bold ${solarColor}`}>
               {d}
             </span>
@@ -274,8 +276,8 @@ export default function Calendar() {
             </span>
           </div>
           
-          <div className="mt-auto overflow-hidden">
-            {holidayInfo && <div className={`text-[9px] sm:text-xs ${eventTextColor} leading-tight truncate font-semibold`}>{holidayInfo.name}</div>}
+          <div className="mt-auto overflow-hidden font-sans">
+            {displayHoliday && <div className={`text-[9px] sm:text-xs ${eventTextColor} leading-tight truncate font-semibold`}>{displayHoliday.name}</div>}
             {dayEvents.length > 0 && (
               <div className="flex gap-1 mt-1 items-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-sky-400"></div>
@@ -295,7 +297,7 @@ export default function Calendar() {
       const lunar = getLunarDate(nextDate);
       grid.push(
         <div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]">
-           <div className="flex justify-between items-start">
+           <div className="flex justify-between items-start font-sans">
             <span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span>
             <span className="text-xs font-medium text-slate-600">{lunar.day}</span>
           </div>
@@ -309,55 +311,67 @@ export default function Calendar() {
   const selLunar = getLunarDate(selectedDate);
   const selSolarKey = `${selectedDate.getDate()}/${selectedDate.getMonth()+1}`;
   const selLunarKey = `${selLunar.day}/${selLunar.month}`;
-  const selHolidayInfo = HOLIDAYS[selSolarKey] || LUNAR_HOLIDAYS[selLunarKey];
-  const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
-  const selEvents = events.filter(e => e.dateStr === selDateStr);
+  
+  const selSolarHoliday = HOLIDAYS[selSolarKey];
+  const selLunarHoliday = LUNAR_HOLIDAYS[selLunarKey];
 
   let topSolarColor = 'text-white';
-  if (selectedDate.getDay() === 0 || selHolidayInfo?.isDayOff) {
+  if (selectedDate.getDay() === 0 || selSolarHoliday?.isDayOff || selLunarHoliday?.isDayOff) {
     topSolarColor = 'text-red-500';
-  } else if (selHolidayInfo) {
+  } else if (selSolarHoliday || selLunarHoliday) {
     topSolarColor = 'text-amber-500';
   }
+
+  const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
+  const selEvents = events.filter(e => e.dateStr === selDateStr);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans">
       
       <div className="bg-[#05070a] border border-sky-900/50 rounded-2xl overflow-hidden shadow-2xl">
         <div className="bg-sky-700 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-white font-bold text-lg uppercase tracking-widest flex items-center gap-2">
+          <h2 className="text-white font-bold text-lg uppercase tracking-widest flex items-center gap-2 font-sans">
             <CalendarIcon size={20} /> Lịch Vạn Niên
           </h2>
-          <button onClick={() => { setSelectedDate(new Date()); setCurrentDate(new Date()); }} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-xs text-white font-semibold transition flex items-center gap-2">
+          <button onClick={() => { setSelectedDate(new Date()); setCurrentDate(new Date()); }} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded text-xs text-white font-semibold transition flex items-center gap-2 font-sans">
             <CalendarIcon size={14}/> Hôm nay
           </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/50 p-6 sm:p-10 lg:p-14">
           <div className="flex flex-col items-center justify-center p-4">
-            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Dương Lịch</span>
-            <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 ${topSolarColor}`}>
+            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans">Dương Lịch</span>
+            <div className={`text-8xl sm:text-9xl lg:text-[10rem] font-black mb-4 font-sans ${topSolarColor}`}>
               {selectedDate.getDate()}
             </div>
-            <span className="text-lg lg:text-xl text-slate-300 font-semibold">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} Năm {selectedDate.getFullYear()}</span>
-            <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium">Thứ {['Chủ nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'][selectedDate.getDay()]}</span>
+            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {(selectedDate.getMonth() + 1).toString().padStart(2, '0')} Năm {selectedDate.getFullYear()}</span>
+            <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium font-sans">Thứ {['Chủ nhật', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'][selectedDate.getDay()]}</span>
+            
+            {/* VỊ TRÍ GHI CHÚ LỄ DƯƠNG LỊCH */}
+            {selSolarHoliday && (
+              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${selSolarHoliday.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                {selSolarHoliday.name}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col items-center justify-center p-4">
-            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2">Âm Lịch</span>
-            <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4">{selLunar.day}</div>
-            <span className="text-lg lg:text-xl text-slate-300 font-semibold">Tháng {selLunar.month} Năm {getCanChiYear(selectedDate.getFullYear())}</span>
-            {selHolidayInfo ? (
-              <span className={`text-sm lg:text-base font-bold mt-2 px-5 py-2 rounded-full border ${selHolidayInfo.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
-                {selHolidayInfo.name}
+            <span className="text-slate-400 font-bold tracking-widest uppercase mb-2 font-sans">Âm Lịch</span>
+            <div className="text-8xl sm:text-9xl lg:text-[10rem] font-black text-blue-500 mb-4 font-sans">{selLunar.day}</div>
+            <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} Năm {getCanChiYear(selectedDate.getFullYear())}</span>
+            
+            {/* VỊ TRÍ GHI CHÚ LỄ ÂM LỊCH */}
+            {selLunarHoliday ? (
+              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${selLunarHoliday.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                {selLunarHoliday.name}
               </span>
             ) : (
-              <span className="text-sm lg:text-base text-slate-500 mt-2 tracking-widest uppercase font-medium">Bình thường</span>
+              <span className="text-sm lg:text-base text-slate-500 mt-4 tracking-widest uppercase font-medium font-sans">Bình thường</span>
             )}
           </div>
         </div>
 
-        <div className="bg-slate-900/40 p-6 lg:p-8 border-t border-[#1e293b] text-sm lg:text-base text-slate-300">
+        <div className="bg-slate-900/40 p-6 lg:p-8 border-t border-[#1e293b] text-sm lg:text-base text-slate-300 font-sans">
            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-1">
                 <p><strong className="text-sky-400 font-semibold">Năm Can Chi:</strong> {getCanChiYear(selectedDate.getFullYear())}</p>
@@ -404,7 +418,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="bg-[#05070a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-[#05070a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl font-sans">
         <div className="bg-[#0a0f18] px-6 py-5 flex flex-col sm:flex-row items-center justify-between border-b border-[#1e293b] gap-4">
           <div className="flex items-center gap-4">
             <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
@@ -446,8 +460,8 @@ export default function Calendar() {
       </div>
 
       {showEventModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 w-full max-w-md lg:max-w-lg shadow-2xl font-sans">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-sans">
+          <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 w-full max-w-md lg:max-w-lg shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg lg:text-xl font-bold text-sky-400 flex items-center gap-2">
                 <Bell size={20} /> {editingId ? 'Sửa Lịch trình' : 'Ghi chú công việc'}
