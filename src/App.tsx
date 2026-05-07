@@ -11,12 +11,12 @@ import Calendar from './components/Calendar';
 
 type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner'; 
 
-// --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG (Theo file Word) ---
+// --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG ---
 const HelpContent = ({ module }: { module: string }) => {
   switch (module) {
     case 'calendar':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
            <h3 className="font-bold text-brand text-lg">1. Hướng dẫn sử dụng Lịch</h3>
            <p>Lịch Vạn niên AI được thiết kế theo Công nghệ lõi API Lịch quốc tế kết hợp với thuật toán Phong thủy (Feng Shui Engine), tự động tính Can Chi của Ngày/Tháng/Năm Âm lịch. Thuật toán này sẽ tính toán dựa trên các quy luật cổ học phương Đông và đưa ra đánh giá về ngày tốt xấu (tính từ 1.0 đến 5.0 sao), đồng thời xuất ra thông báo bằng chữ (Ví dụ: Ngày Hắc Đạo - Nguyệt Kỵ).</p>
            <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc thông thường.</p>
@@ -26,7 +26,7 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'pdf':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">2. Hướng dẫn sử dụng Xử lý PDF</h3>
           <p>Cung cấp bộ công cụ cắt, ghép, và sắp xếp lại trang PDF bằng thao tác kéo thả. Đặc biệt có tính năng chuyển PDF sang Word (.docx), tự động làm sạch ký hiệu thừa và định dạng chuẩn font Times New Roman dùng cho hành chính.</p>
           <h4 className="font-bold text-white">Công cụ này có 3 chức năng:</h4>
@@ -35,8 +35,8 @@ const HelpContent = ({ module }: { module: string }) => {
             <li>Bước 1: Bạn tải lên file PDF bất kỳ;</li>
             <li>Bước 2: Xuất hiện giao diện của từng trang PDF. Tại đây, bạn đưa chuột vào từng trang xuất hiện 3 nút công cụ: Nút màu vàng có chấm đen (di chuyển trang), Nút màu xanh (copy trang), Nút màu đỏ (xóa trang).</li>
             <li>Bước 3: Sau khi edit xong bạn có thể tách bằng nhiều cách:<br/>
-            - <strong>Cách 1:</strong> Chọn các trang bất kỳ. Nhấn nút "Xuất n trang chọn" -> Lưu file.<br/>
-            - <strong>Cách 2:</strong> Chọn khoảng cách chia tách -> Nhấn "Tải Zip" để tách hàng loạt.</li>
+            - <strong>Cách 1:</strong> Chọn các trang bất kỳ. Nhấn nút "Xuất n trang chọn" ➔ Lưu file.<br/>
+            - <strong>Cách 2:</strong> Chọn khoảng cách chia tách ➔ Nhấn "Tải Zip" để tách hàng loạt.</li>
           </ul>
           <p className="font-bold text-sky-400">2. Ghép file PDF</p>
           <ul className="list-disc pl-5 space-y-1">
@@ -53,7 +53,7 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'ocr':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">3. Hướng dẫn sử dụng Trích xuất OCR</h3>
           <p>Sử dụng Trí tuệ nhân tạo (AI) chạy nội bộ (Offline) để nhận diện và bóc tách văn bản từ hình ảnh JPG/PNG. Đảm bảo bảo mật tuyệt đối 100% tài liệu nhạy cảm do dữ liệu không bị gửi lên mạng.</p>
           <ul className="list-disc pl-5 space-y-1">
@@ -65,7 +65,7 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'scanner':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">4. Hướng dẫn Scan tài liệu</h3>
           <p>Chức năng này bạn nên sử dụng trên điện thoại. Mặc định sau khi scan sẽ xuất thành file PDF ở dạng bản màu hoặc đen trắng.</p>
           <ul className="list-disc pl-5 space-y-1">
