@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useRef } from 'react';
 import { 
   FileText, Scan, Languages, ChevronRight, HelpCircle, Menu, X, 
@@ -111,10 +116,18 @@ const DraggableHelp = ({ activeModule, onClose }: { activeModule: string, onClos
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
         className="p-3 bg-brand/20 cursor-move flex justify-between items-center border-b border-brand/30 touch-none"
       >
-         <h3 className="font-bold text-brand flex items-center gap-2">
-           <HelpCircle size={18}/> Trợ giúp: {activeModule.toUpperCase()}
+         <h3 className="font-bold text-brand flex items-center gap-2 pointer-events-none">
+           <HelpCircle size={18}/> Trợ giúp
          </h3>
-         <button onClick={onClose} className="p-1 hover:bg-rose-500 rounded text-slate-300 hover:text-white transition-colors"><X size={18}/></button>
+         
+         {/* FIX LỖI: Dùng onPointerDown chặn sự kiện lây lan sang kéo thả */}
+         <button 
+           onPointerDown={(e) => { e.stopPropagation(); onClose(); }}
+           onClick={(e) => { e.stopPropagation(); onClose(); }}
+           className="p-1.5 bg-rose-500/20 hover:bg-rose-500 rounded-lg text-rose-400 hover:text-white transition-colors cursor-pointer"
+         >
+           <X size={18}/>
+         </button>
       </div>
       <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
          <HelpContent module={activeModule} />
