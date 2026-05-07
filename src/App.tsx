@@ -9,14 +9,14 @@ import {
   Scan, 
   Languages, 
   ChevronRight,
-  Settings,
   HelpCircle,
   Menu,
   X,
   CalendarDays, 
   QrCode, 
   Image as ImageIcon, 
-  Search 
+  Search,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
@@ -30,6 +30,7 @@ export default function App() {
   const [activeModule, setActiveModule] = useState<Module>('calendar');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false); // State cho bảng Trợ giúp
 
   const modules = [
     { id: 'calendar', label: 'Lịch Vạn Niên', icon: CalendarDays },
@@ -56,6 +57,13 @@ export default function App() {
       icon: Search, 
       isExternal: true, 
       url: 'https://tracuu.hungvdtn.vn/' 
+    },
+    { 
+      id: 'gemini', 
+      label: 'Trợ lý Gemini', 
+      icon: Sparkles, 
+      isExternal: true, 
+      url: 'https://gemini.google.com/app' 
     },
   ];
 
@@ -141,11 +149,8 @@ export default function App() {
 
         <div className="p-4 border-t border-[#1e293b] space-y-4 flex-shrink-0">
           <div className="space-y-1">
-            <button className="sidebar-link w-full whitespace-nowrap">
-              <Settings size={18} className="flex-shrink-0" />
-              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium font-sans">Cài đặt</span>}
-            </button>
-            <button className="sidebar-link w-full whitespace-nowrap">
+            {/* NÚT TRỢ GIÚP - KÍCH HOẠT BẢNG HƯỚNG DẪN */}
+            <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap">
               <HelpCircle size={18} className="flex-shrink-0" />
               {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium font-sans">Trợ giúp</span>}
             </button>
@@ -170,16 +175,13 @@ export default function App() {
                 {modules.find(m => m.id === activeModule)?.label || 'Ứng dụng ngoài'}
               </span>
             </div>
-
-            <div className="flex sm:hidden items-center gap-2 text-xs text-brand truncate max-w-[150px] font-sans">
-              {modules.find(m => m.id === activeModule)?.label}
-            </div>
           </div>
           
           <div className="flex items-center gap-4 md:gap-8">
-            <div className="text-xl md:text-2xl font-black text-brand tracking-widest uppercase drop-shadow-[0_0_10px_rgba(var(--brand-color),0.5)] font-sans">
-              AIBTeM
-            </div>
+            {/* LOGO GÓC PHẢI - CLICK ĐỂ VỀ TRANG CHỦ */}
+            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className="flex items-center transition-transform hover:scale-105">
+              <img src="Logo-5.jpg" alt="AIBTeM Logo" className="h-8 md:h-10 w-auto object-contain rounded-full shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
+            </a>
           </div>
         </header>
 
@@ -205,6 +207,44 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {/* BẢNG TRỢ GIÚP (MODAL) */}
+      <AnimatePresence>
+        {showHelpModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-sans"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 md:p-8 w-full max-w-2xl shadow-2xl relative"
+            >
+              <button onClick={() => setShowHelpModal(false)} className="absolute top-4 right-4 p-2 text-slate-500 hover:text-white bg-slate-800/50 rounded-lg transition-colors"><X size={20}/></button>
+              
+              <h2 className="text-xl md:text-2xl font-bold text-brand mb-6 flex items-center gap-3">
+                <HelpCircle size={28} /> Hướng dẫn sử dụng
+              </h2>
+              
+              <div className="space-y-4 text-sm md:text-base text-slate-300">
+                <div className="bg-[#05070a] p-5 rounded-xl border border-[#1e293b]">
+                  <h3 className="text-white font-bold mb-2 flex items-center gap-2"><FileText size={18} className="text-blue-400"/> 1. Xử lý PDF</h3>
+                  <p className="leading-relaxed">Cung cấp bộ công cụ cắt, ghép, và sắp xếp lại trang PDF bằng thao tác kéo thả. Đặc biệt có tính năng chuyển PDF sang Word (.docx), tự động làm sạch ký hiệu thừa và định dạng chuẩn font Times New Roman dùng cho hành chính.</p>
+                </div>
+                
+                <div className="bg-[#05070a] p-5 rounded-xl border border-[#1e293b]">
+                  <h3 className="text-white font-bold mb-2 flex items-center gap-2"><Languages size={18} className="text-emerald-400"/> 2. Trích xuất OCR</h3>
+                  <p className="leading-relaxed">Sử dụng Trí tuệ nhân tạo (AI) chạy nội bộ (Offline) để nhận diện và bóc tách văn bản từ hình ảnh JPG/PNG. Đảm bảo bảo mật tuyệt đối 100% tài liệu nhạy cảm do dữ liệu không bị gửi lên mạng.</p>
+                </div>
+                
+                <div className="bg-[#05070a] p-5 rounded-xl border border-[#1e293b]">
+                  <h3 className="text-white font-bold mb-2 flex items-center gap-2"><Scan size={18} className="text-amber-400"/> 3. Scan Tài liệu</h3>
+                  <p className="leading-relaxed">Biến thiết bị thành máy quét chuyên nghiệp. Bạn chỉ cần đưa giấy vào khung vàng, hệ thống sẽ tự động cắt viền bàn, khử bóng đổ và tẩy nền trắng tinh y như bản photocopy.</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
