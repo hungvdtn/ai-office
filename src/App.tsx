@@ -180,7 +180,7 @@ export default function App() {
           <div className="flex items-center gap-4 md:gap-8">
             {/* LOGO GÓC PHẢI - CLICK ĐỂ VỀ TRANG CHỦ */}
             <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className="flex items-center transition-transform hover:scale-105">
-              <img src="Logo-5.jpg" alt="AIBTeM Logo" className="h-8 md:h-10 w-auto object-contain rounded-full shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
+              <img src="Logo_anh.PNG" alt="AIBTeM Logo" className="h-8 md:h-10 w-auto object-contain rounded-full shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
             </a>
           </div>
         </header>
