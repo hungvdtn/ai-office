@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
 
-// --- THUẬT TOÁN CAN CHI VÀ PHONG THỦY ---
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
 const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
 
@@ -87,69 +86,75 @@ const renderStars = (scoreStr: string) => {
   )
 }
 
-// --- DỮ LIỆU LỄ TẾT ĐÃ PHÂN VÙNG DƯƠNG/ÂM ---
-interface HolidayInfo { name: string; isDayOff: boolean; isSolar: boolean; }
+// --- DỮ LIỆU LỄ TẾT KÈM THEO NĂM LỊCH SỬ BẮT ĐẦU ---
+interface HolidayInfo { 
+  name: string; 
+  isDayOff: boolean; 
+  startYear: number;       // Năm bắt đầu có sự kiện
+  dayOffStartYear?: number; // Năm bắt đầu được tính là ngày nghỉ (nếu khác startYear)
+}
+
 const HOLIDAYS: Record<string, HolidayInfo> = {
-  '1/1': { name: 'Tết Dương lịch', isDayOff: true, isSolar: true },
-  '9/1': { name: 'Ngày truyền thống HSSV', isDayOff: false, isSolar: true },
-  '3/2': { name: 'Ngày thành lập Đảng', isDayOff: false, isSolar: true },
-  '14/2': { name: 'Lễ Tình nhân', isDayOff: false, isSolar: true },
-  '27/2': { name: 'Ngày thầy thuốc VN', isDayOff: false, isSolar: true },
-  '8/3': { name: 'Quốc tế Phụ nữ', isDayOff: false, isSolar: true },
-  '20/3': { name: 'Quốc tế Hạnh phúc', isDayOff: false, isSolar: true },
-  '26/3': { name: 'Thành lập Đoàn TNCS HCM', isDayOff: false, isSolar: true },
-  '1/4': { name: 'Cá tháng Tư', isDayOff: false, isSolar: true },
-  '30/4': { name: 'Giải phóng miền Nam', isDayOff: true, isSolar: true },
-  '1/5': { name: 'Quốc tế Lao động', isDayOff: true, isSolar: true },
-  '7/5': { name: 'Chiến thắng Điện Biên Phủ', isDayOff: false, isSolar: true },
-  '13/5': { name: 'Ngày của Mẹ', isDayOff: false, isSolar: true },
-  '19/5': { name: 'Sinh nhật Bác Hồ', isDayOff: false, isSolar: true },
-  '1/6': { name: 'Quốc tế Thiếu nhi', isDayOff: false, isSolar: true },
-  '17/6': { name: 'Ngày của Cha', isDayOff: false, isSolar: true },
-  '21/6': { name: 'Ngày Báo chí VN', isDayOff: false, isSolar: true },
-  '28/6': { name: 'Ngày Gia đình VN', isDayOff: false, isSolar: true },
-  '11/7': { name: 'Dân số Thế giới', isDayOff: false, isSolar: true },
-  '27/7': { name: 'Thương binh Liệt sĩ', isDayOff: false, isSolar: true },
-  '28/7': { name: 'Thành lập Công đoàn VN', isDayOff: false, isSolar: true },
-  '19/8': { name: 'Cách mạng Tháng Tám', isDayOff: false, isSolar: true },
-  '28/8': { name: 'Truyền thống Tổ chức Nhà nước', isDayOff: false, isSolar: true },
-  '2/9': { name: 'Quốc khánh', isDayOff: true, isSolar: true },
-  '10/9': { name: 'Thành lập MTTQ VN', isDayOff: false, isSolar: true },
-  '1/10': { name: 'Quốc tế Người cao tuổi', isDayOff: false, isSolar: true },
-  '4/10': { name: 'Kỹ năng nghề Việt Nam', isDayOff: false, isSolar: true },
-  '10/10': { name: 'Giải phóng Thủ đô', isDayOff: false, isSolar: true },
-  '13/10': { name: 'Doanh nhân Việt Nam', isDayOff: false, isSolar: true },
-  '20/10': { name: 'Phụ nữ Việt Nam', isDayOff: false, isSolar: true },
-  '31/10': { name: 'Halloween', isDayOff: false, isSolar: true },
-  '9/11': { name: 'Pháp luật Việt Nam', isDayOff: false, isSolar: true },
-  '19/11': { name: 'Quốc tế Nam giới', isDayOff: false, isSolar: true },
-  '20/11': { name: 'Nhà giáo Việt Nam', isDayOff: false, isSolar: true },
-  '23/11': { name: 'Thành lập Hội Chữ thập đỏ VN', isDayOff: false, isSolar: true },
-  '24/11': { name: 'Ngày Văn hóa Việt Nam', isDayOff: true, isSolar: true },
-  '1/12': { name: 'Thế giới phòng chống AIDS', isDayOff: false, isSolar: true },
-  '19/12': { name: 'Toàn quốc Kháng chiến', isDayOff: false, isSolar: true },
-  '24/12': { name: 'Lễ Giáng sinh', isDayOff: false, isSolar: true },
-  '22/12': { name: 'Thành lập QĐND VN', isDayOff: false, isSolar: true }
+  '1/1': { name: 'Tết Dương lịch', isDayOff: true, startYear: 1946 },
+  '9/1': { name: 'Ngày truyền thống HSSV', isDayOff: false, startYear: 1950 },
+  '3/2': { name: 'Ngày thành lập Đảng', isDayOff: false, startYear: 1930 },
+  '14/2': { name: 'Lễ Tình nhân', isDayOff: false, startYear: 0 },
+  '27/2': { name: 'Ngày thầy thuốc VN', isDayOff: false, startYear: 1985 },
+  '8/3': { name: 'Quốc tế Phụ nữ', isDayOff: false, startYear: 1910 },
+  '20/3': { name: 'Quốc tế Hạnh phúc', isDayOff: false, startYear: 2014 },
+  '26/3': { name: 'Thành lập Đoàn TNCS HCM', isDayOff: false, startYear: 1931 },
+  '1/4': { name: 'Cá tháng Tư', isDayOff: false, startYear: 0 },
+  '30/4': { name: 'Giải phóng miền Nam', isDayOff: true, startYear: 1975, dayOffStartYear: 1994 },
+  '1/5': { name: 'Quốc tế Lao động', isDayOff: true, startYear: 1946 },
+  '7/5': { name: 'Chiến thắng Điện Biên Phủ', isDayOff: false, startYear: 1954 },
+  '13/5': { name: 'Ngày của Mẹ', isDayOff: false, startYear: 0 },
+  '19/5': { name: 'Sinh nhật Bác Hồ', isDayOff: false, startYear: 1890 },
+  '1/6': { name: 'Quốc tế Thiếu nhi', isDayOff: false, startYear: 1949 },
+  '17/6': { name: 'Ngày của Cha', isDayOff: false, startYear: 0 },
+  '21/6': { name: 'Ngày Báo chí VN', isDayOff: false, startYear: 1985 },
+  '28/6': { name: 'Ngày Gia đình VN', isDayOff: false, startYear: 2001 },
+  '11/7': { name: 'Dân số Thế giới', isDayOff: false, startYear: 1989 },
+  '27/7': { name: 'Thương binh Liệt sĩ', isDayOff: false, startYear: 1947 },
+  '28/7': { name: 'Thành lập Công đoàn VN', isDayOff: false, startYear: 1929 },
+  '19/8': { name: 'Cách mạng Tháng Tám', isDayOff: false, startYear: 1945 },
+  '28/8': { name: 'Truyền thống Tổ chức Nhà nước', isDayOff: false, startYear: 1945 },
+  '2/9': { name: 'Quốc khánh', isDayOff: true, startYear: 1945 },
+  '10/9': { name: 'Thành lập MTTQ VN', isDayOff: false, startYear: 1955 },
+  '1/10': { name: 'Quốc tế Người cao tuổi', isDayOff: false, startYear: 1990 },
+  '4/10': { name: 'Kỹ năng nghề Việt Nam', isDayOff: false, startYear: 2020 },
+  '10/10': { name: 'Giải phóng Thủ đô', isDayOff: false, startYear: 1954 },
+  '13/10': { name: 'Doanh nhân Việt Nam', isDayOff: false, startYear: 2004 },
+  '20/10': { name: 'Phụ nữ Việt Nam', isDayOff: false, startYear: 1930 },
+  '31/10': { name: 'Halloween', isDayOff: false, startYear: 0 },
+  '9/11': { name: 'Pháp luật Việt Nam', isDayOff: false, startYear: 2012 },
+  '19/11': { name: 'Quốc tế Nam giới', isDayOff: false, startYear: 1999 },
+  '20/11': { name: 'Nhà giáo Việt Nam', isDayOff: false, startYear: 1982 },
+  '23/11': { name: 'Thành lập Hội Chữ thập đỏ VN', isDayOff: false, startYear: 1946 },
+  '24/11': { name: 'Ngày Văn hóa Việt Nam', isDayOff: true, startYear: 1946, dayOffStartYear: 2026 },
+  '1/12': { name: 'Thế giới phòng chống AIDS', isDayOff: false, startYear: 1988 },
+  '19/12': { name: 'Toàn quốc Kháng chiến', isDayOff: false, startYear: 1946 },
+  '24/12': { name: 'Lễ Giáng sinh', isDayOff: false, startYear: 0 },
+  '22/12': { name: 'Thành lập QĐND VN', isDayOff: false, startYear: 1944 }
 };
 
 const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
-  '1/1': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
-  '2/1': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
-  '3/1': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
-  '15/1': { name: 'Tết Nguyên Tiêu', isDayOff: false, isSolar: false },
-  '3/3': { name: 'Tết Hàn thực', isDayOff: false, isSolar: false },
-  '10/3': { name: 'Giỗ tổ Hùng Vương', isDayOff: true, isSolar: false },
-  '15/4': { name: 'Lễ Phật Đản', isDayOff: false, isSolar: false },
-  '5/5': { name: 'Tết Đoan ngọ', isDayOff: false, isSolar: false },
-  '7/7': { name: 'Lễ Thất tịch', isDayOff: false, isSolar: false },
-  '15/7': { name: 'Lễ Vu Lan', isDayOff: false, isSolar: false },
-  '15/8': { name: 'Tết Trung thu', isDayOff: false, isSolar: false },
-  '9/9': { name: 'Tết Trùng cửu', isDayOff: false, isSolar: false },
-  '10/10': { name: 'Tết Trùng thập', isDayOff: false, isSolar: false },
-  '15/10': { name: 'Tết Hạ Nguyên', isDayOff: false, isSolar: false },
-  '23/12': { name: 'Ông Táo về trời', isDayOff: false, isSolar: false },
-  '29/12': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false },
-  '30/12': { name: 'Tết Nguyên đán', isDayOff: true, isSolar: false }
+  '1/1': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 },
+  '2/1': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 },
+  '3/1': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 },
+  '15/1': { name: 'Tết Nguyên Tiêu', isDayOff: false, startYear: 0 },
+  '3/3': { name: 'Tết Hàn thực', isDayOff: false, startYear: 0 },
+  '10/3': { name: 'Giỗ tổ Hùng Vương', isDayOff: true, startYear: 0, dayOffStartYear: 2007 },
+  '15/4': { name: 'Lễ Phật Đản', isDayOff: false, startYear: 0 },
+  '5/5': { name: 'Tết Đoan ngọ', isDayOff: false, startYear: 0 },
+  '7/7': { name: 'Lễ Thất tịch', isDayOff: false, startYear: 0 },
+  '15/7': { name: 'Lễ Vu Lan', isDayOff: false, startYear: 0 },
+  '15/8': { name: 'Tết Trung thu', isDayOff: false, startYear: 0 },
+  '9/9': { name: 'Tết Trùng cửu', isDayOff: false, startYear: 0 },
+  '10/10': { name: 'Tết Trùng thập', isDayOff: false, startYear: 0 },
+  '15/10': { name: 'Tết Hạ Nguyên', isDayOff: false, startYear: 0 },
+  '23/12': { name: 'Ông Táo về trời', isDayOff: false, startYear: 0 },
+  '29/12': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 },
+  '30/12': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 }
 };
 
 interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; }
@@ -165,7 +170,6 @@ export default function Calendar() {
   const [newEventLocation, setNewEventLocation] = useState('');
   const [newReminderAdvance, setNewReminderAdvance] = useState<number>(0);
 
-  // --- TRẠNG THÁI BỘ CHUYỂN ĐỔI NGÀY ---
   const [convType, setConvType] = useState<'S2L' | 'L2S'>('S2L');
   const [cDay, setCDay] = useState('');
   const [cMonth, setCMonth] = useState('');
@@ -211,7 +215,6 @@ export default function Calendar() {
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => { let day = new Date(year, month, 1).getDay(); return day === 0 ? 6 : day - 1; };
 
-  // --- HÀM TÌM NGÀY THÔNG MINH ---
   const doConvert = () => {
     const d = parseInt(cDay), m = parseInt(cMonth), y = parseInt(cYear);
     if (!d || !m || !y) { setCResult("Vui lòng nhập đầy đủ Ngày, Tháng, Năm!"); return; }
@@ -231,6 +234,7 @@ export default function Calendar() {
         }
     }
   };
+  
   const goToDate = () => {
     if(cResultDate) {
         setSelectedDate(cResultDate); setCurrentDate(cResultDate);
@@ -259,12 +263,20 @@ export default function Calendar() {
       const dayEvents = events.filter(e => e.dateStr === dateStr);
       
       const solarKey = `${d}/${month+1}`; const lunarKey = `${lunar.day}/${lunar.month}`;
-      const solarHoliday = HOLIDAYS[solarKey]; const lunarHoliday = LUNAR_HOLIDAYS[lunarKey];
-      const isDayOff = solarHoliday?.isDayOff || lunarHoliday?.isDayOff;
+      
+      // KIỂM TRA LỊCH SỬ SỰ KIỆN: Chỉ hiện nếu năm hiện tại >= năm bắt đầu
+      const rawSolarHoliday = HOLIDAYS[solarKey]; 
+      const rawLunarHoliday = LUNAR_HOLIDAYS[lunarKey];
+      
+      const solarHoliday = (rawSolarHoliday && year >= rawSolarHoliday.startYear) ? rawSolarHoliday : undefined;
+      const lunarHoliday = (rawLunarHoliday && year >= rawLunarHoliday.startYear) ? rawLunarHoliday : undefined;
+
+      const isSolarDayOff = solarHoliday?.isDayOff && (!solarHoliday.dayOffStartYear || year >= solarHoliday.dayOffStartYear);
+      const isLunarDayOff = lunarHoliday?.isDayOff && (!lunarHoliday.dayOffStartYear || year >= lunarHoliday.dayOffStartYear);
+      const isDayOff = isSolarDayOff || isLunarDayOff;
       
       let solarColor = 'text-white';
       if (isSunday || isDayOff) { solarColor = 'text-red-500'; } else if (solarHoliday || lunarHoliday) { solarColor = 'text-amber-500'; }
-      const eventTextColor = isDayOff ? 'text-red-500' : 'text-amber-500';
 
       grid.push(
         <div key={`cur-${d}`} onClick={() => setSelectedDate(dateObj)} className={`h-20 sm:h-28 lg:h-32 border border-[#1e293b] p-1 sm:p-2 lg:p-3 cursor-pointer transition-all flex flex-col relative group ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'} ${isToday ? 'ring-1 ring-sky-500/50' : ''}`}>
@@ -273,8 +285,8 @@ export default function Calendar() {
             <span className={`text-[11px] sm:text-sm font-medium ${lunar.day === 1 || lunar.day === 15 ? 'text-blue-400 font-bold' : 'text-slate-500'}`}>{lunar.day === 1 ? `${lunar.day}/${lunar.month}` : lunar.day}</span>
           </div>
           <div className="mt-auto overflow-hidden font-sans">
-            {solarHoliday && <div className={`text-[9px] sm:text-xs ${solarHoliday.isDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold`}>{solarHoliday.name}</div>}
-            {lunarHoliday && <div className={`text-[9px] sm:text-xs ${lunarHoliday.isDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold mt-0.5`}>{lunarHoliday.name}</div>}
+            {solarHoliday && <div className={`text-[9px] sm:text-xs ${isSolarDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold`}>{solarHoliday.name}</div>}
+            {lunarHoliday && <div className={`text-[9px] sm:text-xs ${isLunarDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold mt-0.5`}>{lunarHoliday.name}</div>}
             {dayEvents.length > 0 && <div className="flex gap-1 mt-1 items-center"><div className="w-1.5 h-1.5 rounded-full bg-sky-400"></div><span className="text-[9px] sm:text-xs text-sky-400 truncate hidden sm:block">{dayEvents.length} sự kiện</span></div>}
           </div>
         </div>
@@ -289,15 +301,22 @@ export default function Calendar() {
     return grid;
   };
 
+  const currentYear = selectedDate.getFullYear();
   const selLunar = getLunarDate(selectedDate);
   const selSolarKey = `${selectedDate.getDate()}/${selectedDate.getMonth()+1}`;
   const selLunarKey = `${selLunar.day}/${selLunar.month}`;
   
-  const selSolarHoliday = HOLIDAYS[selSolarKey];
-  const selLunarHoliday = LUNAR_HOLIDAYS[selLunarKey];
+  const rawSelSolarHoliday = HOLIDAYS[selSolarKey];
+  const rawSelLunarHoliday = LUNAR_HOLIDAYS[selLunarKey];
+
+  const selSolarHoliday = (rawSelSolarHoliday && currentYear >= rawSelSolarHoliday.startYear) ? rawSelSolarHoliday : undefined;
+  const selLunarHoliday = (rawSelLunarHoliday && currentYear >= rawSelLunarHoliday.startYear) ? rawSelLunarHoliday : undefined;
+
+  const isSelSolarDayOff = selSolarHoliday?.isDayOff && (!selSolarHoliday.dayOffStartYear || currentYear >= selSolarHoliday.dayOffStartYear);
+  const isSelLunarDayOff = selLunarHoliday?.isDayOff && (!selLunarHoliday.dayOffStartYear || currentYear >= selLunarHoliday.dayOffStartYear);
 
   let topSolarColor = 'text-white';
-  if (selectedDate.getDay() === 0 || selSolarHoliday?.isDayOff || selLunarHoliday?.isDayOff) { topSolarColor = 'text-red-500'; } 
+  if (selectedDate.getDay() === 0 || isSelSolarDayOff || isSelLunarDayOff) { topSolarColor = 'text-red-500'; } 
   else if (selSolarHoliday || selLunarHoliday) { topSolarColor = 'text-amber-500'; }
 
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
@@ -331,7 +350,7 @@ export default function Calendar() {
             </span>
             
             {selSolarHoliday && (
-              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${selSolarHoliday.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${isSelSolarDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                 {selSolarHoliday.name}
               </span>
             )}
@@ -345,7 +364,7 @@ export default function Calendar() {
             <span className="text-lg lg:text-xl text-slate-300 font-semibold font-sans">Tháng {selLunar.month} năm {getCanChiYear(selectedDate.getFullYear())}</span>
             
             {selLunarHoliday ? (
-              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${selLunarHoliday.isDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+              <span className={`text-sm lg:text-base font-bold mt-4 px-5 py-2 rounded-full border font-sans ${isSelLunarDayOff ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
                 {selLunarHoliday.name}
               </span>
             ) : (
@@ -415,8 +434,9 @@ export default function Calendar() {
             <select value={currentDate.getMonth()} onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
+            {/* CẬP NHẬT TỪ 1900 ĐẾN 2100 (201 năm) */}
             <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
-              {Array.from({length: 101}).map((_, i) => <option key={i} value={1950 + i}>năm {1950 + i}</option>)}
+              {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}>năm {1900 + i}</option>)}
             </select>
           </div>
         </div>
@@ -431,7 +451,6 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* --- CÔNG CỤ CHUYỂN ĐỔI ÂM DƯƠNG --- */}
       <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl mt-8">
          <h3 className="text-lg font-bold text-brand flex items-center gap-2 mb-6"><ArrowRightLeft size={20} /> Cỗ máy thời gian (Đổi lịch Âm - Dương)</h3>
          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -447,7 +466,7 @@ export default function Calendar() {
                <input type="number" placeholder="Năm" value={cYear} onChange={e=>setCYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
             </div>
             <div className="md:col-span-3">
-               <button onClick={doConvert} className="w-full h-full bg-brand text-bg-dark font-bold rounded-lg hover:bg-brand/90 transition shadow-lg">XEM KẾT QUẢ</button>
+               <button onClick={doConvert} className="w-full h-full bg-brand text-bg-dark font-bold rounded-lg hover:bg-brand/90 transition shadow-lg py-3">XEM KẾT QUẢ</button>
             </div>
          </div>
          {cResult && (
@@ -491,7 +510,7 @@ export default function Calendar() {
                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Báo trước</label>
                   <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors">
                     <option value={0}>Đúng giờ</option>
-                    <option value={15}>30 phút</option>
+                    <option value={15}>15 phút</option>
                     <option value={60}>1 tiếng</option>
                     <option value={1440}>1 ngày (24h)</option>
                   </select>
