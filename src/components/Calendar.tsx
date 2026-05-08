@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
 
+// --- IMPORT TỪ FIREBASE ĐÃ SETUP Ở BƯỚC TRƯỚC ---
+import { auth, db, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
+import { collection, query, where, getDocs, setDoc, doc, deleteDoc } from 'firebase/firestore';
+
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
 const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
 
@@ -86,12 +91,8 @@ const renderStars = (scoreStr: string) => {
   )
 }
 
-interface HolidayInfo { 
-  name: string; 
-  isDayOff: boolean; 
-  startYear: number;       
-  dayOffStartYear?: number; 
-}
+// --- DỮ LIỆU LỄ TẾT KÈM THEO NĂM LỊCH SỬ BẮT ĐẦU ---
+interface HolidayInfo { name: string; isDayOff: boolean; startYear: number; dayOffStartYear?: number; }
 
 const HOLIDAYS: Record<string, HolidayInfo> = {
   '1/1': { name: 'Tết Dương lịch', isDayOff: true, startYear: 1946 },
@@ -156,13 +157,17 @@ const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
   '30/12': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 }
 };
 
-interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; }
+interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; userId?: string; }
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<UserEvent[]>([]);
+  
+  // MODAL STATES
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false); // Modal bắt đăng nhập
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventTime, setNewEventTime] = useState('08:00');
@@ -176,12 +181,35 @@ export default function Calendar() {
   const [cResult, setCResult] = useState('');
   const [cResultDate, setCResultDate] = useState<Date | null>(null);
 
+  // --- LẮNG NGHE ĐĂNG NHẬP VÀ ĐỒNG BỘ FIRESTORE ---
   useEffect(() => {
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') { Notification.requestPermission(); }
-    const saved = localStorage.getItem('user_events'); if (saved) setEvents(JSON.parse(saved));
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // Đã đăng nhập -> Tải sự kiện từ đám mây về
+        try {
+          const q = query(collection(db, "events"), where("userId", "==", user.uid));
+          const snapshot = await getDocs(q);
+          const cloudEvents: UserEvent[] = [];
+          snapshot.forEach(doc => cloudEvents.push(doc.data() as UserEvent));
+          setEvents(cloudEvents);
+          localStorage.setItem('user_events', JSON.stringify(cloudEvents));
+          setShowLoginPrompt(false); // Ẩn hộp thoại bắt đăng nhập nếu đang hiện
+        } catch (error) {
+          console.error("Lỗi đồng bộ Firebase:", error);
+        }
+      } else {
+        // Chưa đăng nhập -> Chỉ dùng tạm LocalStorage
+        const saved = localStorage.getItem('user_events');
+        if (saved) setEvents(JSON.parse(saved));
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
+  // --- CHUÔNG CẢNH BÁO SỰ KIỆN TRÌNH DUYỆT ---
   useEffect(() => {
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') { Notification.requestPermission(); }
+    
     const interval = setInterval(() => {
       const now = new Date();
       events.forEach(ev => {
@@ -199,39 +227,67 @@ export default function Calendar() {
     return () => clearInterval(interval);
   }, [events]);
 
-  const saveEvents = (newEvents: UserEvent[]) => { setEvents(newEvents); localStorage.setItem('user_events', JSON.stringify(newEvents)); };
-  const openModalForAdd = () => { setEditingId(null); setNewEventTitle(''); setNewEventLocation(''); setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true); };
-  const openModalForEdit = (ev: UserEvent) => { setEditingId(ev.id); setNewEventTitle(ev.title); setNewEventTime(ev.time); setNewEventLocation(ev.location || ''); setNewReminderAdvance(ev.reminderAdvance || 0); setShowEventModal(true); };
-  const handleSaveEvent = () => {
-    if (!newEventTitle) return;
+  // --- KIỂM TRA ĐĂNG NHẬP TRƯỚC KHI MỞ MODAL ---
+  const openModalForAdd = () => { 
+    if (!auth.currentUser) {
+       setShowLoginPrompt(true);
+       return;
+    }
+    setEditingId(null); setNewEventTitle(''); setNewEventLocation(''); setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true); 
+  };
+  
+  const openModalForEdit = (ev: UserEvent) => { 
+    if (!auth.currentUser) {
+       setShowLoginPrompt(true);
+       return;
+    }
+    setEditingId(ev.id); setNewEventTitle(ev.title); setNewEventTime(ev.time); setNewEventLocation(ev.location || ''); setNewReminderAdvance(ev.reminderAdvance || 0); setShowEventModal(true); 
+  };
+
+  const handleGoogleLogin = async () => {
+    try { await signInWithPopup(auth, googleProvider); } 
+    catch (error) { console.error("Đăng nhập thất bại", error); }
+  };
+
+  // --- LƯU VÀO CẢ LOCAL LẪN ĐÁM MÂY (FIRESTORE) ---
+  const handleSaveEvent = async () => {
+    if (!newEventTitle || !auth.currentUser) return;
     const dateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
-    if (editingId) { const updatedEvents = events.map(e => e.id === editingId ? { ...e, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance } : e); saveEvents(updatedEvents); } 
-    else { const newEv: UserEvent = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance }; saveEvents([...events, newEv]); }
+    
+    let updatedEvents: UserEvent[] = [];
+    
+    if (editingId) { 
+      const ev = { id: editingId, dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid };
+      updatedEvents = events.map(e => e.id === editingId ? ev : e); 
+      setEvents(updatedEvents);
+      localStorage.setItem('user_events', JSON.stringify(updatedEvents));
+      try { await setDoc(doc(db, "events", ev.id), ev); } catch (e) { console.error(e); }
+    } 
+    else { 
+      const newEv = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid };
+      updatedEvents = [...events, newEv];
+      setEvents(updatedEvents);
+      localStorage.setItem('user_events', JSON.stringify(updatedEvents));
+      try { await setDoc(doc(db, "events", newEv.id), newEv); } catch (e) { console.error(e); }
+    }
     setShowEventModal(false);
   };
-  const handleDeleteEvent = (id: string, e: React.MouseEvent) => { e.stopPropagation(); saveEvents(events.filter(e => e.id !== id)); };
+
+  const handleDeleteEvent = async (id: string, e: React.MouseEvent) => { 
+    e.stopPropagation(); 
+    if (!auth.currentUser) return;
+    
+    const updatedEvents = events.filter(e => e.id !== id);
+    setEvents(updatedEvents);
+    localStorage.setItem('user_events', JSON.stringify(updatedEvents));
+    try { await deleteDoc(doc(db, "events", id)); } catch (e) { console.error(e); }
+  };
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => { let day = new Date(year, month, 1).getDay(); return day === 0 ? 6 : day - 1; };
 
-  // --- HÀM ĐIỀU HƯỚNG TỚI LÙI MỘT NGÀY ---
-  const goToPrevDay = () => {
-    const prevDate = new Date(selectedDate);
-    prevDate.setDate(prevDate.getDate() - 1);
-    setSelectedDate(prevDate);
-    if (prevDate.getMonth() !== currentDate.getMonth() || prevDate.getFullYear() !== currentDate.getFullYear()) {
-      setCurrentDate(new Date(prevDate.getFullYear(), prevDate.getMonth(), 1));
-    }
-  };
-
-  const goToNextDay = () => {
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    setSelectedDate(nextDate);
-    if (nextDate.getMonth() !== currentDate.getMonth() || nextDate.getFullYear() !== currentDate.getFullYear()) {
-      setCurrentDate(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1));
-    }
-  };
+  const goToPrevDay = () => { const prevDate = new Date(selectedDate); prevDate.setDate(prevDate.getDate() - 1); setSelectedDate(prevDate); if (prevDate.getMonth() !== currentDate.getMonth() || prevDate.getFullYear() !== currentDate.getFullYear()) { setCurrentDate(new Date(prevDate.getFullYear(), prevDate.getMonth(), 1)); } };
+  const goToNextDay = () => { const nextDate = new Date(selectedDate); nextDate.setDate(nextDate.getDate() + 1); setSelectedDate(nextDate); if (nextDate.getMonth() !== currentDate.getMonth() || nextDate.getFullYear() !== currentDate.getFullYear()) { setCurrentDate(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1)); } };
 
   const doConvert = () => {
     const d = parseInt(cDay), m = parseInt(cMonth), y = parseInt(cYear);
@@ -281,10 +337,7 @@ export default function Calendar() {
       const dayEvents = events.filter(e => e.dateStr === dateStr);
       
       const solarKey = `${d}/${month+1}`; const lunarKey = `${lunar.day}/${lunar.month}`;
-      
-      const rawSolarHoliday = HOLIDAYS[solarKey]; 
-      const rawLunarHoliday = LUNAR_HOLIDAYS[lunarKey];
-      
+      const rawSolarHoliday = HOLIDAYS[solarKey]; const rawLunarHoliday = LUNAR_HOLIDAYS[lunarKey];
       const solarHoliday = (rawSolarHoliday && year >= rawSolarHoliday.startYear) ? rawSolarHoliday : undefined;
       const lunarHoliday = (rawLunarHoliday && year >= rawLunarHoliday.startYear) ? rawLunarHoliday : undefined;
 
@@ -341,7 +394,7 @@ export default function Calendar() {
   const evaluation = getDayEvaluation(selectedDate);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans">
+    <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans relative">
       
       <div className="bg-[#05070a] border border-sky-900/50 rounded-2xl overflow-hidden shadow-2xl">
         <div className="bg-sky-700 px-6 py-4 flex justify-between items-center">
@@ -353,9 +406,7 @@ export default function Calendar() {
           </button>
         </div>
 
-        {/* THIẾT KẾ CÓ NÚT LÙI/TIẾN NGÀY HAI BÊN */}
         <div className="relative flex items-center group">
-          
           <button onClick={goToPrevDay} className="absolute left-2 sm:left-4 lg:left-6 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-[#1e293b] bg-[#0f172a]/80 text-slate-400 hover:text-sky-400 hover:border-sky-500 hover:bg-sky-500/10 flex items-center justify-center transition-all shadow-lg backdrop-blur-sm">
             <ChevronLeft size={24} className="-ml-0.5" />
           </button>
@@ -431,11 +482,7 @@ export default function Calendar() {
                <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm lg:text-base uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}:</strong>
                <ul className="space-y-3">
                  {selEvents.map(ev => (
-                   <li 
-                      key={ev.id} 
-                      onClick={() => openModalForEdit(ev)}
-                      className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group"
-                   >
+                   <li key={ev.id} onClick={() => openModalForEdit(ev)} className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-200 font-medium flex items-center gap-2 text-base">
                           <Clock size={16} className="text-sky-400" /> <span className="text-sky-400 font-bold">{ev.time}</span> {ev.title}
@@ -445,14 +492,8 @@ export default function Calendar() {
                           <button onClick={(e) => handleDeleteEvent(ev.id, e)} className="text-slate-400 hover:text-red-400 p-2"><Trash2 size={18}/></button>
                         </div>
                       </div>
-                      {ev.location && (
-                        <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7">
-                          <MapPin size={14} /> {ev.location}
-                        </div>
-                      )}
-                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">
-                        Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}
-                      </div>
+                      {ev.location && <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7"><MapPin size={14} /> {ev.location}</div>}
+                      <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}</div>
                    </li>
                  ))}
                </ul>
@@ -464,28 +505,16 @@ export default function Calendar() {
       <div className="bg-[#05070a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-xl font-sans">
         <div className="bg-[#0a0f18] px-6 py-5 flex flex-col sm:flex-row items-center justify-between border-b border-[#1e293b] gap-4">
           <div className="flex items-center gap-4">
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
-              <ChevronLeft size={20} />
-            </button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition"><ChevronLeft size={20} /></button>
             <span className="text-lg lg:text-xl font-bold text-sky-400 uppercase tracking-widest w-32 lg:w-40 text-center">Tháng {currentDate.getMonth() + 1}</span>
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition">
-              <ChevronRight size={20} />
-            </button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="p-2 bg-sky-900/20 hover:bg-sky-500/20 rounded-lg text-sky-400 transition"><ChevronRight size={20} /></button>
           </div>
           
           <div className="flex gap-2 w-full sm:w-auto">
-            <select 
-              value={currentDate.getMonth()} 
-              onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))}
-              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
-            >
+            <select value={currentDate.getMonth()} onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
-            <select 
-              value={currentDate.getFullYear()} 
-              onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))}
-              className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500"
-            >
+            <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
               {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}>năm {1900 + i}</option>)}
             </select>
           </div>
@@ -493,8 +522,7 @@ export default function Calendar() {
 
         <div className="p-4 sm:p-6 lg:p-8 bg-[#05070a]">
           <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
-            <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div>
-            <div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
+            <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
           </div>
           <div className="grid grid-cols-7 gap-px bg-[#1e293b] border border-[#1e293b] rounded-lg overflow-hidden">
             {generateMonthGrid()}
@@ -526,15 +554,38 @@ export default function Calendar() {
                <span className="text-emerald-400 font-bold text-lg">{cResult}</span>
                {cResultDate && (
                  <button onClick={goToDate} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold transition">
-                   <CalendarIcon size={16}/> Xem Lịch ngày
+                   <CalendarIcon size={16}/> Lịch ngày
                  </button>
                )}
             </div>
          )}
       </div>
 
+      {/* MODAL CẢNH BÁO BẮT BUỘC ĐĂNG NHẬP */}
+      <AnimatePresence>
+        {showLoginPrompt && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-brand/50 rounded-2xl p-8 max-w-sm w-full shadow-[0_0_50px_rgba(56,189,248,0.2)] text-center relative overflow-hidden">
+                <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <Bell className="text-brand" size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Đăng nhập để lưu sự kiện</h3>
+                <p className="text-slate-400 text-sm mb-8">Dữ liệu Lịch trình của Bạn sẽ được lưu trữ bảo mật trên Đám mây để đồng bộ giữa các thiết bị.</p>
+                <div className="flex flex-col gap-3">
+                  <button onClick={handleGoogleLogin} className="w-full py-3 bg-brand text-bg-dark font-bold rounded-lg hover:scale-105 transition-transform flex justify-center items-center gap-2 shadow-lg shadow-brand/20">
+                    <img src="https://www.google.com/favicon.ico" alt="G" className="w-4 h-4" /> Đăng nhập bằng Google
+                  </button>
+                  <button onClick={() => setShowLoginPrompt(false)} className="w-full py-3 bg-[#1e293b] text-slate-300 font-bold rounded-lg hover:bg-slate-800 transition-colors">
+                    Hủy bỏ
+                  </button>
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {showEventModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-sans">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 font-sans">
           <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 w-full max-w-md lg:max-w-lg shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg lg:text-xl font-bold text-sky-400 flex items-center gap-2">
