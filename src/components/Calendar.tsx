@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 // --- IMPORT TỪ FIREBASE ĐÃ SETUP Ở BƯỚC TRƯỚC ---
 import { auth, db, googleProvider } from '../firebase';
