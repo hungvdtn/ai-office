@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info, CheckCircle, AlertTriangle, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Solar, Lunar, HolidayUtil } from 'lunar-javascript';
+import { Solar } from 'lunar-javascript';
 
 // --- IMPORT TỪ FIREBASE ---
 import { auth, db, googleProvider } from '../firebase';
@@ -10,7 +10,6 @@ import { collection, query, where, getDocs, setDoc, doc, deleteDoc } from 'fireb
 
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
 const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
-// THÊM: Dữ liệu 12 Trực và 28 Chòm sao
 const TRUC_12 = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
 const NHI_THAP_BAT_TU = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
 
@@ -29,28 +28,36 @@ const getCanChiDay = (date: Date) => {
   return { text: `${CAN_CHU[canIdx]} ${CHI_CHU[chiIdx]}`, chiIdx, canIdx };
 };
 
-const getCanChiMonth = (lMonth: number, year: number) => {
-  const stdYearCan = ((year % 10) + 6) % 10; 
-  const month1Can = ((stdYearCan % 5) * 2 + 2) % 10;
-  const targetMonthCan = (month1Can + lMonth - 1) % 10;
-  const targetMonthChi = (2 + lMonth - 1) % 12;
-  return { text: `${CAN_CHU[targetMonthCan]} ${CHI_CHU[targetMonthChi]}`, chiIdx: targetMonthChi };
-};
-
+// THUẬT TOÁN THIÊN VĂN HỌC CHUẨN XÁC (Lunar-Javascript)
 const getLunarDate = (date: Date) => {
   try {
-    const lunarStr = new Intl.DateTimeFormat('vi-VN-u-ca-chinese', { day: 'numeric', month: 'numeric' }).format(date);
-    const numbers = lunarStr.match(/\d+/g); 
-    if (numbers && numbers.length >= 2) return { day: parseInt(numbers[0], 10), month: parseInt(numbers[1], 10) };
-    return { day: date.getDate(), month: date.getMonth() + 1 }; 
-  } catch (e) { return { day: date.getDate(), month: date.getMonth() + 1 }; }
+    const lunar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar();
+    return { day: lunar.getDay(), month: lunar.getMonth() > 0 ? lunar.getMonth().toString() : `Nhuận ${Math.abs(lunar.getMonth())}` };
+  } catch (e) { return { day: date.getDate(), month: (date.getMonth() + 1).toString() }; }
 };
 
 const getDayEvaluation = (date: Date) => {
-  const lunar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar();
-  const isHoangDao = lunar.getDayTianShenType() === 'Hoàng Đạo';
-  const isNguyetKy = lunar.getDay() === 5 || lunar.getDay() === 14 || lunar.getDay() === 23;
-  const isTamNuong = lunar.getDay() === 3 || lunar.getDay() === 7 || lunar.getDay() === 13 || lunar.getDay() === 18 || lunar.getDay() === 22 || lunar.getDay() === 27;
+  const lunar = getLunarDate(date);
+  const dayInfo = getCanChiDay(date);
+  
+  // Lấy chi tháng chính xác theo kinh độ mặt trời (Tiết khí)
+  const exactMonthZhi = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar().getMonthZhiExact(); 
+  const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  const mChi = CH_ZHI.indexOf(exactMonthZhi);
+  const dChi = dayInfo.chiIdx;   
+
+  const hoangDaoMap: Record<number, number[]> = {
+    2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10],
+    3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],
+    4: [4, 5, 8, 9, 11, 2], 10: [4, 5, 8, 9, 11, 2],
+    5: [6, 7, 10, 11, 1, 4], 11: [6, 7, 10, 11, 1, 4],
+    0: [8, 9, 0, 1, 3, 6],   6: [8, 9, 0, 1, 3, 6],
+    1: [10, 11, 2, 3, 5, 8], 7: [10, 11, 2, 3, 5, 8]
+  };
+
+  const isHoangDao = hoangDaoMap[mChi]?.includes(dChi);
+  const isNguyetKy = [5, 14, 23].includes(lunar.day);
+  const isTamNuong = [3, 7, 13, 18, 22, 27].includes(lunar.day);
 
   let score = 3.0; 
   let notes = [];
@@ -68,35 +75,92 @@ const getDayEvaluation = (date: Date) => {
 };
 
 const getDayDetails = (date: Date) => {
-  const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-  const lunar = solar.getLunar();
+  const dayInfo = getCanChiDay(date);
+  const lunar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar();
   
-  const eduAdvice = {
-    should: ["Lên kế hoạch giảng dạy", "Nghiên cứu, viết tài liệu khoa học"],
-    avoid: [] as string[]
+  // 1. Tiết khí (Dịch sang tiếng Việt)
+  const currentJieQi = lunar.getJieQi() || lunar.getPrevJieQi().getName();
+  const JIE_QI_MAP: any = {
+    '立春': 'Lập Xuân', '雨水': 'Vũ Thủy', '惊蛰': 'Kinh Trập', '春分': 'Xuân Phân',
+    '清明': 'Thanh Minh', '谷雨': 'Cốc Vũ', '立夏': 'Lập Hạ', '小满': 'Tiểu Mãn',
+    '芒种': 'Mang Chủng', '夏至': 'Hạ Chí', '小暑': 'Tiểu Thử', '大暑': 'Đại Thử',
+    '立秋': 'Lập Thu', '处暑': 'Xử Thử', '白露': 'Bạch Lộ', '秋分': 'Thu Phân',
+    '寒露': 'Hàn Lộ', '霜降': 'Sương Giáng', '立冬': 'Lập Đông', '小雪': 'Tiểu Tuyết',
+    '大雪': 'Đại Tuyết', '冬至': 'Đông Chí', '小寒': 'Tiểu Hàn', '大寒': 'Đại Hàn'
   };
+  const tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
 
-  const zhiXing = lunar.getZhiXing();
-  if (['Giác', 'Đẩu', 'Khuê', 'Bích', 'Tỉnh'].includes(zhiXing)) {
-    eduAdvice.should.push("Khai giảng, mở khóa học", "Tổ chức thi cử, bảo vệ luận án");
+  // 2. 12 Trực (Bát tự Tiết khí)
+  const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  const monthZhiExact = lunar.getMonthZhiExact();
+  const exactMonthChiIdx = CH_ZHI.indexOf(monthZhiExact);
+  const trucIdx = (dayInfo.chiIdx - exactMonthChiIdx + 12) % 12;
+  const trucName = TRUC_12[trucIdx];
+
+  // 3. 28 Sao
+  const anchorDate = Date.UTC(2024, 0, 1);
+  const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const diff = Math.floor((targetDate - anchorDate) / 86400000);
+  const saoIdx = (diff + 10) % 28;
+  const saoName = NHI_THAP_BAT_TU[saoIdx];
+
+  const nguHanhMap: any = { 0: 'Kim', 1: 'Thủy', 2: 'Hỏa', 3: 'Thổ', 4: 'Mộc' };
+  const nguHanhName = nguHanhMap[dayInfo.canIdx % 5];
+
+  // 4. Hệ thống Sao Tốt / Xấu
+  const catTinh = [];
+  const hungTinh = [];
+  if (trucIdx === 0) { catTinh.push("Thiên Ân", "Thiên Hỷ"); hungTinh.push("Thổ Phủ"); }
+  if (trucIdx === 1) { catTinh.push("Nguyệt Đức", "Thiên Quan"); hungTinh.push("Thiên Cương"); }
+  if (trucIdx === 2) { catTinh.push("Thiên Phúc", "Phúc Sinh"); hungTinh.push("Tử Khí"); }
+  if (trucIdx === 3) { catTinh.push("Nguyệt Ân", "Thiên Mã"); hungTinh.push("Cô Thần"); }
+  if (trucIdx === 4) { catTinh.push("Tam Hợp", "Mẫu Thương"); hungTinh.push("Quả Tú"); }
+  if (trucIdx === 5) { catTinh.push("Lục Hợp", "Ngũ Phú"); hungTinh.push("Kiếp Sát"); }
+  if (trucIdx === 6) { catTinh.push("Giải Thần"); hungTinh.push("Đại Hao", "Nguyệt Phá"); }
+  if (trucIdx === 7) { catTinh.push("Ích Hậu"); hungTinh.push("Bạch Hổ"); }
+  if (trucIdx === 8) { catTinh.push("Thiên Y", "Thiên Tài"); hungTinh.push("Địa Tặc"); }
+  if (trucIdx === 9) { catTinh.push("Sinh Khí", "Phúc Hậu"); hungTinh.push("Thiên Cẩu"); }
+  if (trucIdx === 10) { catTinh.push("Thiên Đức", "Nguyệt Không"); hungTinh.push("Thiên Lại"); }
+  if (trucIdx === 11) { catTinh.push("Thánh Tâm"); hungTinh.push("Chu Tước", "Câu Trận"); }
+
+  if (['Khuê', 'Bích', 'Giác'].includes(saoName)) catTinh.push("Văn Xương (Học hành)");
+
+  // 5. Lời khuyên Giáo dục
+  const eduAdvice = { should: [] as string[], avoid: [] as string[] };
+  if (['Kiến', 'Thành', 'Khai'].includes(trucName)) {
+    eduAdvice.should.push("Tổ chức lễ khai giảng, khai mạc năm học.", "Triển khai dự án giáo dục mới, ký kết hợp tác.");
   }
-  if (lunar.getTwelveCycleOrder() === 'Phá' || lunar.getTwelveCycleOrder() === 'Bế') {
-    eduAdvice.avoid.push("Tổ chức sự kiện giáo dục lớn", "Ký kết hợp đồng đào tạo");
+  if (['Khuê', 'Bích', 'Giác', 'Đẩu', 'Tỉnh'].includes(saoName)) {
+    eduAdvice.should.push("Rất tốt để xuất bản bài báo khoa học, bảo vệ luận án.", "Nộp hồ sơ xin học bổng, vinh danh học sinh giỏi.");
+  }
+  if (eduAdvice.should.length === 0) {
+    eduAdvice.should.push("Lên kế hoạch giảng dạy, nghiên cứu tài liệu.", "Thực hiện các công việc hành chính trường học bình thường.");
   }
 
-  return {
-    truc: lunar.getTwelveCycleOrder(),
-    sao: zhiXing,
-    nguHanh: lunar.getDayNaYin(),
-    tietKhi: lunar.getJieQi() || lunar.getPrevJieQi().getName(),
-    hop: lunar.getDayYi().length > 0 ? lunar.getDayYi().join(', ') : "Bình thường",
-    ky: lunar.getDayJi().length > 0 ? lunar.getDayJi().join(', ') : "Không có kiêng kỵ lớn",
-    catTinh: lunar.getDayJiShen(),
-    hungTinh: lunar.getDayXiongShen(),
-    eduAdvice,
-    tianShen: lunar.getDayTianShen(),
-    tianShenType: lunar.getDayTianShenType()
-  };
+  if (['Phá', 'Bế', 'Chấp'].includes(trucName)) {
+    eduAdvice.avoid.push("Tránh tổ chức sự kiện giáo dục quy mô lớn.", "Tránh ký kết các hợp đồng đào tạo dài hạn.");
+  }
+  if (['Tâm', 'Vĩ', 'Cơ', 'Nguy'].includes(saoName)) {
+    eduAdvice.avoid.push("Không nên khai giảng khóa học quan trọng.", "Tránh tổ chức thi cử hoặc đánh giá năng lực lớn.");
+  }
+
+  // 6. Việc chung
+  let hop = "Bình thường, làm các công việc hàng ngày.";
+  let ky = "Không có kiêng kỵ lớn.";
+  if (trucIdx === 0) { hop = "Khai trương, xuất hành, nhậm chức."; ky = "Động thổ, an táng."; }
+  else if (trucIdx === 1) { hop = "Sửa chữa, quét dọn, giải oan."; ky = "Khai trương, ký hợp đồng."; }
+  else if (trucIdx === 2) { hop = "Cầu tài, nhậm chức, tế tự."; ky = "Chữa bệnh, kiện cáo."; }
+  else if (trucIdx === 3) { hop = "Họp mặt, di dời, san lấp."; ky = "Động thổ, gieo trồng."; }
+  else if (trucIdx === 4) { hop = "Giao dịch, nạp tài, đính hôn."; ky = "Tố tụng, thưa kiện."; }
+  else if (trucIdx === 5) { hop = "Lập khế ước, thu tiền, chăn nuôi."; ky = "Xuất hành, dời nhà."; }
+  else if (trucIdx === 6) { hop = "Chữa bệnh, tháo dỡ."; ky = "Khai trương, xuất hành, an táng."; }
+  else if (trucIdx === 7) { hop = "An sàng, tế tự."; ky = "Leo núi, mạo hiểm, đi thuyền."; }
+  else if (trucIdx === 8) { hop = "Khai trương, nhập học, kết hôn."; ky = "Kiện tụng, phá dỡ."; }
+  else if (trucIdx === 9) { hop = "Thu hoạch, mua sắm, nhập kho."; ky = "An táng, mai táng."; }
+  else if (trucIdx === 10) { hop = "Khởi công, xuất hành, mở cửa hàng."; ky = "Động thổ, dọn rác."; }
+  else if (trucIdx === 11) { hop = "Lấp hang lỗ, xây tường, vá vách."; ky = "Mở cửa hàng, chữa mắt."; }
+
+  return { truc: trucName, sao: saoName, nguHanh: nguHanhName, tietKhi, hop, ky, catTinh, hungTinh, eduAdvice };
 };
 
 const renderStars = (scoreStr: string) => {
@@ -591,7 +655,7 @@ export default function Calendar() {
          )}
       </div>
 
-      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐÃ NÂNG CẤP */}
+      {/* MODAL CHI TIẾT NGÀY PHONG THỦY NÂNG CAO */}
       <AnimatePresence>
         {showDayDetail && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
@@ -602,7 +666,7 @@ export default function Calendar() {
                   <div className="w-14 h-14 bg-brand text-bg-dark rounded-2xl flex items-center justify-center font-black text-3xl">{selectedDate.getDate()}</div>
                   <div>
                     <h3 className="text-white font-bold text-lg">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
-                    <p className="text-xs text-brand uppercase font-black tracking-widest">{dayDet.tianShenType} - {dayDet.tianShen}</p>
+                    <p className="text-xs text-brand uppercase font-black tracking-widest">{dayEval.text}</p>
                   </div>
                 </div>
                 <button onClick={() => setShowDayDetail(false)} className="p-2 hover:bg-rose-500 rounded-xl text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
