@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, Scan, Languages, ChevronRight, HelpCircle, Menu, X, 
-  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles
+  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
@@ -14,25 +14,30 @@ import OCRStudio from './components/OCRStudio';
 import Scanner from './components/Scanner';
 import Calendar from './components/Calendar';
 
+// --- IMPORT FIREBASE ---
+import { auth, googleProvider } from './firebase';
+import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+
 type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner'; 
 
-// --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG ---
+// --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG (ĐẦY ĐỦ KHÔNG RÚT GỌN) ---
 const HelpContent = ({ module }: { module: string }) => {
   switch (module) {
     case 'calendar':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-           <h3 className="font-bold text-brand text-lg">1. Hướng dẫn sử dụng Lịch</h3>
+           <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Lịch</h3>
            <p>Lịch Vạn niên AI được thiết kế theo Công nghệ lõi API Lịch quốc tế kết hợp với thuật toán Phong thủy (Feng Shui Engine), tự động tính Can Chi của Ngày/Tháng/Năm Âm lịch. Thuật toán này sẽ tính toán dựa trên các quy luật cổ học phương Đông và đưa ra đánh giá về ngày tốt xấu (tính từ 1.0 đến 5.0 sao), đồng thời xuất ra thông báo bằng chữ (Ví dụ: Ngày Hắc Đạo - Nguyệt Kỵ).</p>
            <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc thông thường.</p>
            <p>Ngoài ra, khác với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
            <p>Để ghi chú vào lịch bạn chỉ cần nháy thực đơn Thêm sự kiện và điền các thông tin cần thiết, sau đó lưu sự kiện.</p>
+           <p>Lịch Vạn niên AI còn có tính năng đổi ngày âm sang dương và ngược lại ở cuối giao diện. Đầu tiên bạn chọn kiểu chuyển đôi, sau đó nhập ngày tháng năm cần chuyển và chọn xem kết quả.</p>
         </div>
       );
     case 'pdf':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">2. Hướng dẫn sử dụng Xử lý PDF</h3>
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Xử lý PDF</h3>
           <p>Cung cấp bộ công cụ cắt, ghép, và sắp xếp lại trang PDF bằng thao tác kéo thả. Đặc biệt có tính năng chuyển PDF sang Word (.docx), tự động làm sạch ký hiệu thừa và định dạng chuẩn font Times New Roman dùng cho hành chính.</p>
           <h4 className="font-bold text-white">Công cụ này có 3 chức năng:</h4>
           <p className="font-bold text-sky-400">1. Cắt và tách file PDF:</p>
@@ -59,7 +64,7 @@ const HelpContent = ({ module }: { module: string }) => {
     case 'ocr':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">3. Hướng dẫn sử dụng Trích xuất OCR</h3>
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Trích xuất OCR</h3>
           <p>Sử dụng Trí tuệ nhân tạo (AI) chạy nội bộ (Offline) để nhận diện và bóc tách văn bản từ hình ảnh JPG/PNG. Đảm bảo bảo mật tuyệt đối 100% tài liệu nhạy cảm do dữ liệu không bị gửi lên mạng.</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải hình ảnh có text cần trích xuất thành văn bản</li>
@@ -71,7 +76,7 @@ const HelpContent = ({ module }: { module: string }) => {
     case 'scanner':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">4. Hướng dẫn Scan tài liệu</h3>
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn Scan tài liệu</h3>
           <p>Chức năng này bạn nên sử dụng trên điện thoại. Mặc định sau khi scan sẽ xuất thành file PDF ở dạng bản màu hoặc đen trắng.</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Đặt văn bản cần scan ngay ngắn trên mặt phẳng;</li>
@@ -120,7 +125,6 @@ const DraggableHelp = ({ activeModule, onClose }: { activeModule: string, onClos
            <HelpCircle size={18}/> Trợ giúp
          </h3>
          
-         {/* FIX LỖI: Dùng onPointerDown chặn sự kiện lây lan sang kéo thả */}
          <button 
            onPointerDown={(e) => { e.stopPropagation(); onClose(); }}
            onClick={(e) => { e.stopPropagation(); onClose(); }}
@@ -141,6 +145,17 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false); 
+
+  // QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => { setUser(currentUser); });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (error) { console.error(error); } };
+  const handleLogout = async () => { try { await signOut(auth); } catch (error) { console.error(error); } };
 
   const modules = [
     { id: 'calendar', label: 'Lịch Vạn Niên', icon: CalendarDays },
@@ -211,9 +226,23 @@ export default function App() {
               <span className="text-brand flex items-center gap-2"><ChevronRight size={12} className="text-slate-500" />{modules.find(m => m.id === activeModule)?.label || 'Ứng dụng ngoài'}</span>
             </div>
           </div>
-          <div className="flex items-center gap-4 md:gap-8">
-            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className="flex items-center transition-transform hover:scale-105">
-              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 md:h-10 w-auto object-contain rounded-full shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
+          
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* TÀI KHOẢN ĐĂNG NHẬP NẰM TRƯỚC LOGO */}
+            {user ? (
+              <div className="flex items-center gap-3 bg-[#1e293b]/50 px-3 py-1.5 rounded-full border border-[#1e293b]">
+                 <img src={user.photoURL || ''} alt="Avatar" className="w-7 h-7 rounded-full" title={user.email || ''} />
+                 <button onClick={handleLogout} className="text-[10px] uppercase tracking-widest font-bold text-slate-400 hover:text-rose-400 hidden sm:block transition-colors"><LogOut size={14} /></button>
+              </div>
+            ) : (
+              <button onClick={handleLogin} className="flex items-center gap-2 px-4 py-2 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20">
+                 <LogIn size={14} /> Đăng nhập
+              </button>
+            )}
+
+            {/* LOGO NẰM CUỐI CÙNG BÊN PHẢI */}
+            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className="flex items-center transition-transform hover:scale-105 border-l border-[#1e293b] pl-4 md:pl-6">
+              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 md:h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
             </a>
           </div>
         </header>
