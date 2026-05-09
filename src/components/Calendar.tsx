@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
 
@@ -180,7 +180,6 @@ const getDayDetails = (date: Date) => {
   };
   const gioHoangDao = GIO_HOANG_DAO[CHI_CHU[dayInfo.chiIdx] as keyof typeof GIO_HOANG_DAO];
 
-  // Tính tuổi xung khắc
   const xungChiIdx = (dayInfo.chiIdx + 6) % 12;
   const xungCan1 = (dayInfo.canIdx + 2) % 10;
   const xungCan2 = (dayInfo.canIdx + 4) % 10;
@@ -565,7 +564,7 @@ export default function Calendar() {
                   <strong className="text-amber-400 font-black">[{dayEval.score}]</strong>
                   {renderStars(dayEval.score)}
                   <span className="ml-2 text-xs font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded">
-                    {dayEval.description}
+                    {dayEval.text}
                   </span>
                 </div>
                 <p><span className="text-slate-400 font-semibold">Giờ Hoàng Đạo:</span> Tý (23-1h), Dần (3-5h), Mão (5-7h), Ngọ (11-13h), Mùi (13-15h), Dậu (17-19h)</p>
@@ -725,7 +724,6 @@ export default function Calendar() {
         )}
       </AnimatePresence>
 
-      {/* MODAL CẢNH BÁO BẮT BUỘC ĐĂNG NHẬP */}
       <AnimatePresence>
         {showLoginPrompt && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
