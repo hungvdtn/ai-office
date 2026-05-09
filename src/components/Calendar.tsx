@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info, CheckCircle, AlertTriangle, GraduationCap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
 
@@ -19,7 +19,6 @@ const getCanChiYear = (year: number) => {
   return `${can} ${chi}`;
 };
 
-// --- HÀM BỊ THIẾU TRONG BẢN TRƯỚC ĐÃ ĐƯỢC BỔ SUNG LẠI ---
 const getCanChiMonth = (lMonth: number, year: number) => {
   const stdYearCan = ((year % 10) + 6) % 10; 
   const month1Can = ((stdYearCan % 5) * 2 + 2) % 10;
@@ -32,8 +31,8 @@ const getCanChiDay = (date: Date) => {
   const anchor = Date.UTC(2024, 0, 1);
   const target = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const diffDays = Math.floor((target - anchor) / 86400000);
-  const canIdx = (diffDays % 10 + 10) % 10;
-  const chiIdx = (diffDays % 12 + 12) % 12;
+  const canIdx = ((diffDays % 10) + 10) % 10;
+  const chiIdx = ((diffDays % 12) + 12) % 12;
   return { text: `${CAN_CHU[canIdx]} ${CHI_CHU[chiIdx]}`, chiIdx, canIdx };
 };
 
@@ -43,7 +42,7 @@ const getLunarDate = (date: Date) => {
     return { 
       day: lunar.getDay(), 
       monthStr: lunar.getMonth() > 0 ? lunar.getMonth().toString() : `Nhuận ${Math.abs(lunar.getMonth())}`,
-      monthNum: Math.abs(lunar.getMonth()) // Số nguyên của tháng để dùng tính toán
+      monthNum: Math.abs(lunar.getMonth()) 
     };
   } catch (e) {
     return { day: date.getDate(), monthStr: (date.getMonth() + 1).toString(), monthNum: date.getMonth() + 1 }; 
@@ -62,9 +61,7 @@ const getDayEvaluation = (date: Date) => {
     const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
     mChi = CH_ZHI.indexOf(lunar.getMonthZhiExact()); 
     if(mChi === -1) mChi = date.getMonth();
-  } catch (e) {
-    mChi = date.getMonth();
-  }
+  } catch (e) { mChi = date.getMonth(); }
 
   const dChi = dayInfo.chiIdx;   
   const hoangDaoMap: Record<number, number[]> = {
@@ -81,25 +78,23 @@ const getDayEvaluation = (date: Date) => {
   const isTamNuong = [3, 7, 13, 18, 22, 27].includes(lunarDay);
 
   let score = 3.0; 
-  let notes = [];
-  let text = "Ngày Trung bình";
+  let text = "Ngày trung bình";
 
-  if (isHoangDao) { score += 1.5; notes.push("Ngày Hoàng đạo"); text = "Ngày Tốt"; } 
-  else { score -= 0.5; notes.push("Ngày Hắc đạo"); text = "Ngày Hắc đạo"; }
-  if (isNguyetKy) { score -= 1.5; notes.push("Phạm Nguyệt Kỵ"); text = "Ngày Xấu (Bách Kỵ)"; }
-  if (isTamNuong) { score -= 1.5; notes.push("Phạm Tam Nương"); text = "Ngày Xấu (Bách Kỵ)"; }
+  if (isHoangDao) { score += 1.5; text = "Ngày tốt"; } 
+  else { score -= 0.5; text = "Ngày xấu"; }
+  if (isNguyetKy || isTamNuong) { score -= 1.5; text = "Ngày xấu"; }
 
   score = Math.max(1.0, Math.min(5.0, score));
-  if (score >= 4.5 && !isNguyetKy && !isTamNuong) text = "Ngày Rất Tốt";
+  if (score >= 4.5 && !isNguyetKy && !isTamNuong) text = "Ngày rất tốt";
+  if (score >= 3.0 && score < 4.0 && !isNguyetKy && !isTamNuong) text = "Ngày trung bình";
 
-  return { score: score.toFixed(1), description: notes.join(' - '), text, isHoangDao };
+  return { score: score.toFixed(1), text, isHoangDao };
 };
 
 const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   let tietKhi = "Đang cập nhật...";
   let trucIdx = 0;
-  let monthChiIdx = 0;
 
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
@@ -117,12 +112,11 @@ const getDayDetails = (date: Date) => {
     tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
 
     const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    monthChiIdx = CH_ZHI.indexOf(lunar.getMonthZhiExact());
-    if(monthChiIdx === -1) monthChiIdx = date.getMonth();
+    let monthChiIdx = CH_ZHI.indexOf(lunar.getMonthZhiExact());
+    if (monthChiIdx === -1) monthChiIdx = date.getMonth();
     trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
   } catch(e) {
-    monthChiIdx = date.getMonth();
-    trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
+    trucIdx = (dayInfo.chiIdx - date.getMonth() + 12) % 12;
   }
 
   const trucName = TRUC_12[trucIdx];
@@ -130,46 +124,30 @@ const getDayDetails = (date: Date) => {
   const anchorDate = Date.UTC(2024, 0, 1);
   const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const diff = Math.floor((targetDate - anchorDate) / 86400000);
-  const saoIdx = (diff + 10) % 28;
+  const saoIdx = ((diff % 28) + 28 + 10) % 28;
   const saoName = NHI_THAP_BAT_TU[saoIdx];
 
-  const nguHanhMap: any = { 0: 'Kim', 1: 'Thủy', 2: 'Hỏa', 3: 'Thổ', 4: 'Mộc' };
-  const nguHanhName = nguHanhMap[dayInfo.canIdx % 5];
+  const ganVal = Math.floor(dayInfo.canIdx / 2) + 1;
+  const zhiVal = Math.floor((dayInfo.chiIdx % 6) / 2) + 1;
+  let sumNguHanh = ganVal + zhiVal;
+  if (sumNguHanh > 5) sumNguHanh -= 5;
+  const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
+  const nguHanhName = NA_YIN_MAP[sumNguHanh] || "Không xác định";
 
   const catTinh = [];
   const hungTinh = [];
   if (trucIdx === 0) { catTinh.push("Thiên Ân", "Thiên Hỷ"); hungTinh.push("Thổ Phủ"); }
-  if (trucIdx === 1) { catTinh.push("Nguyệt Đức", "Thiên Quan"); hungTinh.push("Thiên Cương"); }
-  if (trucIdx === 2) { catTinh.push("Thiên Phúc", "Phúc Sinh"); hungTinh.push("Tử Khí"); }
+  if (trucIdx === 1) { catTinh.push("Nguyệt Đức", "Thiên Quan"); hungTinh.push("Thiên Cương", "Tiểu không vong"); }
+  if (trucIdx === 2) { catTinh.push("Thiên Phúc", "Phúc Sinh"); hungTinh.push("Tử Khí", "Đại hao"); }
   if (trucIdx === 3) { catTinh.push("Nguyệt Ân", "Thiên Mã"); hungTinh.push("Cô Thần"); }
-  if (trucIdx === 4) { catTinh.push("Tam Hợp", "Mẫu Thương"); hungTinh.push("Quả Tú"); }
-  if (trucIdx === 5) { catTinh.push("Lục Hợp", "Ngũ Phú"); hungTinh.push("Kiếp Sát"); }
-  if (trucIdx === 6) { catTinh.push("Giải Thần"); hungTinh.push("Đại Hao", "Nguyệt Phá"); }
+  if (trucIdx === 4) { catTinh.push("Tam hợp", "Mẫu Thương", "Thiên quý", "Kính tâm", "Thiên tài", "Trực tính"); hungTinh.push("Quả Tú"); }
+  if (trucIdx === 5) { catTinh.push("Lục Hợp", "Ngũ Phú"); hungTinh.push("Kiếp Sát", "Vãng vong"); }
+  if (trucIdx === 6) { catTinh.push("Giải Thần"); hungTinh.push("Đại hao", "Nguyệt Phá", "Âm thác", "Dương thác"); }
   if (trucIdx === 7) { catTinh.push("Ích Hậu"); hungTinh.push("Bạch Hổ"); }
   if (trucIdx === 8) { catTinh.push("Thiên Y", "Thiên Tài"); hungTinh.push("Địa Tặc"); }
   if (trucIdx === 9) { catTinh.push("Sinh Khí", "Phúc Hậu"); hungTinh.push("Thiên Cẩu"); }
   if (trucIdx === 10) { catTinh.push("Thiên Đức", "Nguyệt Không"); hungTinh.push("Thiên Lại"); }
   if (trucIdx === 11) { catTinh.push("Thánh Tâm"); hungTinh.push("Chu Tước", "Câu Trận"); }
-
-  if (['Khuê', 'Bích', 'Giác'].includes(saoName)) catTinh.push("Văn Xương (Học hành)");
-
-  const eduAdvice = { should: [] as string[], avoid: [] as string[] };
-  if (['Kiến', 'Thành', 'Khai'].includes(trucName)) {
-    eduAdvice.should.push("Tổ chức lễ khai giảng, khai mạc năm học.", "Triển khai dự án giáo dục mới, ký kết hợp tác.");
-  }
-  if (['Khuê', 'Bích', 'Giác', 'Đẩu', 'Tỉnh'].includes(saoName)) {
-    eduAdvice.should.push("Rất tốt để xuất bản bài báo khoa học, bảo vệ luận án.", "Nộp hồ sơ xin học bổng, vinh danh học sinh giỏi.");
-  }
-  if (eduAdvice.should.length === 0) {
-    eduAdvice.should.push("Lên kế hoạch giảng dạy, nghiên cứu tài liệu.", "Thực hiện các công việc hành chính trường học bình thường.");
-  }
-
-  if (['Phá', 'Bế', 'Chấp'].includes(trucName)) {
-    eduAdvice.avoid.push("Tránh tổ chức sự kiện giáo dục quy mô lớn.", "Tránh ký kết các hợp đồng đào tạo dài hạn.");
-  }
-  if (['Tâm', 'Vĩ', 'Cơ', 'Nguy'].includes(saoName)) {
-    eduAdvice.avoid.push("Không nên khai giảng khóa học quan trọng.", "Tránh tổ chức thi cử hoặc đánh giá năng lực lớn.");
-  }
 
   let hop = "Bình thường, làm các công việc hàng ngày.";
   let ky = "Không có kiêng kỵ lớn.";
@@ -177,7 +155,7 @@ const getDayDetails = (date: Date) => {
   else if (trucIdx === 1) { hop = "Sửa chữa, quét dọn, giải oan."; ky = "Khai trương, ký hợp đồng."; }
   else if (trucIdx === 2) { hop = "Cầu tài, nhậm chức, tế tự."; ky = "Chữa bệnh, kiện cáo."; }
   else if (trucIdx === 3) { hop = "Họp mặt, di dời, san lấp."; ky = "Động thổ, gieo trồng."; }
-  else if (trucIdx === 4) { hop = "Giao dịch, nạp tài, đính hôn."; ky = "Tố tụng, thưa kiện."; }
+  else if (trucIdx === 4) { hop = "Giao dịch, nạp tài, đính hôn, động thổ, cầu sức khỏe."; ky = "Tố tụng, thưa kiện."; }
   else if (trucIdx === 5) { hop = "Lập khế ước, thu tiền, chăn nuôi."; ky = "Xuất hành, dời nhà."; }
   else if (trucIdx === 6) { hop = "Chữa bệnh, tháo dỡ."; ky = "Khai trương, xuất hành, an táng."; }
   else if (trucIdx === 7) { hop = "An sàng, tế tự."; ky = "Leo núi, mạo hiểm, đi thuyền."; }
@@ -186,24 +164,36 @@ const getDayDetails = (date: Date) => {
   else if (trucIdx === 10) { hop = "Khởi công, xuất hành, mở cửa hàng."; ky = "Động thổ, dọn rác."; }
   else if (trucIdx === 11) { hop = "Lấp hang lỗ, xây tường, vá vách."; ky = "Mở cửa hàng, chữa mắt."; }
 
-  const hoangDaoMap: Record<number, number[]> = {
-    2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10],
-    3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],
-    4: [4, 5, 8, 9, 11, 2], 10: [4, 5, 8, 9, 11, 2],
-    5: [6, 7, 10, 11, 1, 4], 11: [6, 7, 10, 11, 1, 4],
-    0: [8, 9, 0, 1, 3, 6],   6: [8, 9, 0, 1, 3, 6],
-    1: [10, 11, 2, 3, 5, 8], 7: [10, 11, 2, 3, 5, 8]
+  const GIO_HOANG_DAO = {
+    'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
+    'Thân': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
+    'Mão': 'Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)',
+    'Dậu': 'Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)',
+    'Thìn': 'Dần (3-5), Thìn (7-9), Tỵ (9-11), Thân (15-17), Dậu (17-19), Hợi (21-23)',
+    'Tuất': 'Dần (3-5), Thìn (7-9), Tỵ (9-11), Thân (15-17), Dậu (17-19), Hợi (21-23)',
+    'Tỵ': 'Sửu (1-3), Thìn (7-9), Ngọ (11-13), Mùi (13-15), Tuất (19-21), Hợi (21-23)',
+    'Hợi': 'Sửu (1-3), Thìn (7-9), Ngọ (11-13), Mùi (13-15), Tuất (19-21), Hợi (21-23)',
+    'Tý': 'Tý (23-1), Sửu (1-3), Mão (5-7), Ngọ (11-13), Thân (15-17), Dậu (17-19)',
+    'Ngọ': 'Tý (23-1), Sửu (1-3), Mão (5-7), Ngọ (11-13), Thân (15-17), Dậu (17-19)',
+    'Sửu': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)',
+    'Mùi': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)'
   };
-  const tianShenType = hoangDaoMap[monthChiIdx]?.includes(dayInfo.chiIdx) ? "Hoàng Đạo" : "Hắc Đạo";
+  const gioHoangDao = GIO_HOANG_DAO[CHI_CHU[dayInfo.chiIdx] as keyof typeof GIO_HOANG_DAO];
 
-  return { truc: trucName, sao: saoName, nguHanh: nguHanhName, tietKhi, hop, ky, catTinh, hungTinh, eduAdvice, tianShenType };
+  // Tính tuổi xung khắc
+  const xungChiIdx = (dayInfo.chiIdx + 6) % 12;
+  const xungCan1 = (dayInfo.canIdx + 2) % 10;
+  const xungCan2 = (dayInfo.canIdx + 4) % 10;
+  const xungCan3 = (dayInfo.canIdx + 6) % 10;
+  const tuoiXung = `${CAN_CHU[xungCan1]} ${CHI_CHU[xungChiIdx].toLowerCase()}, ${CAN_CHU[xungCan2]} ${CHI_CHU[xungChiIdx].toLowerCase()}, ${CAN_CHU[xungCan3]} ${CHI_CHU[xungChiIdx].toLowerCase()}`;
+
+  return { truc: trucName, sao: saoName, nguHanh: nguHanhName, tietKhi, hop, ky, catTinh, hungTinh, gioHoangDao, tuoiXung };
 };
 
 const renderStars = (scoreStr: string) => {
   const score = parseFloat(scoreStr);
   const fullStars = Math.floor(score);
   const hasHalf = score - fullStars >= 0.5;
-  
   return (
       <div className="flex items-center gap-0.5 ml-2">
           {[1, 2, 3, 4, 5].map(i => {
@@ -287,7 +277,6 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<UserEvent[]>([]);
   
-  // MODAL STATES
   const [showEventModal, setShowEventModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false); 
   const [showDayDetail, setShowDayDetail] = useState(false); 
@@ -316,9 +305,7 @@ export default function Calendar() {
           setEvents(cloudEvents);
           localStorage.setItem('user_events', JSON.stringify(cloudEvents));
           setShowLoginPrompt(false); 
-        } catch (error) {
-          console.error("Lỗi đồng bộ Firebase:", error);
-        }
+        } catch (error) { console.error(error); }
       } else {
         const saved = localStorage.getItem('user_events');
         if (saved) setEvents(JSON.parse(saved));
@@ -329,7 +316,6 @@ export default function Calendar() {
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') { Notification.requestPermission(); }
-    
     const interval = setInterval(() => {
       const now = new Date();
       events.forEach(ev => {
@@ -348,30 +334,22 @@ export default function Calendar() {
   }, [events]);
 
   const openModalForAdd = () => { 
-    if (!auth.currentUser) {
-       setShowLoginPrompt(true);
-       return;
-    }
+    if (!auth.currentUser) { setShowLoginPrompt(true); return; }
     setEditingId(null); setNewEventTitle(''); setNewEventLocation(''); setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true); 
   };
   
   const openModalForEdit = (ev: UserEvent) => { 
-    if (!auth.currentUser) {
-       setShowLoginPrompt(true);
-       return;
-    }
+    if (!auth.currentUser) { setShowLoginPrompt(true); return; }
     setEditingId(ev.id); setNewEventTitle(ev.title); setNewEventTime(ev.time); setNewEventLocation(ev.location || ''); setNewReminderAdvance(ev.reminderAdvance || 0); setShowEventModal(true); 
   };
 
   const handleGoogleLogin = async () => {
-    try { await signInWithPopup(auth, googleProvider); } 
-    catch (error) { console.error("Đăng nhập thất bại", error); }
+    try { await signInWithPopup(auth, googleProvider); } catch (error) { console.error(error); }
   };
 
   const handleSaveEvent = async () => {
     if (!newEventTitle || !auth.currentUser) return;
     const dateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
-    
     let updatedEvents: UserEvent[] = [];
     
     if (editingId) { 
@@ -379,14 +357,13 @@ export default function Calendar() {
       updatedEvents = events.map(e => e.id === editingId ? ev : e); 
       setEvents(updatedEvents);
       localStorage.setItem('user_events', JSON.stringify(updatedEvents));
-      try { await setDoc(doc(db, "events", ev.id), ev); } catch (e) { console.error(e); }
-    } 
-    else { 
+      try { await setDoc(doc(db, "events", ev.id), ev); } catch (e) {}
+    } else { 
       const newEv = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid };
       updatedEvents = [...events, newEv];
       setEvents(updatedEvents);
       localStorage.setItem('user_events', JSON.stringify(updatedEvents));
-      try { await setDoc(doc(db, "events", newEv.id), newEv); } catch (e) { console.error(e); }
+      try { await setDoc(doc(db, "events", newEv.id), newEv); } catch (e) {}
     }
     setShowEventModal(false);
   };
@@ -394,11 +371,10 @@ export default function Calendar() {
   const handleDeleteEvent = async (id: string, e: React.MouseEvent) => { 
     e.stopPropagation(); 
     if (!auth.currentUser) return;
-    
     const updatedEvents = events.filter(e => e.id !== id);
     setEvents(updatedEvents);
     localStorage.setItem('user_events', JSON.stringify(updatedEvents));
-    try { await deleteDoc(doc(db, "events", id)); } catch (e) { console.error(e); }
+    try { await deleteDoc(doc(db, "events", id)); } catch (e) {}
   };
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -683,104 +659,73 @@ export default function Calendar() {
          )}
       </div>
 
-      {/* MODAL CHI TIẾT NGÀY PHONG THỦY */}
+      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - GIAO DIỆN PHẲNG */}
       <AnimatePresence>
         {showDayDetail && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-brand/30 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-brand/30 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
               
               <div className="p-6 bg-brand/10 border-b border-brand/20 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 bg-brand text-bg-dark rounded-2xl flex items-center justify-center font-black text-3xl">{selectedDate.getDate()}</div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
-                    <p className="text-xs text-brand uppercase font-black tracking-widest">{dayDet.tianShenType}</p>
-                  </div>
-                </div>
+                <h3 className="text-white font-bold text-xl uppercase tracking-widest">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
                 <button onClick={() => setShowDayDetail(false)} className="p-2 hover:bg-rose-500 rounded-xl text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
               </div>
 
-              <div className="p-8 overflow-y-auto custom-scrollbar space-y-8">
-                {/* PHẦN 1: THÔNG TIN CHUNG */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="bg-[#05070a] p-4 rounded-xl border border-[#1e293b] text-center">
-                    <p className="text-[10px] text-slate-500 uppercase mb-1">Đánh giá</p>
-                    <div className="flex justify-center mb-1">{Array.from({length: 5}).map((_, i) => <Star key={i} size={12} className={i < Math.floor(parseFloat(dayEval.score)) ? "text-amber-400 fill-amber-400" : "text-slate-800"} />)}</div>
-                    <p className="text-sm font-bold text-white">[{dayEval.score}]</p>
+              <div className="p-8 overflow-y-auto custom-scrollbar text-slate-300 space-y-8 text-sm font-sans leading-relaxed">
+                
+                {/* 1. THÔNG TIN CHUNG */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-3 uppercase tracking-widest">1. Thông tin chung về ngày</h4>
+                  <p>Ngày âm lịch <span className="text-white font-bold">{selLunar.day}/{selLunar.monthStr}</span>, là ngày: <span className="text-sky-400 font-bold">{getCanChiDay(selectedDate).text}</span>, tháng: <span className="text-sky-400 font-bold">{getCanChiMonth(selLunar.monthNum, selectedDate.getFullYear()).text}</span>, năm: <span className="text-sky-400 font-bold">{getCanChiYear(selectedDate.getFullYear())}</span>, là <span className="text-amber-400 font-bold">{dayEval.text.toLowerCase()}</span> theo lịch âm. Ngày bình thường, không có gì đặc biệt.</p>
+                  <div className="flex items-center gap-2 mt-2">
+                     <span>Đánh giá:</span>
+                     <span className="text-white font-bold">[{dayEval.score}]</span>
+                     {renderStars(dayEval.score)}
                   </div>
-                  <div className="bg-[#05070a] p-4 rounded-xl border border-[#1e293b] text-center">
-                    <p className="text-[10px] text-slate-500 uppercase mb-1">Ngũ hành</p>
-                    <p className="text-sm font-bold text-sky-400">{dayDet.nguHanh}</p>
-                  </div>
-                  <div className="bg-[#05070a] p-4 rounded-xl border border-[#1e293b] text-center">
-                    <p className="text-[10px] text-slate-500 uppercase mb-1">Trực / Tiết khí</p>
-                    <p className="text-sm font-bold text-amber-400">{dayDet.truc} / {dayDet.tietKhi}</p>
-                  </div>
-                  <div className="bg-[#05070a] p-4 rounded-xl border border-[#1e293b] text-center">
-                    <p className="text-[10px] text-slate-500 uppercase mb-1">28 Chòm Sao</p>
-                    <p className="text-sm font-bold text-emerald-400">Sao {dayDet.sao}</p>
-                  </div>
+                  <p className="mt-2">Kiểu ngày: <span className={`font-bold ${dayEval.isHoangDao ? 'text-emerald-400' : 'text-rose-400'}`}>{dayEval.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span></p>
+                  <p>Trực: <span className="text-amber-400 font-bold">{dayDet.truc}</span></p>
+                  <p>Sao: <span className="text-amber-400 font-bold">{dayDet.sao}</span></p>
+                  
+                  <h5 className="font-bold text-white mt-4 mb-1">Ngũ hành & Tiết khí</h5>
+                  <p>Nạp âm: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
+                  <p>Tiết khí: <span className="text-emerald-400 font-bold">{dayDet.tietKhi}</span></p>
+                  
+                  <h5 className="font-bold text-white mt-4 mb-1">Nhị thập bát tú</h5>
+                  <p className="italic">"Ngày có sao <span className="text-amber-400 font-bold">{dayDet.sao}</span> chiếu mệnh, vạn sự cần cẩn trọng."</p>
                 </div>
 
-                {/* PHẦN 2: HỆ THỐNG SAO CÁT HUNG */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                     <h4 className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center gap-2"><CheckCircle size={14}/> Các Sao Tốt (Cát tinh)</h4>
-                     <div className="flex flex-wrap gap-2">
-                        {dayDet.catTinh.length > 0 ? dayDet.catTinh.map((s: string) => <span key={s} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] rounded-full font-bold">{s}</span>) : <span className="text-xs text-slate-500 italic">Không có Cát tinh đáng kể</span>}
-                     </div>
-                  </div>
-                  <div className="space-y-3">
-                     <h4 className="text-rose-400 text-xs font-black uppercase tracking-widest flex items-center gap-2"><AlertTriangle size={14}/> Các Sao Xấu (Hung tinh)</h4>
-                     <div className="flex flex-wrap gap-2">
-                        {dayDet.hungTinh.length > 0 ? dayDet.hungTinh.map((s: string) => <span key={s} className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] rounded-full font-bold">{s}</span>) : <span className="text-xs text-slate-500 italic">Không có Hung tinh đáng kể</span>}
-                     </div>
-                  </div>
+                {/* 2. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-3 uppercase tracking-widest">2. Mức độ phù hợp công việc</h4>
+                  <p><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
+                  <p className="mt-2"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> {dayDet.ky}</p>
                 </div>
 
-                {/* PHẦN 3: LỜI KHUYÊN GIÁO DỤC */}
-                <div className="bg-blue-500/5 border border-blue-500/20 p-6 rounded-2xl">
-                   <h4 className="text-blue-400 text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2"><GraduationCap size={18}/> Dành riêng cho Quản lý & Giáo dục</h4>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-[10px] font-bold text-blue-300 mb-2 uppercase">Nên ưu tiên thực hiện:</p>
-                        <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
-                          {dayDet.eduAdvice.should.map((item: string) => <li key={item}>{item}</li>)}
-                        </ul>
-                      </div>
-                      {dayDet.eduAdvice.avoid.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-bold text-rose-300 mb-2 uppercase">Cần thận trọng / Tránh:</p>
-                          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
-                            {dayDet.eduAdvice.avoid.map((item: string) => <li key={item}>{item}</li>)}
-                          </ul>
-                        </div>
-                      )}
-                   </div>
+                {/* 3. GIỜ HOÀNG ĐẠO VÀ XUNG KHẮC */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-3 uppercase tracking-widest">3. Giờ Hoàng đạo & Xung khắc</h4>
+                  <p><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}.</p>
+                  <p className="text-white font-bold mt-3">Tuổi xung khắc với ngày:</p>
+                  <p>Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span>, bị xung với ngày này, làm việc gì cũng cần tránh khởi sự vào giờ chính xung.</p>
                 </div>
 
-                {/* PHẦN 4: VIỆC CHUNG */}
-                <div className="space-y-3">
-                   <h4 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Đánh giá Trạch cát Dân gian</h4>
-                   <div className="flex gap-4 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                      <span className="text-xs font-black text-emerald-400 w-20 shrink-0 uppercase">Nên làm:</span>
-                      <p className="text-sm text-slate-300 leading-relaxed">{dayDet.hop}</p>
-                   </div>
-                   <div className="flex gap-4 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                      <span className="text-xs font-black text-rose-400 w-20 shrink-0 uppercase">Kiêng kỵ:</span>
-                      <p className="text-sm text-slate-300 leading-relaxed">{dayDet.ky}</p>
-                   </div>
+                {/* 4. CÁC SAO TỐT XẤU */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-3 uppercase tracking-widest">4. Các sao tốt xấu</h4>
+                  <p><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? dayDet.catTinh.join(', ') : 'Không có sao tốt nổi bật'}</p>
+                  <p className="mt-2"><span className="text-rose-400 font-bold">Các sao xấu:</span> {dayDet.hungTinh.length > 0 ? dayDet.hungTinh.join(', ') : 'Không có sao xấu nổi bật'}</p>
                 </div>
+
               </div>
               
               <div className="p-6 bg-[#05070a] border-t border-[#1e293b]">
-                 <button onClick={() => setShowDayDetail(false)} className="w-full py-4 bg-brand text-bg-dark font-black rounded-2xl shadow-lg hover:scale-[1.01] transition-transform">ĐÃ HIỂU VÀ ĐÓNG</button>
+                 <button onClick={() => setShowDayDetail(false)} className="w-full py-4 bg-[#1e293b] hover:bg-brand hover:text-bg-dark text-slate-300 font-black rounded-xl transition-colors">ĐÓNG LẠI</button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* MODAL CẢNH BÁO BẮT BUỘC ĐĂNG NHẬP */}
       <AnimatePresence>
         {showLoginPrompt && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
