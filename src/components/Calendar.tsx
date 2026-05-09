@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info, CheckCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
 
@@ -11,7 +11,6 @@ import { collection, query, where, getDocs, setDoc, doc, deleteDoc } from 'fireb
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
 const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
 const TRUC_12 = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
-const NHI_THAP_BAT_TU = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
 
 const getCanChiYear = (year: number) => {
   const can = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'][year % 10];
@@ -49,21 +48,34 @@ const getLunarDate = (date: Date) => {
   }
 };
 
+// --- BỘ LỌC KỴ DÂN GIAN VIỆT NAM (NGỌC HẠP THÔNG THƯ) ---
+const getFolkTaboos = (lunarMonth: number, lunarDay: number, dayChi: string) => {
+  const taboos: string[] = [];
+  // 1. Tam Nương
+  if ([3, 7, 13, 18, 22, 27].includes(lunarDay)) taboos.push("Tam Nương Sát");
+  // 2. Nguyệt Kỵ
+  if ([5, 14, 23].includes(lunarDay)) taboos.push("Nguyệt Kỵ");
+  // 3. Sát Chủ Dương (Tính theo tháng âm và chi ngày)
+  const satChuMap: Record<number, string> = { 1:'Tỵ', 2:'Tý', 3:'Mùi', 4:'Mão', 5:'Thân', 6:'Tuất', 7:'Hợi', 8:'Sửu', 9:'Ngọ', 10:'Dậu', 11:'Dần', 12:'Thìn' };
+  if (satChuMap[lunarMonth] === dayChi) taboos.push("Sát Chủ");
+  // 4. Vãng Vong (Tháng âm và chi ngày)
+  const vangVongMap: Record<number, string> = { 1:'Dần', 2:'Tỵ', 3:'Thân', 4:'Hợi', 5:'Mão', 6:'Ngọ', 7:'Dậu', 8:'Tý', 9:'Thìn', 10:'Mùi', 11:'Tuất', 12:'Sửu' };
+  if (vangVongMap[lunarMonth] === dayChi) taboos.push("Vãng Vong");
+
+  return taboos;
+};
+
 const getDayEvaluation = (date: Date) => {
   const dayInfo = getCanChiDay(date);
+  const lunar = getLunarDate(date);
   let mChi = 0;
-  let lunarDay = date.getDate();
   
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    const lunar = solar.getLunar();
-    lunarDay = lunar.getDay();
-    const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    mChi = CH_ZHI.indexOf(lunar.getMonthZhiExact()); 
+    mChi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(solar.getLunar().getMonthZhiExact()); 
     if(mChi === -1) mChi = date.getMonth();
   } catch (e) { mChi = date.getMonth(); }
 
-  const dChi = dayInfo.chiIdx;   
   const hoangDaoMap: Record<number, number[]> = {
     2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10],
     3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],
@@ -73,33 +85,41 @@ const getDayEvaluation = (date: Date) => {
     1: [10, 11, 2, 3, 5, 8], 7: [10, 11, 2, 3, 5, 8]
   };
 
-  const isHoangDao = hoangDaoMap[mChi]?.includes(dChi);
-  const isNguyetKy = [5, 14, 23].includes(lunarDay);
-  const isTamNuong = [3, 7, 13, 18, 22, 27].includes(lunarDay);
+  const isHoangDao = hoangDaoMap[mChi]?.includes(dayInfo.chiIdx);
+  const folkTaboos = getFolkTaboos(lunar.monthNum, lunar.day, CHI_CHU[dayInfo.chiIdx]);
 
   let score = 3.0; 
   let text = "Ngày trung bình";
 
   if (isHoangDao) { score += 1.5; text = "Ngày tốt"; } 
   else { score -= 0.5; text = "Ngày xấu"; }
-  if (isNguyetKy || isTamNuong) { score -= 1.5; text = "Ngày xấu"; }
+
+  // Áp dụng bộ lọc Kỵ dân gian: Nếu phạm đại kỵ, điểm hạ xuống và đổi text
+  if (folkTaboos.length > 0) { 
+    score = score >= 3.0 ? 2.5 : 1.0; 
+    text = "Ngày rất xấu (Bách kỵ)"; 
+  }
 
   score = Math.max(1.0, Math.min(5.0, score));
-  if (score >= 4.5 && !isNguyetKy && !isTamNuong) text = "Ngày rất tốt";
-  if (score >= 3.0 && score < 4.0 && !isNguyetKy && !isTamNuong) text = "Ngày trung bình";
+  if (score >= 4.5) text = "Ngày rất tốt";
 
-  return { score: score.toFixed(1), text, isHoangDao };
+  return { score: score.toFixed(1), text, isHoangDao, folkTaboos };
 };
 
 const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
+  const lunarObj = getLunarDate(date);
   let tietKhi = "Đang cập nhật...";
   let trucIdx = 0;
+  let saoName = "Đang cập nhật...";
+  let catTinh: string[] = [];
+  let hungTinh: string[] = [];
 
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
     const lunar = solar.getLunar();
     
+    // Tiết khí tiếng Việt
     const currentJieQi = lunar.getJieQi() || lunar.getPrevJieQi().getName();
     const JIE_QI_MAP: any = {
       '立春': 'Lập Xuân', '雨水': 'Vũ Thủy', '惊蛰': 'Kinh Trập', '春分': 'Xuân Phân',
@@ -111,22 +131,35 @@ const getDayDetails = (date: Date) => {
     };
     tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
 
+    // Trực
     const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
     let monthChiIdx = CH_ZHI.indexOf(lunar.getMonthZhiExact());
     if (monthChiIdx === -1) monthChiIdx = date.getMonth();
     trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
+
+    // 28 Sao (Chuẩn thư viện thiên văn)
+    const XIU_MAP: any = {
+      '角':'Giác', '亢':'Cang', '氐':'Đê', '房':'Phòng', '心':'Tâm', '尾':'Vĩ', '箕':'Cơ',
+      '斗':'Đẩu', '牛':'Ngưu', '女':'Nữ', '虚':'Hư', '危':'Nguy', '室':'Thất', '壁':'Bích',
+      '奎':'Khuê', '娄':'Lâu', '胃':'Vị', '昴':'Mão', '毕':'Tất', '觜':'Chủy', '参':'Sâm',
+      '井':'Tỉnh', '鬼':'Quỷ', '柳':'Liễu', '星':'Tinh', '张':'Trương', '翼':'Dực', '轸':'Chẩn'
+    };
+    saoName = XIU_MAP[lunar.getXiu()] || lunar.getXiu();
+
+    // Sao Tốt/Xấu từ Lunar Javascript
+    catTinh = lunar.getDayJiShen();
+    hungTinh = lunar.getDayXiongShen();
   } catch(e) {
     trucIdx = (dayInfo.chiIdx - date.getMonth() + 12) % 12;
   }
 
   const trucName = TRUC_12[trucIdx];
+  const folkTaboos = getFolkTaboos(lunarObj.monthNum, lunarObj.day, CHI_CHU[dayInfo.chiIdx]);
+  
+  // Trộn đại kỵ vào Hung Tinh để hiển thị
+  hungTinh = [...hungTinh, ...folkTaboos];
 
-  const anchorDate = Date.UTC(2024, 0, 1);
-  const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-  const diff = Math.floor((targetDate - anchorDate) / 86400000);
-  const saoIdx = ((diff % 28) + 28 + 10) % 28;
-  const saoName = NHI_THAP_BAT_TU[saoIdx];
-
+  // Ngũ hành Nạp âm
   const ganVal = Math.floor(dayInfo.canIdx / 2) + 1;
   const zhiVal = Math.floor((dayInfo.chiIdx % 6) / 2) + 1;
   let sumNguHanh = ganVal + zhiVal;
@@ -134,35 +167,26 @@ const getDayDetails = (date: Date) => {
   const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
   const nguHanhName = NA_YIN_MAP[sumNguHanh] || "Không xác định";
 
-  const catTinh = [];
-  const hungTinh = [];
-  if (trucIdx === 0) { catTinh.push("Thiên Ân", "Thiên Hỷ"); hungTinh.push("Thổ Phủ"); }
-  if (trucIdx === 1) { catTinh.push("Nguyệt Đức", "Thiên Quan"); hungTinh.push("Thiên Cương", "Tiểu không vong"); }
-  if (trucIdx === 2) { catTinh.push("Thiên Phúc", "Phúc Sinh"); hungTinh.push("Tử Khí", "Đại hao"); }
-  if (trucIdx === 3) { catTinh.push("Nguyệt Ân", "Thiên Mã"); hungTinh.push("Cô Thần"); }
-  if (trucIdx === 4) { catTinh.push("Tam hợp", "Mẫu Thương", "Thiên quý", "Kính tâm", "Thiên tài", "Trực tính"); hungTinh.push("Quả Tú"); }
-  if (trucIdx === 5) { catTinh.push("Lục Hợp", "Ngũ Phú"); hungTinh.push("Kiếp Sát", "Vãng vong"); }
-  if (trucIdx === 6) { catTinh.push("Giải Thần"); hungTinh.push("Đại hao", "Nguyệt Phá", "Âm thác", "Dương thác"); }
-  if (trucIdx === 7) { catTinh.push("Ích Hậu"); hungTinh.push("Bạch Hổ"); }
-  if (trucIdx === 8) { catTinh.push("Thiên Y", "Thiên Tài"); hungTinh.push("Địa Tặc"); }
-  if (trucIdx === 9) { catTinh.push("Sinh Khí", "Phúc Hậu"); hungTinh.push("Thiên Cẩu"); }
-  if (trucIdx === 10) { catTinh.push("Thiên Đức", "Nguyệt Không"); hungTinh.push("Thiên Lại"); }
-  if (trucIdx === 11) { catTinh.push("Thánh Tâm"); hungTinh.push("Chu Tước", "Câu Trận"); }
-
+  // Mức độ phù hợp công việc
   let hop = "Bình thường, làm các công việc hàng ngày.";
   let ky = "Không có kiêng kỵ lớn.";
-  if (trucIdx === 0) { hop = "Khai trương, xuất hành, nhậm chức."; ky = "Động thổ, an táng."; }
-  else if (trucIdx === 1) { hop = "Sửa chữa, quét dọn, giải oan."; ky = "Khai trương, ký hợp đồng."; }
-  else if (trucIdx === 2) { hop = "Cầu tài, nhậm chức, tế tự."; ky = "Chữa bệnh, kiện cáo."; }
-  else if (trucIdx === 3) { hop = "Họp mặt, di dời, san lấp."; ky = "Động thổ, gieo trồng."; }
-  else if (trucIdx === 4) { hop = "Giao dịch, nạp tài, đính hôn, động thổ, cầu sức khỏe."; ky = "Tố tụng, thưa kiện."; }
-  else if (trucIdx === 5) { hop = "Lập khế ước, thu tiền, chăn nuôi."; ky = "Xuất hành, dời nhà."; }
-  else if (trucIdx === 6) { hop = "Chữa bệnh, tháo dỡ."; ky = "Khai trương, xuất hành, an táng."; }
-  else if (trucIdx === 7) { hop = "An sàng, tế tự."; ky = "Leo núi, mạo hiểm, đi thuyền."; }
-  else if (trucIdx === 8) { hop = "Khai trương, nhập học, kết hôn."; ky = "Kiện tụng, phá dỡ."; }
-  else if (trucIdx === 9) { hop = "Thu hoạch, mua sắm, nhập kho."; ky = "An táng, mai táng."; }
-  else if (trucIdx === 10) { hop = "Khởi công, xuất hành, mở cửa hàng."; ky = "Động thổ, dọn rác."; }
-  else if (trucIdx === 11) { hop = "Lấp hang lỗ, xây tường, vá vách."; ky = "Mở cửa hàng, chữa mắt."; }
+  if (folkTaboos.length > 0) {
+    hop = "Chỉ nên làm các việc nhỏ, tĩnh tâm tu tập.";
+    ky = "Kỵ mọi việc trọng đại như khai trương, xuất hành, cưới hỏi, động thổ.";
+  } else {
+    if (trucIdx === 0) { hop = "Khai trương, xuất hành, nhậm chức."; ky = "Động thổ, an táng."; }
+    else if (trucIdx === 1) { hop = "Sửa chữa, quét dọn, giải oan."; ky = "Khai trương, ký hợp đồng."; }
+    else if (trucIdx === 2) { hop = "Cầu tài, nhậm chức, tế tự."; ky = "Chữa bệnh, kiện cáo."; }
+    else if (trucIdx === 3) { hop = "Họp mặt, di dời, san lấp."; ky = "Động thổ, gieo trồng."; }
+    else if (trucIdx === 4) { hop = "Giao dịch, nạp tài, đính hôn, động thổ, cầu sức khỏe."; ky = "Tố tụng, thưa kiện."; }
+    else if (trucIdx === 5) { hop = "Lập khế ước, thu tiền, chăn nuôi."; ky = "Xuất hành, dời nhà."; }
+    else if (trucIdx === 6) { hop = "Chữa bệnh, tháo dỡ."; ky = "Khai trương, xuất hành, an táng."; }
+    else if (trucIdx === 7) { hop = "An sàng, tế tự."; ky = "Leo núi, mạo hiểm, đi thuyền."; }
+    else if (trucIdx === 8) { hop = "Khai trương, nhập học, kết hôn."; ky = "Kiện tụng, phá dỡ."; }
+    else if (trucIdx === 9) { hop = "Thu hoạch, mua sắm, nhập kho."; ky = "An táng, mai táng."; }
+    else if (trucIdx === 10) { hop = "Khởi công, xuất hành, mở cửa hàng."; ky = "Động thổ, dọn rác."; }
+    else if (trucIdx === 11) { hop = "Lấp hang lỗ, xây tường, vá vách."; ky = "Mở cửa hàng, chữa mắt."; }
+  }
 
   const GIO_HOANG_DAO = {
     'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
@@ -180,6 +204,7 @@ const getDayDetails = (date: Date) => {
   };
   const gioHoangDao = GIO_HOANG_DAO[CHI_CHU[dayInfo.chiIdx] as keyof typeof GIO_HOANG_DAO];
 
+  // Tính tuổi xung khắc
   const xungChiIdx = (dayInfo.chiIdx + 6) % 12;
   const xungCan1 = (dayInfo.canIdx + 2) % 10;
   const xungCan2 = (dayInfo.canIdx + 4) % 10;
@@ -276,6 +301,7 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<UserEvent[]>([]);
   
+  // MODAL STATES
   const [showEventModal, setShowEventModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false); 
   const [showDayDetail, setShowDayDetail] = useState(false); 
@@ -628,6 +654,7 @@ export default function Calendar() {
         </div>
       </div>
 
+      {/* --- CÔNG CỤ CHUYỂN ĐỔI ÂM DƯƠNG --- */}
       <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl mt-8">
          <h3 className="text-lg font-bold text-brand flex items-center gap-2 mb-6"><ArrowRightLeft size={20} /> Cỗ máy thời gian (Đổi lịch Âm - Dương)</h3>
          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -674,7 +701,19 @@ export default function Calendar() {
                 {/* 1. THÔNG TIN CHUNG */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-3 uppercase tracking-widest">1. Thông tin chung về ngày</h4>
-                  <p>Ngày âm lịch <span className="text-white font-bold">{selLunar.day}/{selLunar.monthStr}</span>, là ngày: <span className="text-sky-400 font-bold">{getCanChiDay(selectedDate).text}</span>, tháng: <span className="text-sky-400 font-bold">{getCanChiMonth(selLunar.monthNum, selectedDate.getFullYear()).text}</span>, năm: <span className="text-sky-400 font-bold">{getCanChiYear(selectedDate.getFullYear())}</span>, là <span className="text-amber-400 font-bold">{dayEval.text.toLowerCase()}</span> theo lịch âm. Ngày bình thường, không có gì đặc biệt.</p>
+                  
+                  {/* TEXT ĐỘNG THAY THẾ CHO CÂU HARDCODE CŨ */}
+                  <p>
+                    Ngày âm lịch <span className="text-white font-bold">{selLunar.day}/{selLunar.monthStr}</span>, 
+                    là ngày: <span className="text-sky-400 font-bold">{getCanChiDay(selectedDate).text}</span>, 
+                    tháng: <span className="text-sky-400 font-bold">{getCanChiMonth(selLunar.monthNum, selectedDate.getFullYear()).text}</span>, 
+                    năm: <span className="text-sky-400 font-bold">{getCanChiYear(selectedDate.getFullYear())}</span>, 
+                    là <span className="text-amber-400 font-bold">{dayEval.text.toLowerCase()}</span> theo lịch âm. 
+                    {dayEval.folkTaboos.length > 0 
+                      ? <span className="text-rose-400 font-bold ml-1">Cảnh báo: Ngày này phạm phải đại kỵ ({dayEval.folkTaboos.join(', ')}).</span> 
+                      : <span className="text-emerald-400 font-medium ml-1">Ngày không phạm các đại kỵ dân gian.</span>}
+                  </p>
+                  
                   <div className="flex items-center gap-2 mt-2">
                      <span>Đánh giá:</span>
                      <span className="text-white font-bold">[{dayEval.score}]</span>
@@ -724,6 +763,7 @@ export default function Calendar() {
         )}
       </AnimatePresence>
 
+      {/* MODAL CẢNH BÁO BẮT BUỘC ĐĂNG NHẬP */}
       <AnimatePresence>
         {showLoginPrompt && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
