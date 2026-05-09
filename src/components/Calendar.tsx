@@ -47,7 +47,8 @@ const getDayEvaluation = (date: Date) => {
     const lunar = solar.getLunar();
     lunarDay = lunar.getDay();
     const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    mChi = CH_ZHI.indexOf(lunar.getMonthZhiExact());
+    mChi = CH_ZHI.indexOf(lunar.getMonthZhiExact()); 
+    if(mChi === -1) mChi = date.getMonth();
   } catch (e) {
     mChi = date.getMonth();
   }
@@ -85,6 +86,7 @@ const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   let tietKhi = "Đang cập nhật...";
   let trucIdx = 0;
+  let monthChiIdx = 0;
 
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
@@ -102,10 +104,12 @@ const getDayDetails = (date: Date) => {
     tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
 
     const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    const exactMonthChiIdx = CH_ZHI.indexOf(lunar.getMonthZhiExact());
-    trucIdx = (dayInfo.chiIdx - exactMonthChiIdx + 12) % 12;
+    monthChiIdx = CH_ZHI.indexOf(lunar.getMonthZhiExact());
+    if(monthChiIdx === -1) monthChiIdx = date.getMonth();
+    trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
   } catch(e) {
-    trucIdx = dayInfo.chiIdx % 12;
+    monthChiIdx = date.getMonth();
+    trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
   }
 
   const trucName = TRUC_12[trucIdx];
@@ -134,7 +138,7 @@ const getDayDetails = (date: Date) => {
   if (trucIdx === 10) { catTinh.push("Thiên Đức", "Nguyệt Không"); hungTinh.push("Thiên Lại"); }
   if (trucIdx === 11) { catTinh.push("Thánh Tâm"); hungTinh.push("Chu Tước", "Câu Trận"); }
 
-  if (['Khuê', 'Bích', 'Giác'].includes(saoName)) catTinh.push("Văn Xương");
+  if (['Khuê', 'Bích', 'Giác'].includes(saoName)) catTinh.push("Văn Xương (Học hành)");
 
   const eduAdvice = { should: [] as string[], avoid: [] as string[] };
   if (['Kiến', 'Thành', 'Khai'].includes(trucName)) {
@@ -169,7 +173,17 @@ const getDayDetails = (date: Date) => {
   else if (trucIdx === 10) { hop = "Khởi công, xuất hành, mở cửa hàng."; ky = "Động thổ, dọn rác."; }
   else if (trucIdx === 11) { hop = "Lấp hang lỗ, xây tường, vá vách."; ky = "Mở cửa hàng, chữa mắt."; }
 
-  return { truc: trucName, sao: saoName, nguHanh: nguHanhName, tietKhi, hop, ky, catTinh, hungTinh, eduAdvice };
+  const hoangDaoMap: Record<number, number[]> = {
+    2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10],
+    3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],
+    4: [4, 5, 8, 9, 11, 2], 10: [4, 5, 8, 9, 11, 2],
+    5: [6, 7, 10, 11, 1, 4], 11: [6, 7, 10, 11, 1, 4],
+    0: [8, 9, 0, 1, 3, 6],   6: [8, 9, 0, 1, 3, 6],
+    1: [10, 11, 2, 3, 5, 8], 7: [10, 11, 2, 3, 5, 8]
+  };
+  const tianShenType = hoangDaoMap[monthChiIdx]?.includes(dayInfo.chiIdx) ? "Hoàng Đạo" : "Hắc Đạo";
+
+  return { truc: trucName, sao: saoName, nguHanh: nguHanhName, tietKhi, hop, ky, catTinh, hungTinh, eduAdvice, tianShenType };
 };
 
 const renderStars = (scoreStr: string) => {
@@ -482,7 +496,6 @@ export default function Calendar() {
 
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
   const selEvents = events.filter(e => e.dateStr === selDateStr);
-  
   const dayEval = getDayEvaluation(selectedDate);
   const dayDet = getDayDetails(selectedDate);
 
@@ -670,7 +683,7 @@ export default function Calendar() {
                   <div className="w-14 h-14 bg-brand text-bg-dark rounded-2xl flex items-center justify-center font-black text-3xl">{selectedDate.getDate()}</div>
                   <div>
                     <h3 className="text-white font-bold text-lg">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
-                    <p className="text-xs text-brand uppercase font-black tracking-widest">{dayEval.text}</p>
+                    <p className="text-xs text-brand uppercase font-black tracking-widest">{dayDet.tianShenType}</p>
                   </div>
                 </div>
                 <button onClick={() => setShowDayDetail(false)} className="p-2 hover:bg-rose-500 rounded-xl text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
