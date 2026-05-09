@@ -28,7 +28,6 @@ const getCanChiDay = (date: Date) => {
   return { text: `${CAN_CHU[canIdx]} ${CHI_CHU[chiIdx]}`, chiIdx, canIdx };
 };
 
-// --- HÀM TÍNH TOÁN NGÀY ÂM (CÓ LUNAR JAVASCRIPT) ---
 const getLunarDate = (date: Date) => {
   try {
     const lunar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar();
@@ -48,7 +47,7 @@ const getDayEvaluation = (date: Date) => {
     const lunar = solar.getLunar();
     lunarDay = lunar.getDay();
     const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    mChi = CH_ZHI.indexOf(lunar.getMonthZhiExact()); // Lấy chi tháng chính xác theo Tiết Khí
+    mChi = CH_ZHI.indexOf(lunar.getMonthZhiExact());
   } catch (e) {
     mChi = date.getMonth();
   }
@@ -135,7 +134,7 @@ const getDayDetails = (date: Date) => {
   if (trucIdx === 10) { catTinh.push("Thiên Đức", "Nguyệt Không"); hungTinh.push("Thiên Lại"); }
   if (trucIdx === 11) { catTinh.push("Thánh Tâm"); hungTinh.push("Chu Tước", "Câu Trận"); }
 
-  if (['Khuê', 'Bích', 'Giác'].includes(saoName)) catTinh.push("Văn Xương (Học hành)");
+  if (['Khuê', 'Bích', 'Giác'].includes(saoName)) catTinh.push("Văn Xương");
 
   const eduAdvice = { should: [] as string[], avoid: [] as string[] };
   if (['Kiến', 'Thành', 'Khai'].includes(trucName)) {
@@ -189,7 +188,6 @@ const renderStars = (scoreStr: string) => {
   )
 }
 
-// --- DỮ LIỆU LỄ TẾT KÈM THEO NĂM LỊCH SỬ BẮT ĐẦU ---
 interface HolidayInfo { name: string; isDayOff: boolean; startYear: number; dayOffStartYear?: number; }
 
 const HOLIDAYS: Record<string, HolidayInfo> = {
@@ -484,6 +482,7 @@ export default function Calendar() {
 
   const selDateStr = `${selectedDate.getFullYear()}-${(selectedDate.getMonth()+1).toString().padStart(2,'0')}-${selectedDate.getDate().toString().padStart(2,'0')}`;
   const selEvents = events.filter(e => e.dateStr === selDateStr);
+  
   const dayEval = getDayEvaluation(selectedDate);
   const dayDet = getDayDetails(selectedDate);
 
