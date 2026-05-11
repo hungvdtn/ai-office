@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
 
@@ -156,7 +156,6 @@ const getDayDetails = (date: Date) => {
     };
     trucName = DUTY_MAP[lunar.getDuty()] || lunar.getDuty();
 
-    // SỬA LỖI HÀM SAO Ở ĐÂY: Dùng getDayXiu()
     const XIU_MAP: any = {
       '角':'Giác', '亢':'Cang', '氐':'Đê', '房':'Phòng', '心':'Tâm', '尾':'Vĩ', '箕':'Cơ',
       '斗':'Đẩu', '牛':'Ngưu', '女':'Nữ', '虚':'Hư', '危':'Nguy', '室':'Thất', '壁':'Bích',
@@ -223,7 +222,7 @@ const renderStars = (scoreStr: string) => {
   const fullStars = Math.floor(score);
   const hasHalf = score - fullStars >= 0.5;
   return (
-      <div className="flex items-center gap-0.5 ml-2">
+      <div className="flex items-center gap-0.5 ml-2 font-sans">
           {[1, 2, 3, 4, 5].map(i => {
               if (i <= fullStars) return <Star key={i} size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />;
               if (i === fullStars + 1 && hasHalf) return <StarHalf key={i} size={16} className="text-amber-400 fill-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]" />;
@@ -592,7 +591,7 @@ export default function Calendar() {
                   <span className="text-slate-300 font-semibold">Đánh giá chung:</span>
                   <strong className="text-amber-400 font-black">[{dayEval.score}]</strong>
                   {renderStars(dayEval.score)}
-                  <span className="ml-2 text-xs font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                  <span className="ml-2 text-xs font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded font-sans">
                     {dayEval.text}
                   </span>
                 </div>
@@ -642,7 +641,7 @@ export default function Calendar() {
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
             <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
-              {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}</option>)}
+              {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}>năm {1900 + i}</option>)}
             </select>
           </div>
         </div>
@@ -687,13 +686,13 @@ export default function Calendar() {
          )}
       </div>
 
-      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐỒNG BỘ FONT SANS VÀ LOẠI BỎ ĐÁNH DẤU NỔI BẬT */}
+      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐỒNG BỘ FONT VÀ NỘI DUNG */}
       <AnimatePresence>
         {showDayDetail && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-[#1e293b] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-[#1e293b] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
               
-              {/* HEADER UI: Vuông bo góc + Màu cam + Font Sans */}
+              {/* KHÔI PHỤC HEADER UI SIÊU ĐẸP, ĐỒNG BỘ FONT-SANS */}
               <div className="p-6 bg-[#1e293b]/30 border-b border-[#1e293b] flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-amber-500 text-[#05070a] rounded-2xl flex items-center justify-center font-black text-3xl font-sans shadow-lg">{selectedDate.getDate()}</div>
@@ -757,6 +756,8 @@ export default function Calendar() {
                 </div>
 
               </div>
+              
+              {/* ĐÃ LOẠI BỎ KHỐI BUTTON "ĐÓNG LẠI" Ở BÊN DƯỚI */}
             </motion.div>
           </motion.div>
         )}
