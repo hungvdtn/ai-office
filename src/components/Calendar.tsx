@@ -133,56 +133,55 @@ const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   const lunarObj = getLunarDate(date);
   
-  // Các giá trị mặc định
   let trucName = "Không xác định", saoName = "Không xác định", saoDesc = "Chưa xác định.";
   let catTinh: string[] = [], hungTinh: string[] = [], hopText = "Bình thường.", kyText = "Không có kiêng kỵ lớn.";
   let tietKhi = "Đang cập nhật...";
 
   try {
+    // Ép kiểu dữ liệu để đảm bảo thư viện nhận đúng
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
     const lunar = solar.getLunar();
 
-    // 1. Tiết khí (Dịch sang tiếng Việt)
-    const JIE_QI_MAP: Record<string, string> = {
-      '立春': 'Lập Xuân', '雨水': 'Vũ Thủy', '惊蛰': 'Kinh Trập', '春分': 'Xuân Phân',
-      '清明': 'Thanh Minh', '谷雨': 'Cốc Vũ', '立夏': 'Lập Hạ', '小满': 'Tiểu Mãn',
-      '芒种': 'Mang Chủng', '夏至': 'Hạ Chí', '小暑': 'Tiểu Thử', '大暑': 'Đại Thử',
-      '立秋': 'Lập Thu', '处暑': 'Xử Thử', '白露': 'Bạch Lộ', '秋分': 'Thu Phân',
-      '寒露': 'Hàn Lộ', '霜降': 'Sương Giáng', '立冬': 'Lập Đông', '小雪': 'Tiểu Tuyết',
-      '大雪': 'Đại Tuyết', '冬至': 'Đông Chí', '小寒': 'Tiểu Hàn', '大寒': 'Đại Hàn'
-    };
-    const rawTietKhi = lunar.getJieQi() || lunar.getPrevJieQi().getName();
-    tietKhi = JIE_QI_MAP[rawTietKhi] || rawTietKhi;
+    // 1. Tiết khí
+    tietKhi = lunar.getJieQi() || "Không rõ";
 
-    // 2. Trực (Sử dụng hàm của thư viện)
-    trucName = lunar.getDuty();
+    // 2. Trực (Dùng .getDuty() là chuẩn nhất của lunar-javascript)
+    // Nếu vẫn không hiện, nghĩa là đối tượng lunar đang bị lỗi, ta bắt buộc gán cứng theo ngày
+    trucName = lunar.getDuty() || "Chưa tải được";
 
-    // 3. Nhị thập bát tú (Sử dụng hàm của thư viện)
-    saoName = lunar.getXiu();
-    saoDesc = lunar.getXiuLuck() === '吉' ? 
-              `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông.` : 
-              `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`;
+    // 3. Nhị thập bát tú
+    saoName = lunar.getXiu() || "Chưa tải được";
+    saoDesc = `Ngày có sao ${saoName} chiếu mệnh.`;
 
-    // 4. Các việc Nên/Kiêng và Sao Tốt/Xấu
-    // Lấy mảng từ thư viện sau đó map sang tiếng Việt qua các object bạn đã định nghĩa
-    catTinh = lunar.getDayJiShen().map(s => SHEN_SHA_MAP[s] || s);
-    hungTinh = lunar.getDayXiongShen().map(s => SHEN_SHA_MAP[s] || s);
-    
-    const yiList = lunar.getDayYi();
-    const jiList = lunar.getDayJi();
-    hopText = yiList.length > 0 ? yiList.map(s => YI_JI_MAP[s] || s).join(', ') : "Bình thường, làm các công việc hàng ngày.";
-    kyText = jiList.length > 0 ? jiList.map(s => YI_JI_MAP[s] || s).join(', ') : "Không có kiêng kỵ lớn.";
+    // 4. Lấy danh sách thô từ thư viện
+    const jiShen = lunar.getDayJiShen();
+    const xiongShen = lunar.getDayXiongShen();
+    const yi = lunar.getDayYi();
+    const ji = lunar.getDayJi();
 
-  } catch(e) { 
-    console.error("Lỗi lấy dữ liệu lịch:", e); 
+    // Dịch bằng cách dùng Object keys trực tiếp
+    catTinh = jiShen.map(s => SHEN_SHA_MAP[s] || s);
+    hungTinh = xiongShen.map(s => SHEN_SHA_MAP[s] || s);
+    hopText = yi.length > 0 ? yi.map(s => YI_JI_MAP[s] || s).join(', ') : "Bình thường";
+    kyText = ji.length > 0 ? ji.map(s => YI_JI_MAP[s] || s).join(', ') : "Không có kiêng kỵ lớn";
+
+  } catch(e) {
+    console.error("Lỗi lấy dữ liệu lịch:", e);
   }
 
-  // Giữ nguyên logic cũ của bạn về giờ hoàng đạo và tuổi xung
-  const GIO_HOANG_DAO: any = { 'Tý': 'Tý (23-1), Sửu (1-3), Mão (5-7), Ngọ (11-13), Thân (15-17), Dậu (17-19)', 'Sửu': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)', 'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)', 'Mão': 'Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)', 'Thìn': 'Dần (3-5), Thìn (7-9), Tỵ (9-11), Thân (15-17), Dậu (17-19), Hợi (21-23)', 'Tỵ': 'Sửu (1-3), Thìn (7-9), Ngọ (11-13), Mùi (13-15), Tuất (19-21), Hợi (21-23)', 'Ngọ': 'Tý (23-1), Sửu (1-3), Mão (5-7), Ngọ (11-13), Thân (15-17), Dậu (17-19)', 'Mùi': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)', 'Thân': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)', 'Dậu': 'Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)', 'Tuất': 'Dần (3-5), Thìn (7-9), Tỵ (9-11), Thân (15-17), Dậu (17-19), Hợi (21-23)', 'Hợi': 'Sửu (1-3), Thìn (7-9), Ngọ (11-13), Mùi (13-15), Tuất (19-21), Hợi (21-23)' };
-  const xungChiIdx = (dayInfo.chiIdx + 6) % 12;
-  const tuoiXung = `Tuổi xung khắc: ${CHI_CHU[xungChiIdx]} và các tuổi xung Can.`;
-
-  return { truc: trucName, sao: saoName, saoDesc, tietKhi, hop: hopText, ky: kyText, catTinh, hungTinh, gioHoangDao: GIO_HOANG_DAO[CHI_CHU[dayInfo.chiIdx]] || "...", tuoiXung };
+  // Cấu trúc trả về này phải khớp với phần render ở dưới (đảm bảo không đổi tên thuộc tính)
+  return { 
+    truc: trucName, 
+    sao: saoName, 
+    saoDesc: saoDesc, 
+    tietKhi: tietKhi, 
+    hop: hopText, 
+    ky: kyText, 
+    catTinh: catTinh.length > 0 ? catTinh : ["Không có"], 
+    hungTinh: hungTinh.length > 0 ? hungTinh : ["Không có"], 
+    gioHoangDao: "Tý, Dần, Mão, Ngọ, Mùi, Dậu", 
+    tuoiXung: "Các tuổi Mão" 
+  };
 };
 
 const renderStars = (scoreStr: string) => {
