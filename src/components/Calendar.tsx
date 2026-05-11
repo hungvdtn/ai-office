@@ -93,11 +93,8 @@ const getManualYiJi = (trucIdx: number) => {
 };
 
 const SHEN_SHA_MAP: Record<string, string> = {
-  // --- CÁT TINH (SAO TỐT) ---
-  '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普护': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý', '吉神': 'Cát thần', '地财': 'Địa tài', '月解': 'Nguyệt giải', '直性': 'Trực tính', '月德合': 'Nguyệt đức hợp', '天德合': 'Thiên đức hợp', '月空合': 'Nguyệt không hợp', '人专': 'Nhân chuyên', '杀贡': 'Sát cống', '直星': 'Trực tinh',
-
-  // --- HUNG TINH (SAO XẤU) ---
-  '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九空': 'Cửu không', '九坎': 'Cửu khảm', '重日': 'Trùng nhật', '复日': 'Phục nhật', '天狗': 'Thiên cẩu', '游祸': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '四击': 'Tứ kích', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '五虚': 'Ngũ hư', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '九焦': 'Cửu tiêu', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thọ tử', '离巢': 'Ly sàng', '赤口': 'Xích khẩu', '绝烟': 'Tuyệt yên'
+  '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普护': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý', '吉神': 'Cát thần', '地财': 'Địa tài', '月解': 'Nguyệt giải', '直性': 'Trực tính',
+  '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九空': 'Cửu không', '九坎': 'Cửu khảm', '重日': 'Trùng nhật', '复日': 'Phục nhật', '天狗': 'Thiên cẩu', '游祸': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '四击': 'Tứ kích', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '五虚': 'Ngũ hư', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '九焦': 'Cửu tiêu', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thụ tử', '离巢': 'Ly sàng', '赤口': 'Xích khẩu'
 };
 
 const translateArray = (arr: string[], map: Record<string, string>) => {
@@ -130,81 +127,187 @@ const getDayEvaluation = (date: Date) => {
   const folkTaboos = getFolkTaboos(lunar.monthNum, lunar.day, CHI_CHU[dayInfo.chiIdx]);
   
   const trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
+  const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
+  const trucName = TRUC_12_LOCAL[trucIdx];
+
   const manualStars = getManualStars(trucIdx);
-  
-  let allCat = [...manualStars.cat];
-  let allHung = [...manualStars.hung];
+  let catTinh = [...manualStars.cat];
+  let hungTinh = [...manualStars.hung];
 
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    allCat = [...allCat, ...translateArray(solar.getLunar().getDayJiShen(), SHEN_SHA_MAP)];
-    allHung = [...allHung, ...translateArray(solar.getLunar().getDayXiongShen(), SHEN_SHA_MAP)];
+    catTinh = [...catTinh, ...translateArray(solar.getLunar().getDayJiShen(), SHEN_SHA_MAP)];
+    hungTinh = [...hungTinh, ...translateArray(solar.getLunar().getDayXiongShen(), SHEN_SHA_MAP)];
   } catch (e) {}
 
-  allCat = Array.from(new Set(allCat));
-  allHung = Array.from(new Set([...allHung, ...folkTaboos]));
+  catTinh = Array.from(new Set(catTinh));
+  hungTinh = Array.from(new Set([...hungTinh, ...folkTaboos]));
 
-  const DAI_CAT = ['Thiên đức', 'Nguyệt đức', 'Thiên ân', 'Thiên hỷ', 'Thiên xá', 'Giải thần', 'Sinh khí', 'Thiên y', 'Tam hợp', 'Nhân chuyên', 'Sát cống'];
+  // 1. TÍNH ĐIỂM NỀN
+  let score = 3.0; 
+  if (isHoangDao) score += 1.0; else score -= 0.5;
+
+  const trucGood = ['Kiến', 'Mãn', 'Bình', 'Định', 'Thành', 'Khai'];
+  if (trucGood.includes(trucName)) score += 0.5; else score -= 0.5;
+
+  // 2. NHÓM MIỄN TRỪ VÀ ĐIỂM LIỆT
+  const DAI_CAT = ['Thiên đức', 'Nguyệt đức', 'Thiên ân', 'Thiên hỷ', 'Thiên xá', 'Giải thần', 'Sinh khí', 'Thiên y', 'Tam hợp'];
   const CUU_GIAI = ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần'];
-  const FATAL = ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử', 'Nguyệt phá', 'Đại hao']; 
+  const FATAL = ['Sát chủ', 'Thiên cương']; 
+  const GROUP1 = ['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong'];
 
-  let score = isHoangDao ? 4.0 : 2.5; 
-  score += (allCat.filter(s => DAI_CAT.includes(s)).length * 0.4);
-  score -= (allHung.filter(s => FATAL.includes(s)).length * 1.5);
-  
-  const hasFatal = allHung.some(s => FATAL.includes(s));
-  const hasGroup1 = folkTaboos.some(s => ['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong'].includes(s));
-  const hasCuuGiai = allCat.some(s => CUU_GIAI.includes(s));
+  const daiCatCount = catTinh.filter(s => DAI_CAT.includes(s)).length;
+  const hasCuuGiai = catTinh.some(s => CUU_GIAI.includes(s));
+  const hasFatal = hungTinh.some(s => FATAL.includes(s));
+  const hasGroup1 = folkTaboos.some(s => GROUP1.includes(s));
 
-  if (hasFatal) score = 1.0;
-  else if (hasGroup1 && !hasCuuGiai) score = 2.0;
+  // 3. BÙ TRỪ CÁT HUNG
+  score += (daiCatCount * 0.5);
+  score += ((catTinh.length - daiCatCount) * 0.1);
+  score -= (hungTinh.length * 0.1); // Hung tinh thường
+
+  if (hasFatal) {
+      score = 1.0; // ĐIỂM LIỆT CHẠM ĐÁY
+  } else if (hasGroup1) {
+      if (hasCuuGiai) {
+          score += 0.5; // MIỄN TRỪ: Có sao cứu giải kéo điểm lại
+      } else {
+          score -= 1.5; // Kỵ thường bị trừ điểm nặng
+      }
+  }
 
   score = Math.max(1.0, Math.min(5.0, score));
-  let text = score >= 4.0 ? "Ngày tốt" : (score >= 3.0 ? "Ngày trung bình" : "Ngày xấu");
-  if (score >= 4.5) text = "Ngày rất tốt";
 
+  let text = "";
   let generalDesc = "";
-  if (score >= 4.5) generalDesc = "Vạn sự hanh thông, đại cát đại lợi.";
-  else if (hasFatal) generalDesc = `Ngày Đại Kỵ (${allHung.filter(s => FATAL.includes(s)).join(', ')}), tuyệt đối tránh khởi sự.`;
-  else if (hasGroup1) generalDesc = hasCuuGiai ? `Phạm kỵ (${folkTaboos.join(', ')}) nhưng có sao Cứu giải bù đắp.` : `Phạm đại kỵ (${folkTaboos.join(', ')}), tránh làm việc lớn.`;
-  else generalDesc = isHoangDao ? "Ngày tốt, có nhiều cát tinh phù trợ." : "Thích hợp làm các công việc nhỏ, hàng ngày.";
 
-  return { score: score.toFixed(1), text, isHoangDao, folkTaboos, generalDesc, catTinh: allCat, hungTinh: allHung, hasFatal };
+  if (score >= 4.5) {
+      text = "Ngày rất tốt";
+      generalDesc = "Đại cát đại lợi, vạn sự hanh thông, rất thích hợp khởi sự việc lớn.";
+  } else if (score >= 3.5) {
+      text = "Ngày tốt";
+      generalDesc = "Nhiều cát tinh hội tụ, có thể tiến hành các công việc quan trọng.";
+  } else if (score >= 2.5) {
+      text = "Ngày trung bình";
+      if (hasGroup1 && hasCuuGiai) {
+         generalDesc = `Phạm kỵ (${folkTaboos.join(', ')}) nhưng có sao Cứu giải bù đắp, có thể làm việc nhỏ.`;
+      } else {
+         generalDesc = "Cát hung bù trừ, thích hợp làm các công việc hàng ngày, việc nhỏ.";
+      }
+  } else {
+      text = "Ngày xấu";
+      generalDesc = hasFatal 
+          ? `Ngày Đại Kỵ (mang sát khí ${FATAL.filter(f => hungTinh.includes(f)).join(', ')}), tuyệt đối tránh khởi sự.` 
+          : `Phạm đại kỵ (${folkTaboos.join(', ')}), hung tinh lấn át cát tinh, tránh làm việc lớn.`;
+  }
+
+  return { score: score.toFixed(1), text, isHoangDao, folkTaboos, generalDesc, catTinh, hungTinh, hasFatal, hasGroup1, hasCuuGiai, trucName };
 };
 
 const getDayDetails = (date: Date) => {
-  const evalData = getDayEvaluation(date);
   const dayInfo = getCanChiDay(date);
+  const evalData = getDayEvaluation(date);
   
-  // NHỊ THẬP BÁT TÚ CHUẨN VIỆT NAM (Trùng khớp xemngay.com)
-  const NHI_THAP_BAT_TU_VN = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
+  let tietKhi = "Đang cập nhật...";
+  try {
+    const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    const currentJieQi = solar.getLunar().getJieQi() || solar.getLunar().getPrevJieQi().getName();
+    const JIE_QI_MAP: any = {
+      '立春': 'Lập Xuân', '雨水': 'Vũ Thủy', '惊蛰': 'Kinh Trập', '春分': 'Xuân Phân',
+      '清明': 'Thanh Minh', '谷雨': 'Cốc Vũ', '立夏': 'Lập Hạ', '小满': 'Tiểu Mãn',
+      '芒种': 'Mang Chủng', '夏至': 'Hạ Chí', '小暑': 'Tiểu Thử', '大暑': 'Đại Thử',
+      '立秋': 'Lập Thu', '处暑': 'Xử Thử', '白露': 'Bạch Lộ', '秋分': 'Thu Phân',
+      '寒露': 'Hàn Lộ', '霜降': 'Sương Giáng', '立冬': 'Lập Đông', '小雪': 'Tiểu Tuyết',
+      '大雪': 'Đại Tuyết', '冬至': 'Đông Chí', '小寒': 'Tiểu Hàn', '大寒': 'Đại Hàn'
+    };
+    tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
+  } catch(e) {}
+
+  // NHỊ THẬP BÁT TÚ CHUẨN LỊCH VIỆT NAM (100% Toán học)
+  const NHI_THAP_BAT_TU_LOCAL = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
   const anchorDate = Date.UTC(2026, 4, 1); 
-  const diffSao = Math.floor((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - anchorDate) / 86400000);
-  const saoName = NHI_THAP_BAT_TU_VN[((diffSao % 28) + 28 + 1) % 28];
-  
+  const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffSao = Math.floor((targetDate - anchorDate) / 86400000);
+  const saoIdx = ((diffSao % 28) + 28 + 1) % 28; 
+  const saoName = NHI_THAP_BAT_TU_LOCAL[saoIdx];
+
   const SAO_LUCK: Record<string, string> = {
     'Giác': 'Cát', 'Cang': 'Hung', 'Đê': 'Hung', 'Phòng': 'Cát', 'Tâm': 'Hung', 'Vĩ': 'Cát', 'Cơ': 'Cát',
     'Đẩu': 'Cát', 'Ngưu': 'Hung', 'Nữ': 'Hung', 'Hư': 'Hung', 'Nguy': 'Hung', 'Thất': 'Cát', 'Bích': 'Cát',
     'Khuê': 'Hung', 'Lâu': 'Cát', 'Vị': 'Cát', 'Mão': 'Hung', 'Tất': 'Cát', 'Chủy': 'Hung', 'Sâm': 'Cát',
     'Tỉnh': 'Cát', 'Quỷ': 'Hung', 'Liễu': 'Hung', 'Tinh': 'Hung', 'Trương': 'Cát', 'Dực': 'Hung', 'Chẩn': 'Cát'
   };
+  const saoDesc = SAO_LUCK[saoName] === 'Cát' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông, thuận lợi.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`;
+
+  const ganVal = Math.floor(dayInfo.canIdx / 2) + 1;
+  const zhiVal = Math.floor((dayInfo.chiIdx % 6) / 2) + 1;
+  let sumNguHanh = ganVal + zhiVal;
+  if (sumNguHanh > 5) sumNguHanh -= 5;
+  const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
+  const nguHanhName = NA_YIN_MAP[sumNguHanh] || "Không xác định";
 
   const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
-  const manualYiJi = getManualYiJi(TRUC_12_LOCAL.indexOf(evalData.trucName));
-  const catTinh = evalData.catTinh;
-  const hungTinh = evalData.hungTinh;
+  const tIdx = TRUC_12_LOCAL.indexOf(evalData.trucName);
+  const manualYiJi = getManualYiJi(tIdx);
 
-  return {
-    truc: evalData.trucName,
-    sao: saoName,
-    saoDesc: SAO_LUCK[saoName] === 'Cát' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`,
-    catTinh,
-    hungTinh,
-    hop: manualYiJi.hop,
-    ky: evalData.folkTaboos.length > 0 ? `Kiêng kỵ việc trọng đại vì phạm (${evalData.folkTaboos.join(', ')}). ` + manualYiJi.ky : manualYiJi.ky,
-    gioHoangDao: 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)', // Mặc định cho Dần/Thân
-    tuoiXung: `${CAN_CHU[(dayInfo.canIdx + 6)%10]} ${CHI_CHU[(dayInfo.chiIdx + 6)%12].toLowerCase()}`,
-    generalDesc: evalData.generalDesc,
+  let hopText = manualYiJi.hop;
+  let kyText = manualYiJi.ky;
+
+  // XỬ LÝ TEXT KIÊNG KỴ DỰA THEO ĐÁNH GIÁ (EvalData)
+  let tabooWarnings = [];
+  if (evalData.folkTaboos.includes("Sát chủ")) tabooWarnings.push("Ngày Sát Chủ đại hung, tuyệt đối kỵ mọi việc trọng đại");
+  if (evalData.hungTinh.includes("Thiên cương")) tabooWarnings.push("Sao Thiên Cương chiếu, kỵ khởi sự, di dời");
+  if (evalData.folkTaboos.includes("Tam nương sát")) tabooWarnings.push("Phạm Tam Nương, kỵ khai trương, xuất hành, cưới hỏi, động thổ");
+  if (evalData.folkTaboos.includes("Nguyệt kỵ")) tabooWarnings.push("Phạm Nguyệt Kỵ, kỵ làm việc lớn, đi thuyền");
+  if (evalData.folkTaboos.includes("Vãng vong")) tabooWarnings.push("Phạm Vãng Vong, kỵ xuất hành, giá thú, cầu tài");
+
+  if (evalData.hasFatal) {
+      kyText = tabooWarnings.join("; ") + ". " + kyText;
+      hopText = "Chỉ nên tĩnh tâm tu tập, dọn dẹp nhà cửa, không nên làm việc lớn.";
+  } else if (evalData.hasGroup1) {
+      if (evalData.hasCuuGiai) {
+          const cuuGiaiStars = evalData.catTinh.filter(s => ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần'].includes(s));
+          kyText = `Phạm (${evalData.folkTaboos.join(', ')}) nhưng có sao Cứu giải (${cuuGiaiStars.join(', ')}) bù đắp, tuy nhiên vẫn nên thận trọng. ` + kyText;
+      } else {
+          kyText = tabooWarnings.join("; ") + ". " + kyText;
+          hopText = "Thích hợp làm các việc nhỏ, hàng ngày. Tránh làm việc lớn.";
+      }
+  }
+
+  const GIO_HOANG_DAO = {
+    'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
+    'Thân': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
+    'Mão': 'Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)',
+    'Dậu': 'Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)',
+    'Thìn': 'Dần (3-5), Thìn (7-9), Tỵ (9-11), Thân (15-17), Dậu (17-19), Hợi (21-23)',
+    'Tuất': 'Dần (3-5), Thìn (7-9), Tỵ (9-11), Thân (15-17), Dậu (17-19), Hợi (21-23)',
+    'Tỵ': 'Sửu (1-3), Thìn (7-9), Ngọ (11-13), Mùi (13-15), Tuất (19-21), Hợi (21-23)',
+    'Hợi': 'Sửu (1-3), Thìn (7-9), Ngọ (11-13), Mùi (13-15), Tuất (19-21), Hợi (21-23)',
+    'Tý': 'Tý (23-1), Sửu (1-3), Mão (5-7), Ngọ (11-13), Thân (15-17), Dậu (17-19)',
+    'Ngọ': 'Tý (23-1), Sửu (1-3), Mão (5-7), Ngọ (11-13), Thân (15-17), Dậu (17-19)',
+    'Sửu': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)',
+    'Mùi': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)'
+  };
+  const gioHoangDao = GIO_HOANG_DAO[CHI_CHU[dayInfo.chiIdx] as keyof typeof GIO_HOANG_DAO];
+
+  const xungChiIdx = (dayInfo.chiIdx + 6) % 12;
+  const xungCan1 = (dayInfo.canIdx + 2) % 10;
+  const xungCan2 = (dayInfo.canIdx + 4) % 10;
+  const xungCan3 = (dayInfo.canIdx + 6) % 10;
+  const tuoiXung = `${CAN_CHU[xungCan1]} ${CHI_CHU[xungChiIdx].toLowerCase()}, ${CAN_CHU[xungCan2]} ${CHI_CHU[xungChiIdx].toLowerCase()}, ${CAN_CHU[xungCan3]} ${CHI_CHU[xungChiIdx].toLowerCase()}`;
+
+  return { 
+    truc: evalData.trucName, 
+    sao: saoName, 
+    saoDesc, 
+    nguHanh: nguHanhName, 
+    tietKhi, 
+    hop: hopText, 
+    ky: kyText, 
+    catTinh: evalData.catTinh, 
+    hungTinh: evalData.hungTinh, 
+    gioHoangDao, 
+    tuoiXung,
     folkTaboos: evalData.folkTaboos
   };
 };
@@ -726,13 +829,11 @@ export default function Calendar() {
 
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngày đại kỵ</h5>
                   <p className="font-sans">
-                    {dayDet.hungTinh.some(s => ['Sát chủ', 'Thọ tử', 'Thụ tử'].includes(s)) || dayDet.folkTaboos.length > 0 ? (
-    <span className="text-rose-400 font-bold">
-      {Array.from(new Set([...dayDet.folkTaboos, ...dayDet.hungTinh.filter(s => ['Sát chủ', 'Thọ tử', 'Thụ tử'].includes(s))])).join(', ')}
-    </span>
-  ) : (
-    <span className="text-emerald-400 font-bold">Không</span>
-  )}
+                    {dayDet.folkTaboos.length > 0 ? (
+                      <span className="text-rose-400 font-bold">{dayDet.folkTaboos.join(', ')}</span>
+                    ) : (
+                      <span className="text-emerald-400 font-bold">Không</span>
+                    )}
                   </p>
                 </div>
 
