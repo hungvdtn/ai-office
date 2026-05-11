@@ -112,11 +112,18 @@ const getDayEvaluation = (date: Date) => {
   if (score >= 4.5) text = "Ngày rất tốt";
   if (score >= 3.0 && score < 4.0 && folkTaboos.length === 0) text = "Ngày trung bình";
 
-  let generalDesc = "Ngày bình thường, không có gì đặc biệt.";
-  if (folkTaboos.length > 0) {
-    generalDesc = `Cần cẩn trọng vì phạm đại kỵ (${folkTaboos.join(', ')}).`;
-  } else if (isHoangDao) {
-    generalDesc = "Ngày tốt, vạn sự hanh thông, có nhiều cát tinh phù trợ.";
+  // SỬA LỖI LOGIC: Cập nhật nhận xét chính xác theo tính chất ngày
+  let generalDesc = "";
+  if (score >= 4.5) {
+    generalDesc = "Vạn sự hanh thông, rất thích hợp để tiến hành các việc trọng đại.";
+  } else if (score >= 3.0 && score < 4.5) {
+    if (folkTaboos.length > 0) {
+       generalDesc = `Cần cẩn trọng vì phạm kỵ (${folkTaboos.join(', ')}).`;
+    } else {
+       generalDesc = isHoangDao ? "Ngày tốt, có nhiều cát tinh phù trợ." : "Ngày bình thường, thích hợp làm các công việc nhỏ.";
+    }
+  } else {
+    generalDesc = folkTaboos.length > 0 ? `Ngày xấu, phạm đại kỵ (${folkTaboos.join(', ')}), nên tránh khởi sự việc lớn.` : "Ngày xấu, nhiều hung tinh, nên thận trọng trong mọi việc.";
   }
 
   return { score: score.toFixed(1), text, isHoangDao, folkTaboos, generalDesc };
@@ -156,16 +163,17 @@ const getDayDetails = (date: Date) => {
     };
     trucName = DUTY_MAP[lunar.getDuty()] || lunar.getDuty();
 
+    // SỬA LỖI HÀM: Dùng getXiu() thay vì getDayXiu()
     const XIU_MAP: any = {
       '角':'Giác', '亢':'Cang', '氐':'Đê', '房':'Phòng', '心':'Tâm', '尾':'Vĩ', '箕':'Cơ',
       '斗':'Đẩu', '牛':'Ngưu', '女':'Nữ', '虚':'Hư', '危':'Nguy', '室':'Thất', '壁':'Bích',
       '奎':'Khuê', '娄':'Lâu', '胃':'Vị', '昴':'Mão', '毕':'Tất', '觜':'Chủy', '参':'Sâm',
       '井':'Tỉnh', '鬼':'Quỷ', '柳':'Liễu', '星':'Tinh', '张':'Trương', '翼':'Dực', '轸':'Chẩn'
     };
-    const xiu = lunar.getDayXiu();
+    const xiu = lunar.getXiu();
     saoName = XIU_MAP[xiu] || xiu;
     
-    const luck = lunar.getDayXiuLuck();
+    const luck = lunar.getXiuLuck();
     saoDesc = luck === '吉' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông, thuận lợi.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`;
 
     catTinh = translateArray(lunar.getDayJiShen(), SHEN_SHA_MAP);
@@ -173,7 +181,7 @@ const getDayDetails = (date: Date) => {
 
     let rawYi = lunar.getDayYi();
     let rawJi = lunar.getDayJi();
-    hopText = rawYi.length > 0 ? translateArray(rawYi, YI_JI_MAP).join(', ') : "Bình thường, làm các việc nhỏ";
+    hopText = rawYi.length > 0 ? translateArray(rawYi, YI_JI_MAP).join(', ') : "Bình thường, có thể làm các việc nhỏ";
     kyText = rawJi.length > 0 ? translateArray(rawJi, YI_JI_MAP).join(', ') : "Không có kiêng kỵ lớn";
 
   } catch(e) {
