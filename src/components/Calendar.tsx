@@ -94,7 +94,7 @@ const getManualYiJi = (trucIdx: number) => {
 
 const SHEN_SHA_MAP: Record<string, string> = {
   '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普护': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý', '吉神': 'Cát thần', '地财': 'Địa tài', '月解': 'Nguyệt giải', '直性': 'Trực tính',
-  '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九空': 'Cửu không', '九坎': 'Cửu khảm', '重日': 'Trùng nhật', '复日': 'Phục nhật', '天狗': 'Thiên cẩu', '游祸': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '四击': 'Tứ kích', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '五虚': 'Ngũ hư', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '九焦': 'Cửu tiêu', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thụ tử', '离巢': 'Ly sàng', '赤口': 'Xích khẩu'
+  '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九空': 'Cửu không', '九坎': 'Cửu khảm', '重日': 'Trùng nhật', '复日': 'Phục nhật', '天狗': 'Thiên cẩu', '游祸': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '四击': 'Tứ kích', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '五虚': 'Ngũ hư', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '九焦': 'Cửu tiêu', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thọ tử', '离巢': 'Ly sàng', '赤口': 'Xích khẩu'
 };
 
 const translateArray = (arr: string[], map: Record<string, string>) => {
@@ -153,7 +153,7 @@ const getDayEvaluation = (date: Date) => {
   // 2. NHÓM MIỄN TRỪ VÀ ĐIỂM LIỆT
   const DAI_CAT = ['Thiên đức', 'Nguyệt đức', 'Thiên ân', 'Thiên hỷ', 'Thiên xá', 'Giải thần', 'Sinh khí', 'Thiên y', 'Tam hợp'];
   const CUU_GIAI = ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần'];
-  const FATAL = ['Sát chủ', 'Thiên cương']; 
+  const FATAL = ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử'];
   const GROUP1 = ['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong'];
 
   const daiCatCount = catTinh.filter(s => DAI_CAT.includes(s)).length;
@@ -256,6 +256,7 @@ const getDayDetails = (date: Date) => {
   // XỬ LÝ TEXT KIÊNG KỴ DỰA THEO ĐÁNH GIÁ (EvalData)
   let tabooWarnings = [];
   if (evalData.folkTaboos.includes("Sát chủ")) tabooWarnings.push("Ngày Sát Chủ đại hung, tuyệt đối kỵ mọi việc trọng đại");
+  if (evalData.hungTinh.includes("Thọ tử") || evalData.hungTinh.includes("Thụ tử")) tabooWarnings.push("Ngày Thọ Tử trăm việc đều kỵ, sát khí cực mạnh");
   if (evalData.hungTinh.includes("Thiên cương")) tabooWarnings.push("Sao Thiên Cương chiếu, kỵ khởi sự, di dời");
   if (evalData.folkTaboos.includes("Tam nương sát")) tabooWarnings.push("Phạm Tam Nương, kỵ khai trương, xuất hành, cưới hỏi, động thổ");
   if (evalData.folkTaboos.includes("Nguyệt kỵ")) tabooWarnings.push("Phạm Nguyệt Kỵ, kỵ làm việc lớn, đi thuyền");
@@ -829,11 +830,13 @@ export default function Calendar() {
 
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngày đại kỵ</h5>
                   <p className="font-sans">
-                    {dayDet.folkTaboos.length > 0 ? (
-                      <span className="text-rose-400 font-bold">{dayDet.folkTaboos.join(', ')}</span>
-                    ) : (
-                      <span className="text-emerald-400 font-bold">Không</span>
-                    )}
+                    {dayDet.hungTinh.some(s => ['Sát chủ', 'Thọ tử', 'Thụ tử'].includes(s)) || dayDet.folkTaboos.length > 0 ? (
+    <span className="text-rose-400 font-bold">
+      {Array.from(new Set([...dayDet.folkTaboos, ...dayDet.hungTinh.filter(s => ['Sát chủ', 'Thọ tử', 'Thụ tử'].includes(s))])).join(', ')}
+    </span>
+  ) : (
+    <span className="text-emerald-400 font-bold">Không</span>
+  )}
                   </p>
                 </div>
 
