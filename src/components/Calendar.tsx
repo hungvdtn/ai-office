@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
 
@@ -132,7 +132,6 @@ const getDayEvaluation = (date: Date) => {
   if (score >= 4.5) text = "Ngày rất tốt";
   if (score >= 3.0 && score < 4.0 && folkTaboos.length === 0) text = "Ngày trung bình";
 
-  // XỬ LÝ LOGIC HIỂN THỊ CHUẨN XÁC
   let generalDesc = "";
   if (score >= 4.5) {
     generalDesc = "Vạn sự hanh thông, rất thích hợp để tiến hành các việc trọng đại.";
@@ -155,48 +154,16 @@ const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   const lunarObj = getLunarDate(date);
   
-  // 1. Tính Trực (Toán học)
-  let exactMonthChiIdx = date.getMonth();
-  try {
-    const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    const exactMonthZhi = solar.getLunar().getMonthZhiExact();
-    const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    const idx = CH_ZHI.indexOf(exactMonthZhi);
-    if (idx !== -1) exactMonthChiIdx = idx;
-  } catch(e) {}
-  const trucIdx = (dayInfo.chiIdx - exactMonthChiIdx + 12) % 12;
-  const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
-  const trucName = TRUC_12_LOCAL[trucIdx];
-
-  // 2. Tính 28 Sao (Toán học 100% không crash)
-  const NHI_THAP_BAT_TU_LOCAL = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
-  const anchorDate = Date.UTC(2024, 0, 1);
-  const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-  const diff = Math.floor((targetDate - anchorDate) / 86400000);
-  const saoIdx = ((diff % 28) + 28 + 10) % 28;
-  const saoName = NHI_THAP_BAT_TU_LOCAL[saoIdx];
-  const SAO_LUCK: Record<string, string> = {
-    'Giác': 'Cát', 'Cang': 'Hung', 'Đê': 'Hung', 'Phòng': 'Cát', 'Tâm': 'Hung', 'Vĩ': 'Cát', 'Cơ': 'Cát',
-    'Đẩu': 'Cát', 'Ngưu': 'Hung', 'Nữ': 'Hung', 'Hư': 'Hung', 'Nguy': 'Hung', 'Thất': 'Cát', 'Bích': 'Cát',
-    'Khuê': 'Hung', 'Lâu': 'Cát', 'Vị': 'Cát', 'Mão': 'Hung', 'Tất': 'Cát', 'Chủy': 'Hung', 'Sâm': 'Cát',
-    'Tỉnh': 'Cát', 'Quỷ': 'Hung', 'Liễu': 'Hung', 'Tinh': 'Hung', 'Trương': 'Cát', 'Dực': 'Hung', 'Chẩn': 'Cát'
-  };
-  const saoDesc = SAO_LUCK[saoName] === 'Cát' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`;
-
-  // 3. Tính Ngũ hành Nạp âm
-  const ganVal = Math.floor(dayInfo.canIdx / 2) + 1;
-  const zhiVal = Math.floor((dayInfo.chiIdx % 6) / 2) + 1;
-  let sumNguHanh = ganVal + zhiVal;
-  if (sumNguHanh > 5) sumNguHanh -= 5;
-  const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
-  const nguHanhName = NA_YIN_MAP[sumNguHanh] || "Không xác định";
-
-  // 4. Lấy Cát tinh, Hung Tinh, Tiết khí
+  let tietKhi = "Đang cập nhật...";
+  let trucName = "Đang cập nhật...";
+  let saoName = "Đang cập nhật...";
+  let saoDesc = "Chưa xác định được sao chiếu mệnh.";
   let catTinh: string[] = [];
   let hungTinh: string[] = [];
-  let hopText = "";
-  let kyText = "";
-  let tietKhi = "Đang cập nhật...";
+  let hopText = "Bình thường, làm các công việc hàng ngày.";
+  let kyText = "Không có kiêng kỵ lớn.";
+
+  let trucIdx = (dayInfo.chiIdx - date.getMonth() + 12) % 12;
 
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
@@ -213,9 +180,38 @@ const getDayDetails = (date: Date) => {
     };
     tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
 
+    const CH_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    const exactMonthChiIdx = CH_ZHI.indexOf(lunar.getMonthZhiExact());
+    if (exactMonthChiIdx !== -1) {
+       trucIdx = (dayInfo.chiIdx - exactMonthChiIdx + 12) % 12;
+    }
   } catch(e) {}
 
-  // 5. BƠM SAO VÀ VIỆC NÊN/KỴ CHUẨN XÁC TỪ NGỌC HẠP THÔNG THƯ
+  const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
+  trucName = TRUC_12_LOCAL[trucIdx];
+
+  const NHI_THAP_BAT_TU_LOCAL = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
+  const anchorDate = Date.UTC(2024, 0, 1);
+  const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const diff = Math.floor((targetDate - anchorDate) / 86400000);
+  const saoIdx = ((diff % 28) + 28 + 10) % 28;
+  saoName = NHI_THAP_BAT_TU_LOCAL[saoIdx];
+
+  const SAO_LUCK: Record<string, string> = {
+    'Giác': 'Cát', 'Cang': 'Hung', 'Đê': 'Hung', 'Phòng': 'Cát', 'Tâm': 'Hung', 'Vĩ': 'Cát', 'Cơ': 'Cát',
+    'Đẩu': 'Cát', 'Ngưu': 'Hung', 'Nữ': 'Hung', 'Hư': 'Hung', 'Nguy': 'Hung', 'Thất': 'Cát', 'Bích': 'Cát',
+    'Khuê': 'Hung', 'Lâu': 'Cát', 'Vị': 'Cát', 'Mão': 'Hung', 'Tất': 'Cát', 'Chủy': 'Hung', 'Sâm': 'Cát',
+    'Tỉnh': 'Cát', 'Quỷ': 'Hung', 'Liễu': 'Hung', 'Tinh': 'Hung', 'Trương': 'Cát', 'Dực': 'Hung', 'Chẩn': 'Cát'
+  };
+  saoDesc = SAO_LUCK[saoName] === 'Cát' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`;
+
+  const ganVal = Math.floor(dayInfo.canIdx / 2) + 1;
+  const zhiVal = Math.floor((dayInfo.chiIdx % 6) / 2) + 1;
+  let sumNguHanh = ganVal + zhiVal;
+  if (sumNguHanh > 5) sumNguHanh -= 5;
+  const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
+  const nguHanhName = NA_YIN_MAP[sumNguHanh] || "Không xác định";
+
   const manualStars = getManualStars(trucIdx);
   catTinh = manualStars.cat;
   hungTinh = manualStars.hung;
@@ -680,7 +676,7 @@ export default function Calendar() {
               {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
             </select>
             <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
-              {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}></option>)}
+              {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}>năm {1900 + i}</option>)}
             </select>
           </div>
         </div>
@@ -725,13 +721,13 @@ export default function Calendar() {
          )}
       </div>
 
-      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐỒNG BỘ FONT VÀ NỘI DUNG */}
+      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐÃ SỬA LỖI SAO VÀ GIAO DIỆN */}
       <AnimatePresence>
         {showDayDetail && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-[#1e293b] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
               
-              {/* KHÔI PHỤC HEADER UI SIÊU ĐẸP, ĐỒNG BỘ FONT-SANS */}
+              {/* HEADER UI: Vuông bo góc + Màu cam + Font Sans */}
               <div className="p-6 bg-[#1e293b]/30 border-b border-[#1e293b] flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-amber-500 text-[#05070a] rounded-2xl flex items-center justify-center font-black text-3xl font-sans shadow-lg">{selectedDate.getDate()}</div>
@@ -769,7 +765,7 @@ export default function Calendar() {
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Nhị thập bát tú</h5>
                   <p className="font-sans">Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span></p>
-                  <p className="italic font-sans">{dayDet.saoDesc}</p>
+                  <p className="italic font-sans">"{dayDet.saoDesc}"</p>
                 </div>
 
                 {/* 2. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
@@ -795,8 +791,6 @@ export default function Calendar() {
                 </div>
 
               </div>
-              
-              {/* ĐÃ LOẠI BỎ KHỐI BUTTON "ĐÓNG LẠI" Ở BÊN DƯỚI */}
             </motion.div>
           </motion.div>
         )}
