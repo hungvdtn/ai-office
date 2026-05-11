@@ -59,10 +59,47 @@ const getFolkTaboos = (lunarMonth: number, lunarDay: number, dayChi: string) => 
   return taboos;
 };
 
-// --- BỘ TỪ ĐIỂN SAO TIẾNG VIỆT ---
+// --- BỘ TỪ ĐIỂN DỊCH THUẬT NGỌC HẠP THÔNG THƯ ---
 const SHEN_SHA_MAP: Record<string, string> = {
-  '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普护': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý',
+  '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普护': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý', '吉神': 'Cát thần',
   '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九空': 'Cửu không', '九坎': 'Cửu khảm', '重日': 'Trùng nhật', '复日': 'Phục nhật', '天狗': 'Thiên cẩu', '游祸': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '四击': 'Tứ kích', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '五虚': 'Ngũ hư', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '九焦': 'Cửu tiêu', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thụ tử'
+};
+
+const YI_JI_MAP: Record<string, string> = {
+  '嫁娶': 'Cưới hỏi', '出行': 'Xuất hành', '动土': 'Động thổ', '祈福': 'Cầu phúc', '祭祀': 'Tế tự', '交易': 'Giao dịch', '纳财': 'Nạp tài', '开市': 'Khai trương', '安床': 'An sàng', '安葬': 'An táng', '入殓': 'Nhập liệm', '修造': 'Sửa chữa', '拆卸': 'Tháo dỡ', '起基': 'Khởi công', '移徙': 'Di dời', '入宅': 'Nhập trạch', '纳采': 'Đính hôn', '订盟': 'Đính ước', '裁衣': 'May áo', '冠笄': 'Cắt tóc', '开仓': 'Mở kho', '纳畜': 'Chăn nuôi', '破土': 'Phá thổ', '启钻': 'Khởi cữu', '伐木': 'Đốn gỗ', '理发': 'Cắt tóc', '沐浴': 'Tắm gội', '治病': 'Chữa bệnh', '破屋': 'Phá nhà', '坏垣': 'Phá tường', '扫舍': 'Quét dọn', '开池': 'Mở ao', '开厕': 'Mở nhà vệ sinh', '造庙': 'Xây đền', '塞穴': 'Lấp hang', '余事勿取': 'Các việc khác không nên làm', '诸事不宜': 'Mọi việc đều kỵ', '造桥': 'Xây cầu', '塑绘': 'Tạc tượng', '开渠': 'Đào mương', '穿井': 'Đào giếng', '栽种': 'Gieo trồng', '结网': 'Giăng lưới', '畋猎': 'Săn bắn', '捕捉': 'Bắt thú', '教牛马': 'Huấn luyện thú', '造畜稠': 'Làm chuồng', '立券': 'Ký hợp đồng', '开光': 'Khai quang', '竖柱': 'Dựng cột', '上梁': 'Cất nóc', '造门': 'Làm cửa', '安香': 'Đặt bát hương', '解除': 'Giải oan', '求医': 'Cầu y', '会亲友': 'Họp mặt', '进人口': 'Nhận con nuôi', '纳奴妾': 'Nhận người giúp việc', '修墓': 'Sửa mộ', '造葬': 'Xây mộ', '探病': 'Thăm bệnh', '赴任': 'Nhậm chức', '割蜜': 'Thu hoạch mật', '酝酿': 'Ủ rượu', '合帐': 'Làm màn', '放水': 'Tháo nước', '造车器': 'Đóng xe', '造船': 'Đóng thuyền', '修水门': 'Sửa cống', '补垣': 'Vá tường', '平治道涂': 'Làm đường', '修表章': 'Dâng sớ'
+};
+
+const PENG_ZU_GAN_MAP: Record<string, string> = {
+  '甲不开仓财物耗散': 'Giáp không mở kho, tiền tài hao tổn',
+  '乙不栽植千株不长': 'Ất không gieo trồng, ngàn gốc không lên',
+  '丙不修灶必见灾殃': 'Bính không sửa bếp, ắt gặp tai ương',
+  '丁不剃头头必生疮': 'Đinh không cắt tóc, đầu ắt sinh mụn',
+  '戊不受田田主不祥': 'Mậu không nhận đất, chủ đất không may mắn',
+  '己不破券二比并亡': 'Kỷ không phá khoán, hai bên cùng mất',
+  '庚不经络织机虚张': 'Canh không quay tơ, khung cửi trống không',
+  '辛不合酱主人不尝': 'Tân không trộn tương, chủ không được nếm',
+  '壬不泱水更难提防': 'Nhâm không tháo nước, càng khó đề phòng',
+  '癸不词讼理弱敌强': 'Quý không kiện tụng, lý yếu địch mạnh'
+};
+
+const PENG_ZU_ZHI_MAP: Record<string, string> = {
+  '子不问卜自惹灾殃': 'Tý không hỏi bói, tự rước tai ương',
+  '丑不冠带主不还乡': 'Sửu không nhận chức, chủ không về quê',
+  '寅不祭祀神鬼不尝': 'Dần không tế tự, thần quỷ không hưởng',
+  '卯不穿井水泉不香': 'Mão không đào giếng, nguồn nước không trong',
+  '辰不哭泣必主重丧': 'Thìn không khóc lóc, ắt chủ trùng tang',
+  '巳不远行财物伏藏': 'Tỵ không đi xa, tiền tài bị hao hụt',
+  '午不苫盖屋主更张': 'Ngọ không lợp mái, chủ nhà phải thay',
+  '未不服药毒气入肠': 'Mùi không uống thuốc, độc khí vào ruột',
+  '申不安床鬼祟入房': 'Thân không kê giường, quỷ ma vào phòng',
+  '酉不会客醉坐颠狂': 'Dậu không tiếp khách, say sưa điên cuồng',
+  '戌不吃犬作怪上床': 'Tuất không ăn thịt chó, yêu quái lên giường',
+  '亥不嫁娶不利新郎': 'Hợi không cưới hỏi, không lợi tân lang'
+};
+
+const translateArray = (arr: string[], map: Record<string, string>) => {
+  if (!arr || arr.length === 0) return [];
+  return arr.map(item => map[item] || item);
 };
 
 const getDayEvaluation = (date: Date) => {
@@ -115,12 +152,17 @@ const getDayEvaluation = (date: Date) => {
 const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   const lunarObj = getLunarDate(date);
+  
   let tietKhi = "Đang cập nhật...";
-  let trucIdx = 0;
+  let trucName = "Đang cập nhật...";
   let saoName = "Đang cập nhật...";
+  let saoDesc = "";
   let catTinh: string[] = [];
   let hungTinh: string[] = [];
-  let trucName = "";
+  let hopText = "Bình thường, làm các công việc hàng ngày.";
+  let kyText = "Không có kiêng kỵ lớn.";
+  let pzGan = "";
+  let pzZhi = "";
 
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
@@ -150,18 +192,28 @@ const getDayDetails = (date: Date) => {
       '井':'Tỉnh', '鬼':'Quỷ', '柳':'Liễu', '星':'Tinh', '张':'Trương', '翼':'Dực', '轸':'Chẩn'
     };
     saoName = XIU_MAP[lunar.getXiu()] || lunar.getXiu();
+    let saoLuck = lunar.getXiuLuck();
+    saoDesc = saoLuck === '吉' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông, thuận lợi.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng, tránh làm việc lớn.`;
 
-    catTinh = lunar.getDayJiShen().map((s: string) => SHEN_SHA_MAP[s] || s);
-    hungTinh = lunar.getDayXiongShen().map((s: string) => SHEN_SHA_MAP[s] || s);
+    catTinh = translateArray(lunar.getDayJiShen(), SHEN_SHA_MAP);
+    hungTinh = translateArray(lunar.getDayXiongShen(), SHEN_SHA_MAP);
+
+    let rawYi = lunar.getDayYi();
+    let rawJi = lunar.getDayJi();
+    hopText = rawYi.length > 0 ? translateArray(rawYi, YI_JI_MAP).join(', ') : "Không có nổi bật";
+    kyText = rawJi.length > 0 ? translateArray(rawJi, YI_JI_MAP).join(', ') : "Không có kiêng kỵ lớn";
+
+    pzGan = PENG_ZU_GAN_MAP[lunar.getPengZuGan()] || lunar.getPengZuGan();
+    pzZhi = PENG_ZU_ZHI_MAP[lunar.getPengZuZhi()] || lunar.getPengZuZhi();
 
   } catch(e) {
-    trucIdx = (dayInfo.chiIdx - date.getMonth() + 12) % 12;
+    let trucIdx = (dayInfo.chiIdx - date.getMonth() + 12) % 12;
     const TRUC_12 = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
     trucName = TRUC_12[trucIdx];
   }
 
   const folkTaboos = getFolkTaboos(lunarObj.monthNum, lunarObj.day, CHI_CHU[dayInfo.chiIdx]);
-  hungTinh = [...hungTinh, ...folkTaboos]; 
+  hungTinh = Array.from(new Set([...hungTinh, ...folkTaboos]));
 
   const ganVal = Math.floor(dayInfo.canIdx / 2) + 1;
   const zhiVal = Math.floor((dayInfo.chiIdx % 6) / 2) + 1;
@@ -169,30 +221,6 @@ const getDayDetails = (date: Date) => {
   if (sumNguHanh > 5) sumNguHanh -= 5;
   const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
   const nguHanhName = NA_YIN_MAP[sumNguHanh] || "Không xác định";
-
-  const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
-  const tIdx = TRUC_12_LOCAL.indexOf(trucName);
-  
-  let hop = "Bình thường, làm các công việc hàng ngày.";
-  let ky = "Không có kiêng kỵ lớn.";
-  
-  if (folkTaboos.length > 0) {
-    hop = "Chỉ nên làm các việc nhỏ, tĩnh tâm tu tập.";
-    ky = "Kỵ mọi việc trọng đại như khai trương, xuất hành, cưới hỏi, động thổ.";
-  } else {
-    if (tIdx === 0) { hop = "Khai trương, xuất hành, nhậm chức."; ky = "Động thổ, an táng."; }
-    else if (tIdx === 1) { hop = "Sửa chữa, quét dọn, giải oan."; ky = "Khai trương, ký hợp đồng."; }
-    else if (tIdx === 2) { hop = "Cầu tài, nhậm chức, tế tự."; ky = "Chữa bệnh, kiện cáo."; }
-    else if (tIdx === 3) { hop = "Họp mặt, di dời, san lấp."; ky = "Động thổ, gieo trồng."; }
-    else if (tIdx === 4) { hop = "Giao dịch, nạp tài, đính hôn, động thổ, cầu sức khỏe."; ky = "Tố tụng, thưa kiện."; }
-    else if (tIdx === 5) { hop = "Lập khế ước, thu tiền, chăn nuôi."; ky = "Xuất hành, dời nhà."; }
-    else if (tIdx === 6) { hop = "Chữa bệnh, tháo dỡ."; ky = "Khai trương, xuất hành, an táng."; }
-    else if (tIdx === 7) { hop = "An sàng, tế tự."; ky = "Leo núi, mạo hiểm, đi thuyền."; }
-    else if (tIdx === 8) { hop = "Khai trương, nhập học, kết hôn."; ky = "Kiện tụng, phá dỡ."; }
-    else if (tIdx === 9) { hop = "Thu hoạch, mua sắm, nhập kho."; ky = "An táng, mai táng."; }
-    else if (tIdx === 10) { hop = "Khởi công, xuất hành, mở cửa hàng."; ky = "Động thổ, dọn rác."; }
-    else if (tIdx === 11) { hop = "Lấp hang lỗ, xây tường, vá vách."; ky = "Mở cửa hàng, chữa mắt."; }
-  }
 
   const GIO_HOANG_DAO = {
     'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
@@ -216,7 +244,7 @@ const getDayDetails = (date: Date) => {
   const xungCan3 = (dayInfo.canIdx + 6) % 10;
   const tuoiXung = `${CAN_CHU[xungCan1]} ${CHI_CHU[xungChiIdx].toLowerCase()}, ${CAN_CHU[xungCan2]} ${CHI_CHU[xungChiIdx].toLowerCase()}, ${CAN_CHU[xungCan3]} ${CHI_CHU[xungChiIdx].toLowerCase()}`;
 
-  return { truc: trucName, sao: saoName, nguHanh: nguHanhName, tietKhi, hop, ky, catTinh, hungTinh, gioHoangDao, tuoiXung };
+  return { truc: trucName, sao: saoName, saoDesc, nguHanh: nguHanhName, tietKhi, hop: hopText, ky: kyText, pzGan, pzZhi, catTinh, hungTinh, gioHoangDao, tuoiXung };
 };
 
 const renderStars = (scoreStr: string) => {
@@ -688,26 +716,29 @@ export default function Calendar() {
          )}
       </div>
 
-      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐỒNG BỘ FONT SANS VÀ LOẠI BỎ ĐÁNH DẤU NỔI BẬT */}
+      {/* MODAL CHI TIẾT NGÀY PHONG THỦY - ĐỒNG BỘ FONT VÀ NỘI DUNG */}
       <AnimatePresence>
         {showDayDetail && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-[#1e293b] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-brand/30 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
               
-              <div className="p-4 border-b border-[#1e293b] flex justify-between items-center bg-[#0a0f18]">
-                <h3 className="text-lg font-bold text-white font-sans">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
-                <button onClick={() => setShowDayDetail(false)} className="p-1 hover:bg-[#1e293b] rounded-lg text-slate-400 hover:text-white transition-colors"><X size={20}/></button>
+              {/* KHÔI PHỤC HEADER UI SIÊU ĐẸP, ĐỒNG BỘ FONT-SANS */}
+              <div className="p-6 bg-brand/10 border-b border-brand/20 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 bg-brand text-bg-dark rounded-2xl flex items-center justify-center font-black text-3xl font-sans">{selectedDate.getDate()}</div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg font-sans">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
+                    <p className="text-xs text-brand uppercase font-black tracking-widest font-sans">{dayEval.text}</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowDayDetail(false)} className="p-2 hover:bg-rose-500 rounded-xl text-slate-400 hover:text-white transition-colors"><X size={24}/></button>
               </div>
 
-              <div className="p-6 overflow-y-auto custom-scrollbar text-slate-300 space-y-6 text-sm font-sans leading-relaxed bg-[#05070a]">
+              <div className="p-8 overflow-y-auto custom-scrollbar text-slate-300 space-y-8 text-sm font-sans leading-relaxed">
                 
-                <div className="text-center pb-4 border-b border-[#1e293b]">
-                  <h2 className="text-xl font-bold text-amber-400 capitalize font-sans">{dayEval.text}</h2>
-                </div>
-
                 {/* 1. THÔNG TIN CHUNG */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans">1. Thông tin chung về ngày</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">1. Thông tin chung về ngày</h4>
                   <p className="font-sans">
                     Ngày âm lịch <span className="text-white font-bold">{selLunar.day}/{selLunar.monthStr}</span>, 
                     là ngày: <span className="text-sky-400 font-bold">{getCanChiDay(selectedDate).text}</span>, 
@@ -722,39 +753,42 @@ export default function Calendar() {
                   </div>
                   <p className="mt-2 font-sans">Kiểu ngày: <span className={`font-bold ${dayEval.isHoangDao ? 'text-emerald-400' : 'text-rose-400'}`}>{dayEval.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span></p>
                   <p className="font-sans">Trực: <span className="text-amber-400 font-bold">{dayDet.truc}</span></p>
-                  <p className="font-sans">Sao: <span className="text-amber-400 font-bold">{dayDet.sao}</span></p>
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngũ hành & Tiết khí</h5>
                   <p className="font-sans">Nạp âm: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
                   <p className="font-sans">Tiết khí: <span className="text-emerald-400 font-bold">{dayDet.tietKhi}</span></p>
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Nhị thập bát tú</h5>
-                  <p className="italic font-sans">"Ngày có sao <span className="text-amber-400 font-bold">{dayDet.sao}</span> chiếu mệnh, vạn sự cần cẩn trọng."</p>
+                  <p className="font-sans">Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span></p>
+                  <p className="italic font-sans">"{dayDet.saoDesc}"</p>
                 </div>
 
                 {/* 2. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans">2. Mức độ phù hợp công việc</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Mức độ phù hợp công việc</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
                   <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> {dayDet.ky}</p>
+                  <p className="mt-2 font-sans"><span className="text-amber-400 font-bold">Bành Tổ bách kỵ:</span> {dayDet.pzGan}. {dayDet.pzZhi}.</p>
                 </div>
 
                 {/* 3. GIỜ HOÀNG ĐẠO VÀ XUNG KHẮC */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans">3. Giờ Hoàng đạo & Xung khắc</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Giờ Hoàng đạo & Xung khắc</h4>
                   <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}.</p>
                   <p className="text-white font-bold mt-3 font-sans">Tuổi xung khắc với ngày:</p>
                   <p className="font-sans">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span>, bị xung với ngày này, làm việc gì cũng cần tránh khởi sự vào giờ chính xung.</p>
                 </div>
 
-                {/* 4. CÁC SAO TỐT XẤU (KHÔNG NỔI BẬT) */}
+                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans">4. Các sao tốt xấu</h4>
-                  <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? dayDet.catTinh.join(', ') : 'Không có sao tốt đáng chú ý'}</p>
-                  <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Các sao xấu:</span> {dayDet.hungTinh.length > 0 ? dayDet.hungTinh.join(', ') : 'Không có sao xấu đáng chú ý'}</p>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (theo Ngọc hạp thông thư)</h4>
+                  <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? dayDet.catTinh.join(', ') : 'Không có'}</p>
+                  <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Các sao xấu:</span> {dayDet.hungTinh.length > 0 ? dayDet.hungTinh.join(', ') : 'Không có'}</p>
                 </div>
 
               </div>
+              
+              {/* ĐÃ LOẠI BỎ KHỐI BUTTON "ĐÓNG LẠI" Ở BÊN DƯỚI */}
             </motion.div>
           </motion.div>
         )}
