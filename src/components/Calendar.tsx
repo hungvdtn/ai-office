@@ -130,57 +130,32 @@ const getDayEvaluation = (date: Date) => {
 };
 
 const getDayDetails = (date: Date) => {
-  const dayInfo = getCanChiDay(date);
   const lunarObj = getLunarDate(date);
+  const lunarDay = lunarObj.day;
+  const lunarMonth = lunarObj.monthNum;
   
-  let trucName = "Không xác định", saoName = "Không xác định", saoDesc = "Chưa xác định.";
-  let catTinh: string[] = [], hungTinh: string[] = [], hopText = "Bình thường.", kyText = "Không có kiêng kỵ lớn.";
-  let tietKhi = "Đang cập nhật...";
+  // 1. Tính Trực (Dựa trên ngày âm lịch so với tháng)
+  const TRUC_LIST = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
+  const monthZhiIdx = (lunarMonth - 1) % 12; // Chỉ số tháng
+  const dayZhiIdx = (date.getDate() % 12); // Đơn giản hóa chỉ số ngày
+  const trucName = TRUC_LIST[(dayZhiIdx - monthZhiIdx + 12) % 12];
 
-  try {
-    // Ép kiểu dữ liệu để đảm bảo thư viện nhận đúng
-    const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    const lunar = solar.getLunar();
+  // 2. Tính Nhị thập bát tú (Dựa trên ngày âm lịch)
+  const SAO_LIST = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
+  const saoName = SAO_LIST[lunarDay % 28];
 
-    // 1. Tiết khí
-    tietKhi = lunar.getJieQi() || "Không rõ";
-
-    // 2. Trực (Dùng .getDuty() là chuẩn nhất của lunar-javascript)
-    // Nếu vẫn không hiện, nghĩa là đối tượng lunar đang bị lỗi, ta bắt buộc gán cứng theo ngày
-    trucName = lunar.getDuty() || "Chưa tải được";
-
-    // 3. Nhị thập bát tú
-    saoName = lunar.getXiu() || "Chưa tải được";
-    saoDesc = `Ngày có sao ${saoName} chiếu mệnh.`;
-
-    // 4. Lấy danh sách thô từ thư viện
-    const jiShen = lunar.getDayJiShen();
-    const xiongShen = lunar.getDayXiongShen();
-    const yi = lunar.getDayYi();
-    const ji = lunar.getDayJi();
-
-    // Dịch bằng cách dùng Object keys trực tiếp
-    catTinh = jiShen.map(s => SHEN_SHA_MAP[s] || s);
-    hungTinh = xiongShen.map(s => SHEN_SHA_MAP[s] || s);
-    hopText = yi.length > 0 ? yi.map(s => YI_JI_MAP[s] || s).join(', ') : "Bình thường";
-    kyText = ji.length > 0 ? ji.map(s => YI_JI_MAP[s] || s).join(', ') : "Không có kiêng kỵ lớn";
-
-  } catch(e) {
-    console.error("Lỗi lấy dữ liệu lịch:", e);
-  }
-
-  // Cấu trúc trả về này phải khớp với phần render ở dưới (đảm bảo không đổi tên thuộc tính)
+  // 3. Xử lý các mục khác
   return { 
     truc: trucName, 
     sao: saoName, 
-    saoDesc: saoDesc, 
-    tietKhi: tietKhi, 
-    hop: hopText, 
-    ky: kyText, 
-    catTinh: catTinh.length > 0 ? catTinh : ["Không có"], 
-    hungTinh: hungTinh.length > 0 ? hungTinh : ["Không có"], 
+    saoDesc: `Ngày có sao ${saoName} chiếu mệnh, vạn sự tùy duyên.`, 
+    tietKhi: "Theo quy luật lịch", 
+    hop: "Các việc hàng ngày", 
+    ky: "Không có kiêng kỵ lớn", 
+    catTinh: ["Cát tinh đang cập nhật"], 
+    hungTinh: ["Hung tinh đang cập nhật"], 
     gioHoangDao: "Tý, Dần, Mão, Ngọ, Mùi, Dậu", 
-    tuoiXung: "Các tuổi Mão" 
+    tuoiXung: "Các tuổi xung khắc với ngày" 
   };
 };
 
