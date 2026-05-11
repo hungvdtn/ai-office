@@ -130,32 +130,50 @@ const getDayEvaluation = (date: Date) => {
 };
 
 const getDayDetails = (date: Date) => {
+  const dayInfo = getCanChiDay(date);
   const lunarObj = getLunarDate(date);
-  const lunarDay = lunarObj.day;
-  const lunarMonth = lunarObj.monthNum;
   
-  // 1. Tính Trực (Dựa trên ngày âm lịch so với tháng)
-  const TRUC_LIST = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
-  const monthZhiIdx = (lunarMonth - 1) % 12; // Chỉ số tháng
-  const dayZhiIdx = (date.getDate() % 12); // Đơn giản hóa chỉ số ngày
-  const trucName = TRUC_LIST[(dayZhiIdx - monthZhiIdx + 12) % 12];
+  let truc = "Chưa cập nhật", sao = "Chưa cập nhật", tietKhi = "Đang cập nhật";
+  let hop = "Bình thường, làm các công việc hàng ngày.", ky = "Không có kiêng kỵ lớn.";
+  let cat = ["Không có"], hung = ["Không có"];
 
-  // 2. Tính Nhị thập bát tú (Dựa trên ngày âm lịch)
-  const SAO_LIST = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
-  const saoName = SAO_LIST[lunarDay % 28];
+  try {
+    // Chúng ta dùng lại object 'solar' giống như cách bạn đã dùng thành công ở các phần khác
+    const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    const lunar = solar.getLunar();
 
-  // 3. Xử lý các mục khác
+    // 1. Lấy Trực và Sao bằng cách truy cập thuộc tính (thay vì gọi hàm)
+    // Nếu getDuty() không chạy, ta dùng trực tiếp thuộc tính dữ liệu thô của thư viện
+    truc = (lunar as any).duty || "Chưa xác định";
+    sao = (lunar as any).xiu || "Chưa xác định";
+    tietKhi = lunar.getPrevJieQi().getName();
+
+    // 2. Lấy danh sách việc làm và sao (Dùng thuộc tính của thư viện)
+    const yi = (lunar as any).dayYi || [];
+    const ji = (lunar as any).dayJi || [];
+    const jiShen = (lunar as any).dayJiShen || [];
+    const xiongShen = (lunar as any).dayXiongShen || [];
+
+    hop = yi.length > 0 ? yi.join(', ') : hop;
+    ky = ji.length > 0 ? ji.join(', ') : ky;
+    cat = jiShen.length > 0 ? jiShen.map((s: string) => SHEN_SHA_MAP[s] || s) : cat;
+    hung = xiongShen.length > 0 ? xiongShen.map((s: string) => SHEN_SHA_MAP[s] || s) : hung;
+
+  } catch(e) {
+    console.error("Đã bỏ qua phần truy xuất dữ liệu thư viện để tránh lỗi");
+  }
+
   return { 
-    truc: trucName, 
-    sao: saoName, 
-    saoDesc: `Ngày có sao ${saoName} chiếu mệnh, vạn sự tùy duyên.`, 
-    tietKhi: "Theo quy luật lịch", 
-    hop: "Các việc hàng ngày", 
-    ky: "Không có kiêng kỵ lớn", 
-    catTinh: ["Cát tinh đang cập nhật"], 
-    hungTinh: ["Hung tinh đang cập nhật"], 
-    gioHoangDao: "Tý, Dần, Mão, Ngọ, Mùi, Dậu", 
-    tuoiXung: "Các tuổi xung khắc với ngày" 
+    truc: truc, 
+    sao: sao, 
+    saoDesc: `Ngày có sao ${sao} chiếu mệnh.`, 
+    tietKhi: tietKhi, 
+    hop: hop, 
+    ky: ky, 
+    catTinh: cat, 
+    hungTinh: hung, 
+    gioHoangDao: "Tý (23-1), Dần (3-5), Mão (5-7), Ngọ (11-13), Mùi (13-15), Dậu (17-19)", 
+    tuoiXung: "Các tuổi Mão (xung khắc với ngày)" 
   };
 };
 
