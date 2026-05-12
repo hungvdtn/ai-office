@@ -548,7 +548,7 @@ export default function Calendar() {
     
     for (let i = 0; i < firstDay; i++) {
       const d = daysInPrevMonth - firstDay + i + 1; const prevDate = new Date(year, month - 1, d); const lunar = getLunarDate(prevDate);
-      grid.push(<div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]"><div className="flex justify-between items-start font-sans"><span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span><span className="text-xs font-medium text-slate-600">{lunar.day}</span></div></div>);
+      grid.push(<div key={`prev-${i}`} onClick={() => {setCurrentDate(prevDate); setSelectedDate(prevDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]"><div className="flex justify-between items-start font-sans"><span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span><span className="text-[12px] sm:text-sm font-semibold text-slate-600">{lunar.day}</span></div></div>);
     }
     
     for (let d = 1; d <= daysInMonth; d++) {
@@ -577,7 +577,7 @@ export default function Calendar() {
         <div key={`cur-${d}`} onClick={() => setSelectedDate(dateObj)} className={`h-20 sm:h-28 lg:h-32 border border-[#1e293b] p-1 sm:p-2 lg:p-3 cursor-pointer transition-all flex flex-col relative group ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'} ${isToday ? 'ring-1 ring-sky-500/50' : ''}`}>
           <div className="flex justify-between items-start font-sans">
             <span className={`text-lg sm:text-2xl font-bold ${solarColor}`}>{d}</span>
-            <span className={`text-[11px] sm:text-sm font-medium ${lunar.day === 1 || lunar.day === 15 ? 'text-blue-400 font-bold' : 'text-slate-500'}`}>{lunar.day === 1 ? `${lunar.day}/${lunar.monthStr}` : lunar.day}</span>
+            <span className={`text-[12px] sm:text-sm font-semibold ${lunar.day === 1 || lunar.day === 15 ? 'text-sky-400 font-bold' : 'text-slate-400'}`}>{lunar.day === 1 ? `${lunar.day}/${lunar.monthStr}` : lunar.day}</span>
           </div>
           <div className="mt-auto overflow-hidden font-sans">
             {solarHoliday && <div className={`text-[9px] sm:text-xs ${isSolarDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold`}>{solarHoliday.name}</div>}
@@ -591,7 +591,7 @@ export default function Calendar() {
     const totalCells = firstDay + daysInMonth; const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (let i = 0; i < remainingCells; i++) {
       const d = i + 1; const nextDate = new Date(year, month + 1, d); const lunar = getLunarDate(nextDate);
-      grid.push(<div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]"><div className="flex justify-between items-start font-sans"><span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span><span className="text-xs font-medium text-slate-600">{lunar.day}</span></div></div>);
+      grid.push(<div key={`next-${i}`} onClick={() => {setCurrentDate(nextDate); setSelectedDate(nextDate);}} className="h-20 sm:h-28 lg:h-32 p-1 sm:p-2 border border-[#1e293b] opacity-30 cursor-pointer hover:bg-[#1e293b]"><div className="flex justify-between items-start font-sans"><span className="text-lg sm:text-xl font-bold text-slate-500">{d}</span><span className="text-[12px] sm:text-sm font-semibold text-slate-600">{lunar.day}</span></div></div>);
     }
     return grid;
   };
@@ -623,7 +623,7 @@ export default function Calendar() {
     <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans relative">
       
       {/* HEADER TABS */}
-      <div className="flex flex-wrap gap-2 mb-6 border-b border-[#1e293b] pb-4">
+      <div className="flex flex-wrap gap-2 mb-6 border-b border-[#1e293b] pb-4 font-sans">
          <button onClick={() => setActiveTab('calendar')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><CalendarIcon size={16}/> Lịch Vạn Niên</button>
          <button onClick={() => setActiveTab('find-good-days')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'find-good-days' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><Search size={16}/> Tìm ngày tốt</button>
          <button onClick={() => setActiveTab('converter')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'converter' ? 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><ArrowRightLeft size={16}/> Đổi ngày Âm - Dương</button>
@@ -750,17 +750,17 @@ export default function Calendar() {
               </div>
               
               <div className="flex gap-2 w-full sm:w-auto">
-                <select value={currentDate.getMonth()} onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
+                <select value={currentDate.getMonth()} onChange={(e) => setCurrentDate(new Date(currentDate.getFullYear(), parseInt(e.target.value), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500 font-sans">
                   {Array.from({length: 12}).map((_, i) => <option key={i} value={i}>Tháng {i + 1}</option>)}
                 </select>
-                <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500">
+                <select value={currentDate.getFullYear()} onChange={(e) => setCurrentDate(new Date(parseInt(e.target.value), currentDate.getMonth(), 1))} className="flex-1 sm:w-auto bg-[#1e293b] border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 text-sm lg:text-base font-semibold focus:outline-none focus:border-sky-500 font-sans">
                   {Array.from({length: 201}).map((_, i) => <option key={i} value={1900 + i}>năm {1900 + i}</option>)}
                 </select>
               </div>
             </div>
 
             <div className="p-4 sm:p-6 lg:p-8 bg-[#05070a]">
-              <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-slate-500 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
+              <div className="grid grid-cols-7 gap-px mb-2 text-center text-xs lg:text-sm font-bold text-sky-400 uppercase tracking-widest bg-[#0a0f18] py-4 rounded-lg border border-[#1e293b]">
                 <div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div><div className="text-red-500">Chủ nhật</div>
               </div>
               <div className="grid grid-cols-7 gap-px bg-[#1e293b] border border-[#1e293b] rounded-lg overflow-hidden">
@@ -777,25 +777,25 @@ export default function Calendar() {
            <h3 className="text-xl font-bold text-amber-500 flex items-center gap-2 mb-6 uppercase tracking-widest font-sans"><ArrowRightLeft size={24} /> Đổi ngày Âm - Dương</h3>
            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-3">
-                <select value={convType} onChange={e => {setConvType(e.target.value as 'S2L' | 'L2S'); setCResult(''); setCResultDate(null);}} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm font-semibold focus:outline-none focus:border-brand h-full">
+                <select value={convType} onChange={e => {setConvType(e.target.value as 'S2L' | 'L2S'); setCResult(''); setCResultDate(null);}} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-slate-200 text-sm font-semibold focus:outline-none focus:border-brand h-full font-sans">
                    <option value="S2L">Dương ➔ Âm</option>
                    <option value="L2S">Âm ➔ Dương</option>
                 </select>
               </div>
               <div className="md:col-span-6 flex gap-2">
-                 <input type="number" placeholder="Ngày" value={cDay} onChange={e=>setCDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
-                 <input type="number" placeholder="Tháng" value={cMonth} onChange={e=>setCMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
-                 <input type="number" placeholder="Năm" value={cYear} onChange={e=>setCYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand" />
+                 <input type="number" placeholder="Ngày" value={cDay} onChange={e=>setCDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand font-sans" />
+                 <input type="number" placeholder="Tháng" value={cMonth} onChange={e=>setCMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand font-sans" />
+                 <input type="number" placeholder="Năm" value={cYear} onChange={e=>setCYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand font-sans" />
               </div>
               <div className="md:col-span-3">
-                 <button onClick={doConvert} className="w-full h-full bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-500 transition shadow-[0_0_15px_rgba(217,119,6,0.4)] py-3">XEM KẾT QUẢ</button>
+                 <button onClick={doConvert} className="w-full h-full bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-500 transition shadow-[0_0_15px_rgba(217,119,6,0.4)] py-3 font-sans">XEM KẾT QUẢ</button>
               </div>
            </div>
            {cResult && (
               <div className="mt-6 p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between">
                  <span className="text-emerald-400 font-bold text-xl">{cResult}</span>
                  {cResultDate && (
-                   <button onClick={goToDate} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition shadow-lg shadow-emerald-900/50">
+                   <button onClick={goToDate} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition shadow-lg shadow-emerald-900/50 font-sans">
                      <CalendarIcon size={18}/> Mở lịch ngày này
                    </button>
                  )}
@@ -812,24 +812,24 @@ export default function Calendar() {
            <div className="bg-[#05070a] p-6 rounded-xl border border-[#1e293b] mb-8 space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Ngày sinh (Dương lịch)</label>
-                   <input type="date" value={fgdDob} onChange={e => setFgdDob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none" />
+                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Ngày sinh (Dương lịch)</label>
+                   <input type="date" value={fgdDob} onChange={e => setFgdDob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans" />
                 </div>
                 <div>
-                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Tìm trong Tháng (DL)</label>
-                   <select value={fgdMonth} onChange={e => setFgdMonth(Number(e.target.value))} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none">
+                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Tìm trong Tháng (DL)</label>
+                   <select value={fgdMonth} onChange={e => setFgdMonth(Number(e.target.value))} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans">
                      {Array.from({length: 12}).map((_, i) => <option key={i} value={i+1}>Tháng {i+1}</option>)}
                    </select>
                 </div>
                 <div>
-                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Tìm trong Năm (DL)</label>
-                   <select value={fgdYear} onChange={e => setFgdYear(Number(e.target.value))} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none">
+                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Tìm trong Năm (DL)</label>
+                   <select value={fgdYear} onChange={e => setFgdYear(Number(e.target.value))} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans">
                      {Array.from({length: 10}).map((_, i) => <option key={i} value={new Date().getFullYear() + i}>{new Date().getFullYear() + i}</option>)}
                    </select>
                 </div>
                 <div>
-                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Việc cần làm</label>
-                   <select value={fgdJob} onChange={e => setFgdJob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none">
+                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Việc cần làm</label>
+                   <select value={fgdJob} onChange={e => setFgdJob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans">
                      <option value="">Tất cả công việc</option>
                      {JOB_LIST.map(job => <option key={job} value={job}>{job}</option>)}
                    </select>
@@ -837,45 +837,45 @@ export default function Calendar() {
              </div>
              
              {(!fgdDob) && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-sm italic font-medium flex items-center gap-2">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-sm italic font-medium flex items-center gap-2 font-sans">
                    <AlertTriangle size={16}/> Hãy nhập Ngày sinh (Dương lịch) để hệ thống tìm ngày tốt chính xác, không xung khắc với tuổi của bạn.
                 </div>
              )}
 
-             <button onClick={handleFindGoodDays} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest rounded-xl transition shadow-[0_0_15px_rgba(5,150,105,0.4)]">XEM KẾT QUẢ</button>
+             <button onClick={handleFindGoodDays} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black font-sans uppercase tracking-widest rounded-xl transition shadow-[0_0_15px_rgba(5,150,105,0.4)]">XEM KẾT QUẢ</button>
            </div>
 
            {fgdResult && (
-             <div className="space-y-8 animate-in fade-in duration-500">
+             <div className="space-y-8 animate-in fade-in duration-500 font-sans">
                 {/* 1. THÔNG TIN NGƯỜI XEM */}
                 <div className="bg-[#05070a] border border-[#1e293b] rounded-xl p-6">
-                   <h4 className="text-brand font-bold uppercase tracking-widest mb-4 border-b border-[#1e293b] pb-2">Thông tin phong thủy tuổi</h4>
+                   <h4 className="text-brand font-bold uppercase tracking-widest mb-4 border-b border-[#1e293b] pb-2 font-sans">Thông tin phong thủy tuổi</h4>
                    {fgdResult.userCanChi ? (
-                     <div className="space-y-2 text-sm text-slate-300">
+                     <div className="space-y-2 text-sm text-slate-300 font-sans">
                         <p>Năm sinh âm lịch: <span className="text-white font-bold">{fgdResult.userCanChi}</span></p>
                         <p>Các năm không hợp tuổi: <span className="text-rose-400 font-bold">{fgdResult.xungNam}</span></p>
                         <p>Các tháng âm lịch xung tuổi (Nên tránh): <span className="text-rose-400 font-bold">{fgdResult.xungThang}</span></p>
                         <p>Các ngày dương lịch trong tháng {fgdMonth} xung khắc tuổi: <span className="text-rose-400 font-bold">{fgdResult.clashDays}</span></p>
                      </div>
                    ) : (
-                     <p className="text-slate-500 italic text-sm">Chưa nhập thông tin ngày sinh để phân tích xung khắc.</p>
+                     <p className="text-slate-500 italic text-sm font-sans">Chưa nhập thông tin ngày sinh để phân tích xung khắc.</p>
                    )}
                 </div>
 
                 {/* 3. DANH SÁCH NGÀY TỐT */}
                 <div>
-                   <h4 className="text-emerald-400 font-bold uppercase tracking-widest mb-4 flex items-center gap-2"><CheckCircle size={18}/> Danh sách ngày tốt tháng {fgdMonth}/{fgdYear}</h4>
+                   <h4 className="text-emerald-400 font-bold uppercase tracking-widest mb-4 flex items-center gap-2 font-sans"><CheckCircle size={18}/> Danh sách ngày tốt tháng {fgdMonth}/{fgdYear}</h4>
                    {fgdResult.goodDays.length > 0 ? (
                      <div className="space-y-4">
                         {fgdResult.goodDays.map((item: any, idx: number) => (
                            <div key={idx} className="bg-[#05070a] border border-[#1e293b] hover:border-emerald-500/50 transition-colors rounded-xl p-6">
                               <div className="flex justify-between items-center mb-4 border-b border-[#1e293b] pb-3">
-                                 <h5 className="text-lg font-bold text-emerald-400">
-                                   Ngày {item.date.getDate()}/{item.date.getMonth()+1}/{item.date.getFullYear()} <span className="text-slate-500 text-sm font-medium ml-2">(Âm lịch: {getLunarDate(item.date).day}/{getLunarDate(item.date).monthStr} - {item.dayInfo.text})</span>
+                                 <h5 className="text-lg font-bold text-emerald-400 font-sans">
+                                   Ngày {item.date.getDate()}/{item.date.getMonth()+1}/{item.date.getFullYear()} <span className="text-slate-300 text-sm font-medium ml-2 font-sans">(Âm lịch: {getLunarDate(item.date).day}/{getLunarDate(item.date).monthStr} - {item.dayInfo.text})</span>
                                  </h5>
-                                 <div className="flex items-center gap-1 font-bold text-white bg-[#1e293b] px-3 py-1 rounded-lg">[{item.evalData.score}] {renderStars(item.evalData.score)}</div>
+                                 <div className="flex items-center gap-1 font-bold text-white bg-[#1e293b] px-3 py-1 rounded-lg font-sans">[{item.evalData.score}] {renderStars(item.evalData.score)}</div>
                               </div>
-                              <div className="space-y-4 text-sm text-slate-300">
+                              <div className="space-y-4 text-sm text-slate-300 font-sans">
                                  <div>
                                     <strong className="text-white">1. Thông tin chung: </strong>
                                     Là <span className="text-amber-400 font-bold">{item.evalData.text.toLowerCase()}</span>. {item.evalData.generalDesc} 
@@ -889,14 +889,14 @@ export default function Calendar() {
                                     <strong className="text-white">3. Hệ thống sao: </strong>
                                     <br/>- <span className="text-emerald-400 font-bold">Sao tốt:</span> {item.detData.catTinh.length > 0 ? item.detData.catTinh.join(', ') : 'Không có'}
                                     <br/>- <span className="text-rose-400 font-bold">Sao xấu:</span> {item.detData.hungTinh.length > 0 ? item.detData.hungTinh.join(', ') : 'Không có'}
-                                    <br/>- Nhị thập bát tú: Sao <span className="text-amber-400 font-bold">{item.detData.sao}</span>. <i className="text-slate-400">"{item.detData.saoDesc}"</i>
+                                    <br/>- Nhị thập bát tú: Sao <span className="text-amber-400 font-bold">{item.detData.sao}</span>. <i className="text-slate-400 font-sans">"{item.detData.saoDesc}"</i>
                                  </div>
                               </div>
                            </div>
                         ))}
                      </div>
                    ) : (
-                     <div className="p-8 text-center bg-[#05070a] border border-[#1e293b] rounded-xl text-slate-400">
+                     <div className="p-8 text-center bg-[#05070a] border border-[#1e293b] rounded-xl text-slate-400 font-sans">
                         Rất tiếc, không tìm thấy ngày nào phù hợp với yêu cầu của bạn trong tháng này. Hãy thử tìm sang tháng khác!
                      </div>
                    )}
@@ -908,8 +908,8 @@ export default function Calendar() {
 
       {/* HIỂN THỊ LƯU Ý TRẠCH CÁT (ÁP DỤNG CHUNG) */}
       <div className="mt-8 p-6 lg:p-8 bg-[#0f172a] border border-[#1e293b] rounded-2xl shadow-xl font-sans">
-        <h3 className="text-lg font-bold text-brand uppercase tracking-widest mb-4 border-b border-[#1e293b] pb-3">Lưu ý xem ngày tốt</h3>
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <h3 className="text-lg font-bold text-brand uppercase tracking-widest mb-4 border-b border-[#1e293b] pb-3 font-sans">Lưu ý xem ngày tốt</h3>
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <p>Ứng dụng Lịch Vạn niên AI với công nghệ lõi là sử dụng thư viện thiên văn học mã nguồn mở Lunar-javascript, tài liệu tích hợp các lý luận cổ đại Trung Hoa làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu nghiêm ngặt theo "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy trạch cát truyền thống. Theo đó, cách tính ngày tốt xấu của Lịch Vạn niên AI như sau:</p>
           <ol className="list-decimal pl-5 space-y-3">
             <li>Xác định tính chất Hoàng đạo (tốt) hoặc Hắc đạo (xấu) của ngày để thiết lập mức điểm xuất phát.</li>
@@ -918,7 +918,7 @@ export default function Calendar() {
             <li>Cuối cùng, thuật toán đối chiếu trực tiếp Can Chi của ngày với tuổi (năm sinh âm lịch) của người sử dụng. Dù một ngày có điểm số cao tuyệt đối (Đại Cát với đại đa số), nhưng nếu phạm Lục xung với bản mệnh người xem, ngày đó cũng sẽ bị hệ thống tự động loại bỏ.</li>
           </ol>
           <p>Thực chất, việc đánh giá ngày tốt xấu là một quá trình phân tích tổng hợp, đa tầng và lồng ghép nhiều hệ thống lý luận khác nhau. Một ngày được ứng dụng đề xuất là "Ngày Tốt" khi thỏa mãn đồng thời hai điều kiện: (1) Đạt điểm số từ 3.0 trở lên (đã qua bù trừ, chế hóa) và (2) Tuyệt đối không xung khắc với tuổi của người sử dụng.</p>
-          <p className="italic text-slate-400 mt-6 border-t border-[#1e293b] pt-4">Lịch Vạn niên AI không sáng tạo ra các nội dung này. Lịch chỉ là sự kết hợp giữa công nghệ hiện đại với một hệ thống thiên văn, trạch cát, phong thủy truyền thống mang đậm bản sắc văn hóa phương Đông, để người dùng tham khảo, tự chiêm nghiệm bản thân, phục vụ cho việc học tập, nghiên cứu và đời sống. Một ngày được coi là ngày tốt thực sự phải hài hòa các yếu tố "Thiên - Địa - Nhân" hợp nhất.</p>
+          <p className="italic text-slate-300 mt-6 border-t border-[#1e293b] pt-4 font-sans">Lịch Vạn niên AI không sáng tạo ra các nội dung này. Lịch chỉ là sự kết hợp giữa công nghệ hiện đại với một hệ thống thiên văn, trạch cát, phong thủy truyền thống mang đậm bản sắc văn hóa phương Đông, để người dùng tham khảo, tự chiêm nghiệm bản thân, phục vụ cho việc học tập, nghiên cứu và đời sống. Một ngày được coi là ngày tốt thực sự phải hài hòa các yếu tố "Thiên - Địa - Nhân" hợp nhất.</p>
         </div>
       </div>
 
@@ -1055,9 +1055,9 @@ export default function Calendar() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Báo trước</label>
-                  <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors">
+                  <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors font-sans">
                     <option value={0}>Đúng giờ</option>
-                    <option value={15}>15 phút</option>
+                    <option value={30}>30 phút</option>
                     <option value={60}>1 tiếng</option>
                     <option value={1440}>1 ngày (24h)</option>
                   </select>
