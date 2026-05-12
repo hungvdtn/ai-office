@@ -98,10 +98,31 @@ const SHEN_SHA_MAP: Record<string, string> = {
 };
 
 const YI_JI_MAP: Record<string, string> = {
-  '嫁娶': 'Cưới hỏi', '出行': 'Xuất hành', '动土': 'Động thổ', '祈福': 'Cầu phúc', '祭祀': 'Tế tự', '交易': 'Giao dịch', '纳财': 'Nạp tài', '开市': 'Khai trương', '安床': 'An sàng', '安葬': 'An táng', '入殓': 'Nhập liệm', '修造': 'Sửa chữa', '拆卸': 'Tháo dỡ', '起基': 'Khởi công', '移徙': 'Di dời', '入宅': 'Nhập trạch', '纳采': 'Đính hôn', '订盟': 'Đính ước', '裁衣': 'May áo', '冠笄': 'Cắt tóc', '开仓': 'Mở kho', '纳畜': 'Chăn nuôi', '破土': 'Phá thổ', '启钻': 'Khởi cữu', '伐木': 'Đốn gỗ', '理发': 'Cắt tóc', '沐浴': 'Tắm gội', '治病': 'Chữa bệnh', '破屋': 'Phá nhà', '坏垣': 'Phá tường', '扫舍': 'Quét dọn', '开池': 'Mở ao', '开厕': 'Mở nhà vệ sinh', '造庙': 'Xây đền', '塞穴': 'Lấp hang', '余事勿取': 'Các việc khác không nên làm', '诸事不宜': 'Mọi việc đều kỵ', '造桥': 'Xây cầu', '塑绘': 'Tạc tượng', '开渠': 'Đào mương', '穿井': 'Đào giếng', '栽种': 'Gieo trồng', '结网': 'Giăng lưới', '畋猎': 'Săn bắn', '捕捉': 'Bắt thú', '教牛马': 'Huấn luyện thú', '造畜稠': 'Làm chuồng', '立券': 'Ký hợp đồng', '开光': 'Khai quang', '竖柱': 'Dựng cột', '上梁': 'Cất nóc', '造门': 'Làm cửa', '安香': 'Đặt bát hương', '解除': 'Giải oan', '求医': 'Cầu y', '会亲友': 'Họp mặt', '进人口': 'Nhận con nuôi', '纳奴妾': 'Nhận người giúp việc', '修墓': 'Sửa mộ', '造葬': 'Xây mộ', '探病': 'Thăm bệnh', '赴任': 'Nhậm chức', '割蜜': 'Thu hoạch mật', '酝酿': 'Ủ rượu', '合帐': 'Làm màn', '放水': 'Tháo nước', '造车器': 'Đóng xe', '造船': 'Đóng thuyền', '修水门': 'Sửa cống', '补垣': 'Vá tường', '平治道涂': 'Làm đường', '修表章': 'Dâng sớ'
+  '嫁娶': 'Cưới hỏi', '出行': 'Xuất hành', '动土': 'Động thổ', '祈福': 'Cầu phúc', '祭祀': 'Tế tự', '交易': 'Giao dịch', '纳财': 'Nạp tài', '开市': 'Khai trương', '安床': 'An sàng', '安葬': 'An táng', '入殓': 'Nhập liệm', '修造': 'Sửa chữa', '拆卸': 'Tháo dỡ', '起基': 'Khởi công', '移徙': 'Di dời', '入宅': 'Nhập trạch', '纳采': 'Đính hôn', '订盟': 'Đính ước', '裁衣': 'May áo', '冠笄': 'Cắt tóc', '开仓': 'Mở kho', '纳畜': 'Chăn nuôi', '破土': 'Phá thổ', '启钻': 'Khởi cữu', '伐木': 'Đốn gỗ', '理发': 'Cắt tóc', '沐浴': 'Tắm gội', '治病': 'Chữa bệnh', '破屋': 'Phá nhà', '坏垣': 'Phá tường', '扫舍': 'Quét dọn', '开池': 'Mở ao', '开厕': 'Mở nhà vệ sinh', '造庙': 'Xây đền', '塞穴': 'Lấp hang', '余事勿取': 'Các việc khác không nên làm', '诸事不宜': 'Mọi việc đều kỵ', '造桥': 'Xây cầu', '塑绘': 'Tạc tượng', '开渠': 'Đào mương', '穿井': 'Đào giếng', '栽种': 'Gieo trồng', '结网': 'Giăng lưới', '畋猎': 'Săn bắn', '捕捉': 'Bắt thú', '教牛马': 'Huấn luyện thú', '造畜稠': 'Làm chuồng', '立券': 'Ký hợp đồng', '开光': 'Khai quang', '竖柱': 'Dựng cột', '上梁': 'Cất nóc', '造门': 'Làm cửa', '安香': 'Đặt bát hương', '解除': 'Giải oan', '求医': 'Cầu y', '会亲友': 'Họp mặt', '进人口': 'Nhận con nuôi', '纳奴妾': 'Nhận người giúp việc', '修墓': 'Sửa mộ', '造葬': 'Xây mộ', '探病': 'Thăm bệnh', '赴任': 'Nhậm chức', '割蜜': 'Thu hoạch mật', '酝酿': 'Ủ rượu', '合帐': 'Làm màn', '放水': 'Tháo nước', '造车器': 'Đóng xe', '造船': 'Đóng thuyền', '修水门': 'Sửa cống', '补垣': 'Vá tường', '平治道涂': 'Làm đường', '修表章': 'Dâng sớ', '祈嗣': 'Cầu tự', '入学': 'Nhập học'
 };
 
-const JOB_LIST = Array.from(new Set(Object.values(YI_JI_MAP))).filter(job => job !== 'Các việc khác không nên làm' && job !== 'Mọi việc đều kỵ').sort();
+// --- BỘ LỌC TÌM NGÀY TỐT CHUYÊN SÂU ---
+const JOB_CATEGORIES = [
+  { id: '', label: 'Tốt nói chung (Tất cả công việc)', keywords: [] },
+  { id: 'hon_thu', label: 'Hôn thú, giá thú (ngày cưới, đám hỏi)', keywords: ['Cưới hỏi', 'Đính hôn', 'Đính ước', 'Kết hôn', 'Giá thú'] },
+  { id: 'xay_dung', label: 'Xây dựng, làm nhà, sửa nhà', keywords: ['Sửa chữa', 'Khởi công', 'Cất nóc', 'Xây đền', 'Sửa nhà', 'Làm cửa', 'Làm nhà', 'Dựng cột', 'Xây cầu', 'Phá nhà'] },
+  { id: 'khai_truong', label: 'Khai trương, mở hàng', keywords: ['Khai trương', 'Mở cửa hàng', 'Mở kho', 'Mở ao'] },
+  { id: 'an_tang', label: 'An táng, mai táng', keywords: ['An táng', 'Mai táng', 'Nhập liệm', 'Xây mộ', 'Sửa mộ', 'Khởi cữu'] },
+  { id: 'te_tu', label: 'Tế tự, tế lễ, đặt bát hương', keywords: ['Tế tự', 'Cầu phúc', 'Đặt bát hương', 'Tế lễ', 'Làm việc thiện'] },
+  { id: 'dong_tho', label: 'Động thổ', keywords: ['Động thổ', 'Phá thổ', 'San lấp', 'Đào giếng', 'Khởi công'] },
+  { id: 'xuat_hanh', label: 'Xuất hành, di chuyển', keywords: ['Xuất hành', 'Di dời', 'Đi thuyền', 'Đi xa'] },
+  { id: 'giao_dich', label: 'Giao dịch, ký hợp đồng', keywords: ['Giao dịch', 'Ký hợp đồng', 'Lập khế ước', 'Thu tiền'] },
+  { id: 'cau_tai', label: 'Cầu tài, lộc', keywords: ['Cầu tài', 'Nạp tài', 'Cầu lộc'] },
+  { id: 'to_tung', label: 'Tố tụng, giải oan', keywords: ['Giải oan', 'Tố tụng', 'Kiện cáo'] },
+  { id: 'lam_phuc', label: 'Làm việc thiện, làm phúc', keywords: ['Làm việc thiện', 'Làm phúc', 'Cầu phúc', 'Giải oan'] },
+  { id: 'nhap_trach', label: 'Nhập trạch (về nhà mới)', keywords: ['Nhập trạch', 'Dời nhà', 'Di dời'] },
+  { id: 'khai_nghiep', label: 'Khai nghiệp (bắt đầu công việc mới)', keywords: ['Khai nghiệp', 'Nhậm chức', 'Nhận việc', 'Khai trương'] },
+  { id: 'cau_tu', label: 'Cầu tự (cầu con cái)', keywords: ['Cầu tự', 'Cầu phúc'] },
+  { id: 'khai_giang', label: 'Khai giảng, đăng ký khóa học', keywords: ['Nhập học', 'Khai giảng'] },
+  { id: 'chua_benh', label: 'Chữa bệnh', keywords: ['Chữa bệnh', 'Cầu y', 'Cầu sức khỏe'] },
+  { id: 'nhan_nuoi', label: 'Nhận con nuôi, nhận giúp việc', keywords: ['Nhận con nuôi', 'Nhận người giúp việc'] },
+  { id: 'nham_chuc', label: 'Nhậm chức, nhận việc', keywords: ['Nhậm chức', 'Nhận việc'] }
+];
 
 const translateArray = (arr: string[], map: Record<string, string>) => {
   if (!arr || arr.length === 0) return [];
@@ -179,6 +200,9 @@ const getDayDetails = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   
   let tietKhi = "Đang cập nhật...";
+  let lunarYi: string[] = [];
+  let lunarJi: string[] = [];
+  
   try {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
     const currentJieQi = solar.getLunar().getJieQi() || solar.getLunar().getPrevJieQi().getName();
@@ -191,6 +215,9 @@ const getDayDetails = (date: Date) => {
       '大雪': 'Đại Tuyết', '冬至': 'Đông Chí', '小寒': 'Tiểu Hàn', '大寒': 'Đại Hàn'
     };
     tietKhi = JIE_QI_MAP[currentJieQi] || currentJieQi;
+    
+    lunarYi = translateArray(solar.getLunar().getDayYi(), YI_JI_MAP);
+    lunarJi = translateArray(solar.getLunar().getDayJi(), YI_JI_MAP);
   } catch(e) {}
 
   const NHI_THAP_BAT_TU_VN = ['Giác', 'Cang', 'Đê', 'Phòng', 'Tâm', 'Vĩ', 'Cơ', 'Đẩu', 'Ngưu', 'Nữ', 'Hư', 'Nguy', 'Thất', 'Bích', 'Khuê', 'Lâu', 'Vị', 'Mão', 'Tất', 'Chủy', 'Sâm', 'Tỉnh', 'Quỷ', 'Liễu', 'Tinh', 'Trương', 'Dực', 'Chẩn'];
@@ -216,9 +243,21 @@ const getDayDetails = (date: Date) => {
   if (sumNguHanh > 5) sumNguHanh -= 5;
   const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
 
-  let kyText = manualYiJi.ky;
+  // HỢP NHẤT DỮ LIỆU NÊN / KỴ TỪ MANUAL VÀ LUNAR
+  let hopList = [...manualYiJi.hop.replace(/\.$/, '').split(', ')];
+  if (lunarYi.length > 0) hopList = [...hopList, ...lunarYi];
+  const finalHopList = Array.from(new Set(hopList)).filter(item => item && item.trim() !== '');
+  const hopText = finalHopList.length > 0 ? finalHopList.join(', ') + '.' : 'Bình thường.';
+
+  let kyList = [...manualYiJi.ky.replace(/\.$/, '').split(', ')];
+  if (lunarJi.length > 0) kyList = [...kyList, ...lunarJi];
+  const finalKyList = Array.from(new Set(kyList)).filter(item => item && item.trim() !== '');
+  let baseKyText = finalKyList.length > 0 ? finalKyList.join(', ') + '.' : 'Không có kiêng kỵ lớn.';
+
+  let kyText = baseKyText;
   if (evalData.hasFatal || evalData.folkTaboos.length > 0) {
-      kyText = `Kiêng kỵ việc trọng đại vì phạm (${evalData.folkTaboos.length > 0 ? evalData.folkTaboos.join(', ') : evalData.hungTinh.filter(s => ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử'].includes(s)).join(', ')}). ` + kyText;
+      const kyCauses = evalData.folkTaboos.length > 0 ? evalData.folkTaboos : evalData.hungTinh.filter(s => ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử'].includes(s));
+      kyText = `Kiêng kỵ việc trọng đại vì phạm (${kyCauses.join(', ')}). ` + kyText;
   }
 
   const GIO_HOANG_DAO = {
@@ -244,7 +283,7 @@ const getDayDetails = (date: Date) => {
     tietKhi,
     catTinh,
     hungTinh,
-    hop: manualYiJi.hop,
+    hop: hopText,
     ky: kyText,
     gioHoangDao: GIO_HOANG_DAO[CHI_CHU[dayInfo.chiIdx] as keyof typeof GIO_HOANG_DAO] || "Đang cập nhật...",
     tuoiXung: `${CAN_CHU[(dayInfo.canIdx + 6)%10]} ${CHI_CHU[(dayInfo.chiIdx + 6)%12].toLowerCase()}`,
@@ -490,6 +529,9 @@ export default function Calendar() {
     let goodDays = [];
     const clashDays = [];
 
+    const selectedCategory = JOB_CATEGORIES.find(c => c.id === fgdJob);
+    const jobKeywords = selectedCategory ? selectedCategory.keywords : [];
+
     for (let d = 1; d <= daysInMo; d++) {
       const testDate = new Date(fgdYear, fgdMonth - 1, d);
       const dayInfo = getCanChiDay(testDate);
@@ -501,7 +543,11 @@ export default function Calendar() {
         clashDays.push(`${d}/${fgdMonth}`);
       }
 
-      const jobMatch = fgdJob ? detData.hop.includes(fgdJob) : true;
+      let jobMatch = true;
+      if (jobKeywords.length > 0) {
+          const hopTextLower = detData.hop.toLowerCase();
+          jobMatch = jobKeywords.some(kw => hopTextLower.includes(kw.toLowerCase()));
+      }
       
       if (!isClash && parseFloat(evalData.score) >= 3.0 && jobMatch) {
           goodDays.push({ date: testDate, evalData, detData, dayInfo });
@@ -830,8 +876,7 @@ export default function Calendar() {
                 <div>
                    <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Việc cần làm</label>
                    <select value={fgdJob} onChange={e => setFgdJob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans">
-                     <option value="">Tất cả công việc</option>
-                     {JOB_LIST.map(job => <option key={job} value={job}>{job}</option>)}
+                     {JOB_CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
                    </select>
                 </div>
              </div>
@@ -897,7 +942,7 @@ export default function Calendar() {
                      </div>
                    ) : (
                      <div className="p-8 text-center bg-[#05070a] border border-[#1e293b] rounded-xl text-slate-400 font-sans">
-                        Rất tiếc, không tìm thấy ngày nào phù hợp với yêu cầu của bạn trong tháng này. Hãy thử tìm sang tháng khác!
+                        Rất tiếc, không tìm thấy ngày nào phù hợp với yêu cầu của bạn trong tháng này. Hãy thử chọn công việc khác hoặc tìm sang tháng sau nhé!
                      </div>
                    )}
                 </div>
