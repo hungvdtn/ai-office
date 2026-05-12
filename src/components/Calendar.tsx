@@ -371,7 +371,7 @@ const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
   '30/12': { name: 'Tết Nguyên đán', isDayOff: true, startYear: 0 }
 };
 
-interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; userId?: string; }
+interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; userId?: string; email?: string; }
 
 export default function Calendar() {
   const [activeTab, setActiveTab] = useState<'calendar' | 'converter' | 'find-good-days'>('calendar');
@@ -461,13 +461,13 @@ export default function Calendar() {
     let updatedEvents: UserEvent[] = [];
     
     if (editingId) { 
-      const ev = { id: editingId, dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid };
+      const ev = { id: editingId, dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid, email: auth.currentUser.email || '' };
       updatedEvents = events.map(e => e.id === editingId ? ev : e); 
       setEvents(updatedEvents);
       localStorage.setItem('user_events', JSON.stringify(updatedEvents));
       try { await setDoc(doc(db, "events", ev.id), ev); } catch (e) {}
     } else { 
-      const newEv = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid };
+      const newEv = { id: Date.now().toString(), dateStr, title: newEventTitle, time: newEventTime, location: newEventLocation, reminderAdvance: newReminderAdvance, userId: auth.currentUser.uid, email: auth.currentUser.email || '' };
       updatedEvents = [...events, newEv];
       setEvents(updatedEvents);
       localStorage.setItem('user_events', JSON.stringify(updatedEvents));
