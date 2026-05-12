@@ -644,7 +644,16 @@ export default function Calendar() {
   };
 
   const handleGoogleLogin = async () => {
-    try { await signInWithPopup(auth, googleProvider); } catch (error) { console.error(error); }
+    try { 
+      await signInWithPopup(auth, googleProvider); 
+    } catch (error: any) { 
+      console.error("Lỗi đăng nhập:", error); 
+      if (error.code === 'auth/popup-blocked') {
+         alert("Trình duyệt đang chặn cửa sổ đăng nhập. Vui lòng cấp quyền (Cho phép mở Pop-up) để tiếp tục.");
+      } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+         alert("LỖI BẢO MẬT TRÌNH DUYỆT: Nếu bạn đang mở web từ ứng dụng Zalo/Facebook, vui lòng bấm vào nút 3 chấm ở góc phải màn hình, chọn 'Mở bằng trình duyệt' (Chrome/Safari) để có thể đăng nhập Google!");
+      }
+    } 
   };
 
   const handleSaveEvent = async () => {
