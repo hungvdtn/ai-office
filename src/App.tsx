@@ -24,40 +24,77 @@ type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin';
 // --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN ---
 const AdminPanel = () => {
   const [stats, setStats] = useState({ users: 0, events: 0, loading: true });
+  const [userList, setUserList] = useState<any[]>([]);
+
   useEffect(() => {
      const fetchStats = async () => {
         try {
            const snap = await getDocs(collection(db, 'events'));
-           const uniqueUsers = new Set();
+           const uniqueUsers = new Map();
+           
            snap.forEach(doc => {
-              if (doc.data().userId) uniqueUsers.add(doc.data().userId);
+              const data = doc.data();
+              if (data.userId && !uniqueUsers.has(data.userId)) {
+                 // Nếu trong tương lai DB có lưu email, nó sẽ hiển thị ở đây
+                 uniqueUsers.set(data.userId, data.email || 'Ẩn danh (Do chính sách bảo mật Firebase)');
+              }
            });
+           
            setStats({ users: uniqueUsers.size, events: snap.size, loading: false });
+           setUserList(Array.from(uniqueUsers.entries()).map(([id, email]) => ({ id, email })));
         } catch(e) { console.error(e); setStats(s => ({...s, loading: false})); }
      }
      fetchStats();
   }, []);
 
   return (
-     <div className="p-4 md:p-8 font-sans text-slate-200 animate-in fade-in duration-500">
+     <div className="p-4 md:p-8 text-slate-200 animate-in fade-in duration-500">
         <h2 className="text-xl md:text-2xl font-bold text-brand mb-8 flex items-center gap-3">
            <Users size={28} /> Bảng điều khiển Quản trị viên (Admin)
         </h2>
         {stats.loading ? (
            <p className="text-slate-400 flex items-center gap-2">Đang tải dữ liệu từ máy chủ đám mây...</p>
         ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-[#0f172a] p-8 rounded-2xl border border-sky-900/50 shadow-[0_0_30px_rgba(56,189,248,0.1)] relative overflow-hidden group hover:border-sky-500 transition-colors">
-                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
-                 <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
-                 <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                 <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID người dùng đã lưu sự kiện</p>
+           <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="bg-[#0f172a] p-8 rounded-2xl border border-sky-900/50 shadow-[0_0_30px_rgba(56,189,248,0.1)] relative overflow-hidden group hover:border-sky-500 transition-colors">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
+                    <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID thiết bị đã lưu sự kiện</p>
+                 </div>
+                 <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số Sự kiện đã lưu</h3>
+                    <p className="text-5xl font-black text-emerald-400 relative z-10">{stats.events}</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dữ liệu công việc trên toàn hệ thống</p>
+                 </div>
               </div>
-              <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
-                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
-                 <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số Sự kiện đã lưu</h3>
-                 <p className="text-5xl font-black text-emerald-400 relative z-10">{stats.events}</p>
-                 <p className="text-xs text-slate-500 mt-2 relative z-10">Tổng số dữ liệu lịch trình trên hệ thống</p>
+
+              <div className="bg-[#0f172a] p-6 rounded-2xl border border-[#1e293b]">
+                 <h3 className="text-brand font-bold uppercase tracking-widest mb-4">Danh sách tài khoản sử dụng</h3>
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-sm text-left text-slate-300">
+                     <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50">
+                       <tr>
+                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase Auth)</th>
+                         <th className="px-6 py-3 rounded-tr-lg">Email / Định danh</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {userList.map((u, i) => (
+                         <tr key={i} className="border-b border-[#1e293b] hover:bg-[#1e293b]/30 transition-colors">
+                           <td className="px-6 py-4 font-mono text-xs text-sky-400">{u.id}</td>
+                           <td className="px-6 py-4 text-emerald-400 font-medium">{u.email}</td>
+                         </tr>
+                       ))}
+                       {userList.length === 0 && (
+                         <tr><td colSpan={2} className="px-6 py-4 text-center text-slate-500">Chưa có người dùng nào tạo sự kiện.</td></tr>
+                       )}
+                     </tbody>
+                   </table>
+                 </div>
+                 <p className="text-xs text-slate-500 mt-4 italic">* Ghi chú: Vì lý do bảo mật quyền riêng tư của Google, hệ thống mặc định ẩn Email và chỉ nhận diện qua chuỗi ID thiết bị độc nhất.</p>
               </div>
            </div>
         )}
@@ -70,13 +107,13 @@ const HelpContent = ({ module }: { module: string }) => {
   switch (module) {
     case 'calendar':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-           <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn sử dụng Lịch Vạn niên AI</h3>
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+           <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Lịch Vạn niên AI</h3>
            <p>Ứng dụng Lịch Vạn niên AI được thiết kế với công nghệ lõi API sử dụng thư viện mã nguồn mở Lunar-javascript, là tài liệu tích hợp các lý luận cổ đại Trung Hoa về thiên văn, trạch cát, thuật số làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu theo bộ sách cổ "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy, trạch cát truyền thống.</p>
            <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc bình thường.</p>
            <p>Điểm khác biệt với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
            <p>Để ghi chú vào lịch bạn chỉ cần nháy thực đơn Thêm sự kiện và điền các thông tin cần thiết, sau đó lưu sự kiện.</p>
-           <p className="font-bold text-sky-400 mt-4 font-sans">Ngoài ra, Lịch Vạn niên AI còn có các tính năng chuyên sâu:</p>
+           <p className="font-bold text-sky-400 mt-4">Ngoài ra, Lịch Vạn niên AI còn có các tính năng chuyên sâu:</p>
            <ul className="list-none space-y-2">
              <li><strong className="text-white">(1). Xem ngày chi tiết:</strong> Để biết tính chất tốt, xấu của ngày đó;</li>
              <li><strong className="text-white">(2). Tìm các ngày tốt trong một tháng:</strong> Có thể tìm ngày tốt chung hoặc có thể tìm ngày tốt cho từng việc;</li>
@@ -86,11 +123,11 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'pdf':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn sử dụng Xử lý PDF</h3>
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Xử lý PDF</h3>
           <p>Cung cấp bộ công cụ cắt, ghép, và sắp xếp lại trang PDF bằng thao tác kéo thả. Đặc biệt có tính năng chuyển PDF sang Word (.docx), tự động làm sạch ký hiệu thừa và định dạng chuẩn font Times New Roman dùng cho hành chính.</p>
-          <h4 className="font-bold text-white font-sans">Công cụ này có 3 chức năng:</h4>
-          <p className="font-bold text-sky-400 font-sans">1. Cắt và tách file PDF:</p>
+          <h4 className="font-bold text-white">Công cụ này có 3 chức năng:</h4>
+          <p className="font-bold text-sky-400">1. Cắt và tách file PDF:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Bạn tải lên file PDF bất kỳ;</li>
             <li>Bước 2: Xuất hiện giao diện của từng trang PDF. Tại đây, bạn đưa chuột vào từng trang xuất hiện 3 nút công cụ: Nút màu vàng có chấm đen (di chuyển trang), Nút màu xanh (copy trang), Nút màu đỏ (xóa trang).</li>
@@ -98,13 +135,13 @@ const HelpContent = ({ module }: { module: string }) => {
             - <strong>Cách 1:</strong> Chọn các trang bất kỳ. Nhấn nút "Xuất n trang chọn" ➔ Lưu file.<br/>
             - <strong>Cách 2:</strong> Chọn khoảng cách chia tách ➔ Nhấn "Tải Zip" để tách hàng loạt.</li>
           </ul>
-          <p className="font-bold text-sky-400 font-sans">2. Ghép file PDF</p>
+          <p className="font-bold text-sky-400">2. Ghép file PDF</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải lên các file PDF cần ghép.</li>
             <li>Bước 2: Edit hoặc biên tập lại các file PDF (thêm, bớt, xóa, di chuyển).</li>
             <li>Bước 3: Chọn "Ghép & Tải xuống".</li>
           </ul>
-          <p className="font-bold text-sky-400 font-sans">3. Chuyển sang file word</p>
+          <p className="font-bold text-sky-400">3. Chuyển sang file word</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải file PDF cần chuyển.</li>
             <li>Bước 2: Tải file word đã được chuyển.</li>
@@ -113,8 +150,8 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'ocr':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn sử dụng Trích xuất OCR</h3>
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Trích xuất OCR</h3>
           <p>Sử dụng Trí tuệ nhân tạo (AI) chạy nội bộ (Offline) để nhận diện và bóc tách văn bản từ hình ảnh JPG/PNG. Đảm bảo bảo mật tuyệt đối 100% tài liệu nhạy cảm do dữ liệu không bị gửi lên mạng.</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải hình ảnh có text cần trích xuất thành văn bản</li>
@@ -125,8 +162,8 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'scanner':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn Scan tài liệu</h3>
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn Scan tài liệu</h3>
           <p>Chức năng này bạn nên sử dụng trên điện thoại. Mặc định sau khi scan sẽ xuất thành file PDF ở dạng bản màu hoặc đen trắng.</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Đặt văn bản cần scan ngay ngắn trên mặt phẳng;</li>
@@ -164,7 +201,7 @@ const DraggableHelp = ({ activeModule, onClose }: { activeModule: string, onClos
 
   return (
     <div 
-      className="fixed z-50 bg-[#0f172a]/95 backdrop-blur-xl border-2 border-brand/50 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col font-sans"
+      className="fixed z-50 bg-[#0f172a]/95 backdrop-blur-xl border-2 border-brand/50 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col"
       style={{ left: pos.x, top: pos.y, width: 400, height: 500, resize: 'both', overflow: 'hidden' }}
     >
       <div 
@@ -201,8 +238,8 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
 
   // THIẾT LẬP QUYỀN ADMIN (Bạn thay đổi danh sách email quản trị tại đây)
-  const ADMIN_EMAILS = ['hungvdtn@gmail.com', 'vuxuanhung@gmail.com'];
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
+  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => { 
@@ -238,7 +275,14 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-full max-w-[100vw] bg-[#05070a] text-[#e2e8f0] font-sans selection:bg-brand/30 selection:text-brand overflow-hidden relative">
+    <div className="flex h-screen w-full max-w-[100vw] bg-[#05070a] text-[#e2e8f0] overflow-hidden relative">
+      {/* CSS TOÀN CỤC ĐỂ ÉP FONT SANS-SERIF CHO TOÀN BỘ ỨNG DỤNG */}
+      <style dangerouslySetInnerHTML={{__html: `
+        * {
+          font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+        }
+      `}} />
+
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
@@ -252,8 +296,8 @@ export default function App() {
         <div className="p-6 flex items-center justify-between border-b border-[#1e293b] flex-shrink-0">
           {(isSidebarOpen || isMobileMenuOpen) ? (
             <div className="flex flex-col">
-              <h1 className="text-xl font-black tracking-widest text-brand uppercase font-sans whitespace-nowrap">DIGITAL OFFICE</h1>
-              <span className="text-[10px] font-sans tracking-normal font-normal text-slate-400 uppercase mt-1">Văn phòng Số Chuyên biệt</span>
+              <h1 className="text-xl font-black tracking-widest text-brand uppercase whitespace-nowrap">DIGITAL OFFICE</h1>
+              <span className="text-[10px] tracking-normal font-normal text-slate-400 uppercase mt-1">Văn phòng Số Chuyên biệt</span>
             </div>
           ) : (
             <div className="w-8 h-8 rounded bg-brand/10 flex items-center justify-center text-brand font-bold text-xs flex-shrink-0">DO</div>
@@ -272,21 +316,21 @@ export default function App() {
               className={activeModule === m.id ? 'sidebar-link-active w-full whitespace-nowrap' : 'sidebar-link w-full whitespace-nowrap'}
             >
               <m.icon size={18} className={activeModule === m.id ? 'text-brand flex-shrink-0' : 'flex-shrink-0'} />
-              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium font-sans truncate">{m.label}</span>}
+              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium truncate">{m.label}</span>}
               {(isSidebarOpen || isMobileMenuOpen) && m.isExternal && <ChevronRight size={14} className="ml-auto opacity-50 flex-shrink-0" />}
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-[#1e293b] space-y-4 flex-shrink-0">
-          <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap mb-4">
+        <div className="pb-6 border-t border-[#1e293b] flex-shrink-0 flex flex-col">
+          <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap mb-2 mt-4 px-6">
             <HelpCircle size={18} className="flex-shrink-0" />
-            {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium font-sans">Trợ giúp</span>}
+            {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Trợ giúp</span>}
           </button>
 
-          {/* LOGO AIBTeM ĐƯỢC CHUYỂN XUỐNG DƯỚI CÙNG BAR */}
-          <div className="pt-4 border-t border-[#1e293b] flex justify-center">
-            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className={`flex items-center transition-transform hover:scale-105 ${!(isSidebarOpen || isMobileMenuOpen) ? 'hidden' : ''}`}>
+          {/* LOGO AIBTeM ĐƯỢC CHUYỂN XUỐNG DƯỚI CÙNG VÀ CĂN TRÁI CHO ĐỒNG BỘ */}
+          <div className="px-6 mt-2">
+            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className={`flex items-center transition-transform hover:scale-105 origin-left ${!(isSidebarOpen || isMobileMenuOpen) ? 'hidden' : ''}`}>
               <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
             </a>
             {!(isSidebarOpen || isMobileMenuOpen) && (
@@ -300,21 +344,21 @@ export default function App() {
         <header className="h-[70px] bg-[#0f172a]/80 backdrop-blur-md border-b border-[#1e293b] flex items-center justify-between px-4 md:px-8 z-10 flex-shrink-0">
           <div className="flex items-center gap-3 md:gap-4 font-bold text-slate-500">
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-brand transition-colors md:hidden"><Menu size={24} /></button>
-            <div className="hidden sm:flex items-center gap-3 text-[11px] tracking-widest uppercase font-semibold font-sans">
+            <div className="hidden sm:flex items-center gap-3 text-[11px] tracking-widest uppercase font-semibold">
               <span>Vị trí hiện tại:</span>
               <span className="text-brand flex items-center gap-2"><ChevronRight size={12} className="text-slate-500" />{displayModules.find(m => m.id === activeModule)?.label || 'Ứng dụng ngoài'}</span>
             </div>
           </div>
           
           <div className="flex items-center gap-4 md:gap-6">
-            {/* TÀI KHOẢN ĐĂNG NHẬP NẰM ĐƠN ĐỘC LÀM ĐIỂM NHẤN - ĐÃ ẨN TÊN THEO YÊU CẦU */}
+            {/* TÀI KHOẢN ĐĂNG NHẬP (ẨN TÊN, HIỂN THỊ ẢNH ĐẠI DIỆN) */}
             {user ? (
               <div className="flex items-center gap-2 bg-[#1e293b]/50 p-1.5 pr-3 rounded-full border border-[#1e293b]">
                  <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.3)]" title={user.email || ''} />
                  <button onClick={handleLogout} className="text-slate-400 hover:text-rose-400 transition-colors ml-1" title="Đăng xuất"><LogOut size={18} /></button>
               </div>
             ) : (
-              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20 font-sans">
+              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20">
                  <LogIn size={16} /> Đăng nhập
               </button>
             )}
@@ -350,10 +394,10 @@ export default function App() {
                 <img src="https://www.google.com/favicon.ico" alt="G" className="w-5 h-5" />
              </div>
              <div className="flex-1">
-               <p className="text-sm font-bold text-white font-sans">Tiếp tục sử dụng với tài khoản</p>
-               <p className="text-[11px] text-sky-400 font-sans mt-0.5">Đăng nhập nhanh bằng Google</p>
+               <p className="text-sm font-bold text-white">Tiếp tục sử dụng với tài khoản</p>
+               <p className="text-[11px] text-sky-400 mt-0.5">Đăng nhập nhanh bằng Google</p>
              </div>
-             <button onClick={() => { handleLogin(); setShowOneTap(false); }} className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-sm font-sans transition-colors whitespace-nowrap shadow-md">Tiếp tục</button>
+             <button onClick={() => { handleLogin(); setShowOneTap(false); }} className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap shadow-md">Tiếp tục</button>
              <button onClick={() => setShowOneTap(false)} className="text-slate-400 hover:text-rose-400 p-1 transition-colors"><X size={16}/></button>
           </motion.div>
         )}
