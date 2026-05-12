@@ -6,7 +6,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, Scan, Languages, ChevronRight, HelpCircle, Menu, X, 
-  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut
+  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
@@ -15,23 +15,73 @@ import Scanner from './components/Scanner';
 import Calendar from './components/Calendar';
 
 // --- IMPORT FIREBASE ---
-import { auth, googleProvider } from './firebase';
+import { auth, db, googleProvider } from './firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore';
 
-type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner'; 
+type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin'; 
 
-// --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG (ĐẦY ĐỦ KHÔNG RÚT GỌN) ---
+// --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN ---
+const AdminPanel = () => {
+  const [stats, setStats] = useState({ users: 0, events: 0, loading: true });
+  useEffect(() => {
+     const fetchStats = async () => {
+        try {
+           const snap = await getDocs(collection(db, 'events'));
+           const uniqueUsers = new Set();
+           snap.forEach(doc => {
+              if (doc.data().userId) uniqueUsers.add(doc.data().userId);
+           });
+           setStats({ users: uniqueUsers.size, events: snap.size, loading: false });
+        } catch(e) { console.error(e); setStats(s => ({...s, loading: false})); }
+     }
+     fetchStats();
+  }, []);
+
+  return (
+     <div className="p-4 md:p-8 font-sans text-slate-200 animate-in fade-in duration-500">
+        <h2 className="text-xl md:text-2xl font-bold text-brand mb-8 flex items-center gap-3">
+           <Users size={28} /> Bảng điều khiển Quản trị viên (Admin)
+        </h2>
+        {stats.loading ? (
+           <p className="text-slate-400 flex items-center gap-2">Đang tải dữ liệu từ máy chủ đám mây...</p>
+        ) : (
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-[#0f172a] p-8 rounded-2xl border border-sky-900/50 shadow-[0_0_30px_rgba(56,189,248,0.1)] relative overflow-hidden group hover:border-sky-500 transition-colors">
+                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
+                 <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
+                 <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
+                 <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID người dùng đã lưu sự kiện</p>
+              </div>
+              <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
+                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
+                 <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số Sự kiện đã lưu</h3>
+                 <p className="text-5xl font-black text-emerald-400 relative z-10">{stats.events}</p>
+                 <p className="text-xs text-slate-500 mt-2 relative z-10">Tổng số dữ liệu lịch trình trên hệ thống</p>
+              </div>
+           </div>
+        )}
+     </div>
+  );
+}
+
+// --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG ---
 const HelpContent = ({ module }: { module: string }) => {
   switch (module) {
     case 'calendar':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-           <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Lịch</h3>
-           <p>Lịch Vạn niên AI được thiết kế theo Công nghệ lõi API Lịch quốc tế kết hợp với thuật toán Phong thủy (Feng Shui Engine), tự động tính Can Chi của Ngày/Tháng/Năm Âm lịch. Thuật toán này sẽ tính toán dựa trên các quy luật cổ học phương Đông và đưa ra đánh giá về ngày tốt xấu (tính từ 1.0 đến 5.0 sao), đồng thời xuất ra thông báo bằng chữ (Ví dụ: Ngày Hắc Đạo - Nguyệt Kỵ).</p>
-           <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc thông thường.</p>
-           <p>Ngoài ra, khác với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
+           <h3 className="font-bold text-brand text-lg uppercase tracking-widest mb-4">Hướng dẫn sử dụng Lịch Vạn niên AI</h3>
+           <p>Ứng dụng Lịch Vạn niên AI được thiết kế với công nghệ lõi API sử dụng thư viện mã nguồn mở Lunar-javascript, là tài liệu tích hợp các lý luận cổ đại Trung Hoa về thiên văn, trạch cát, thuật số làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu theo bộ sách cổ "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy, trạch cát truyền thống.</p>
+           <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc bình thường.</p>
+           <p>Điểm khác biệt với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
            <p>Để ghi chú vào lịch bạn chỉ cần nháy thực đơn Thêm sự kiện và điền các thông tin cần thiết, sau đó lưu sự kiện.</p>
-           <p>Lịch Vạn niên AI còn có tính năng đổi ngày âm sang dương và ngược lại ở cuối giao diện. Đầu tiên bạn chọn kiểu chuyển đôi, sau đó nhập ngày tháng năm cần chuyển và chọn xem kết quả.</p>
+           <p className="font-bold text-sky-400 mt-4">Ngoài ra, Lịch Vạn niên AI còn có các tính năng chuyên sâu:</p>
+           <ul className="list-none space-y-2">
+             <li><strong className="text-white">(1). Xem ngày chi tiết:</strong> Để biết tính chất tốt, xấu của ngày đó;</li>
+             <li><strong className="text-white">(2). Tìm các ngày tốt trong một tháng:</strong> Có thể tìm ngày tốt chung hoặc có thể tìm ngày tốt cho từng việc;</li>
+             <li><strong className="text-white">(3). Đổi ngày:</strong> Đổi ngày âm hoặc dương sang ngày dương hoặc âm tương ứng.</li>
+           </ul>
         </div>
       );
     case 'pdf':
@@ -145,12 +195,25 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false); 
+  const [showOneTap, setShowOneTap] = useState(false);
 
   // QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP
   const [user, setUser] = useState<User | null>(null);
 
+  // THIẾT LẬP QUYỀN ADMIN (Bạn thay đổi danh sách email quản trị tại đây)
+  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => { setUser(currentUser); });
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => { 
+        setUser(currentUser); 
+        // Hiển thị khung popup "Đăng nhập nhanh" nếu chưa đăng nhập sau 2.5 giây
+        if (!currentUser) {
+           setTimeout(() => setShowOneTap(true), 2500);
+        } else {
+           setShowOneTap(false);
+        }
+    });
     return () => unsubscribe();
   }, []);
 
@@ -167,6 +230,12 @@ export default function App() {
     { id: 'search', label: 'Tra cứu địa phương', icon: Search, isExternal: true, url: 'https://tracuu.hungvdtn.vn/' },
     { id: 'gemini', label: 'Trợ lý Gemini', icon: Sparkles, isExternal: true, url: 'https://gemini.google.com/app' },
   ];
+
+  // Bổ sung module Admin vào danh sách menu nếu đúng Email quản trị viên
+  const displayModules = [...modules];
+  if (isAdmin) {
+     displayModules.push({ id: 'admin', label: 'Admin (Quản trị)', icon: Users });
+  }
 
   return (
     <div className="flex h-screen w-full max-w-[100vw] bg-[#05070a] text-[#e2e8f0] font-sans selection:bg-brand/30 selection:text-brand overflow-hidden relative">
@@ -196,7 +265,7 @@ export default function App() {
         </div>
 
         <nav className="flex-1 py-6 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-          {modules.map((m) => (
+          {displayModules.map((m) => (
             <button
               key={m.id}
               onClick={() => { m.isExternal ? window.open(m.url, '_blank') : setActiveModule(m.id as Module); setIsMobileMenuOpen(false); }}
@@ -210,10 +279,20 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-[#1e293b] space-y-4 flex-shrink-0">
-          <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap">
+          <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap mb-4">
             <HelpCircle size={18} className="flex-shrink-0" />
             {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium font-sans">Trợ giúp</span>}
           </button>
+
+          {/* LOGO AIBTeM ĐƯỢC CHUYỂN XUỐNG DƯỚI CÙNG BAR */}
+          <div className="pt-4 border-t border-[#1e293b] flex justify-center">
+            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className={`flex items-center transition-transform hover:scale-105 ${!(isSidebarOpen || isMobileMenuOpen) ? 'hidden' : ''}`}>
+              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
+            </a>
+            {!(isSidebarOpen || isMobileMenuOpen) && (
+              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 w-8 object-contain rounded-full opacity-50" />
+            )}
+          </div>
         </div>
       </aside>
 
@@ -223,27 +302,23 @@ export default function App() {
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-brand transition-colors md:hidden"><Menu size={24} /></button>
             <div className="hidden sm:flex items-center gap-3 text-[11px] tracking-widest uppercase font-semibold font-sans">
               <span>Vị trí hiện tại:</span>
-              <span className="text-brand flex items-center gap-2"><ChevronRight size={12} className="text-slate-500" />{modules.find(m => m.id === activeModule)?.label || 'Ứng dụng ngoài'}</span>
+              <span className="text-brand flex items-center gap-2"><ChevronRight size={12} className="text-slate-500" />{displayModules.find(m => m.id === activeModule)?.label || 'Ứng dụng ngoài'}</span>
             </div>
           </div>
           
           <div className="flex items-center gap-4 md:gap-6">
-            {/* TÀI KHOẢN ĐĂNG NHẬP NẰM TRƯỚC LOGO */}
+            {/* TÀI KHOẢN ĐĂNG NHẬP NẰM ĐƠN ĐỘC LÀM ĐIỂM NHẤN */}
             {user ? (
               <div className="flex items-center gap-3 bg-[#1e293b]/50 px-3 py-1.5 rounded-full border border-[#1e293b]">
-                 <img src={user.photoURL || ''} alt="Avatar" className="w-7 h-7 rounded-full" title={user.email || ''} />
-                 <button onClick={handleLogout} className="text-[10px] uppercase tracking-widest font-bold text-slate-400 hover:text-rose-400 hidden sm:block transition-colors"><LogOut size={14} /></button>
+                 <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.3)]" title={user.email || ''} />
+                 <span className="text-sm font-bold text-slate-200 hidden sm:block font-sans">{user.displayName}</span>
+                 <button onClick={handleLogout} className="ml-2 text-[10px] uppercase tracking-widest font-bold text-slate-400 hover:text-rose-400 hidden sm:block transition-colors"><LogOut size={16} /></button>
               </div>
             ) : (
-              <button onClick={handleLogin} className="flex items-center gap-2 px-4 py-2 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20">
-                 <LogIn size={14} /> Đăng nhập
+              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20">
+                 <LogIn size={16} /> Đăng nhập
               </button>
             )}
-
-            {/* LOGO NẰM CUỐI CÙNG BÊN PHẢI */}
-            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className="flex items-center transition-transform hover:scale-105 border-l border-[#1e293b] pl-4 md:pl-6">
-              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 md:h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
-            </a>
           </div>
         </header>
 
@@ -256,11 +331,34 @@ export default function App() {
                 {activeModule === 'ocr' && <OCRStudio />}
                 {activeModule === 'scanner' && <Scanner />}
                 {activeModule === 'calendar' && <Calendar />}
+                {activeModule === 'admin' && <AdminPanel />}
               </motion.div>
             </AnimatePresence>
           </div>
         </div>
       </main>
+
+      {/* POPUP ĐĂNG NHẬP NHANH BẰNG GOOGLE TỰ ĐỘNG HIỆN LÊN */}
+      <AnimatePresence>
+        {showOneTap && !user && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: -20 }} 
+            className="fixed top-20 right-4 md:right-8 z-50 bg-[#0f172a] rounded-xl shadow-[0_0_30px_rgba(56,189,248,0.2)] p-4 flex items-center gap-4 border border-sky-900 max-w-sm"
+          >
+             <div className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-inner">
+                <img src="https://www.google.com/favicon.ico" alt="G" className="w-5 h-5" />
+             </div>
+             <div className="flex-1">
+               <p className="text-sm font-bold text-white font-sans">Tiếp tục sử dụng với tài khoản</p>
+               <p className="text-[11px] text-sky-400 font-sans mt-0.5">Đăng nhập nhanh bằng Google</p>
+             </div>
+             <button onClick={() => { handleLogin(); setShowOneTap(false); }} className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-sm font-sans transition-colors whitespace-nowrap shadow-md">Tiếp tục</button>
+             <button onClick={() => setShowOneTap(false)} className="text-slate-400 hover:text-rose-400 p-1 transition-colors"><X size={16}/></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* HIỂN THỊ BẢNG TRỢ GIÚP NỔI BÊN TRÊN */}
       {showHelpModal && <DraggableHelp activeModule={activeModule} onClose={() => setShowHelpModal(false)} />}
