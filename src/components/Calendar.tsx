@@ -488,7 +488,7 @@ export default function Calendar() {
     }
 
     const daysInMo = getDaysInMonth(fgdYear, fgdMonth - 1);
-    const goodDays = [];
+    let goodDays = [];
     const clashDays = [];
 
     for (let d = 1; d <= daysInMo; d++) {
@@ -497,17 +497,25 @@ export default function Calendar() {
       const evalData = getDayEvaluation(testDate);
       const detData = getDayDetails(testDate);
 
+      // Tính ngày xung khắc với tuổi người dùng (Lục xung)
       const isClash = userChiIdx !== -1 && Math.abs(dayInfo.chiIdx - userChiIdx) === 6;
       if (isClash) {
         clashDays.push(`${d}/${fgdMonth}`);
       }
 
+      // Lọc theo công việc
       const jobMatch = fgdJob ? detData.hop.includes(fgdJob) : true;
       
-      if (!isClash && evalData.folkTaboos.length === 0 && !evalData.hasFatal && parseFloat(evalData.score) >= 3.0 && jobMatch) {
+      // THUẬT TOÁN LỌC MỚI (GIỐNG XEMNGAY.COM): 
+      // Không vứt bỏ ngày phạm kỵ dân gian ngay lập tức. 
+      // Chỉ cần không Xung tuổi, và Điểm số >= 3.0 (Tức là ngày tốt, hoặc ngày kỵ nhưng ĐÃ ĐƯỢC SAO CỨU GIẢI kéo điểm lên 3.0) thì đều được duyệt.
+      if (!isClash && parseFloat(evalData.score) >= 3.0 && jobMatch) {
           goodDays.push({ date: testDate, evalData, detData, dayInfo });
       }
     }
+
+    // Sắp xếp ngày từ Tốt nhất (Điểm cao nhất) xuống thấp
+    goodDays.sort((a, b) => parseFloat(b.evalData.score) - parseFloat(a.evalData.score));
 
     let xungNam = "Chưa nhập ngày sinh";
     let xungThang = "Chưa nhập ngày sinh";
