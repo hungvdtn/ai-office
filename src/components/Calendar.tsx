@@ -842,7 +842,7 @@ export default function Calendar() {
                 </div>
              )}
 
-             <button onClick={handleFindGoodDays} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black font-sans uppercase tracking-widest rounded-xl transition shadow-[0_0_15px_rgba(5,150,105,0.4)]">XEM KẾT QUẢ</button>
+             <button onClick={handleFindGoodDays} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold font-sans uppercase tracking-widest rounded-xl transition shadow-[0_0_15px_rgba(5,150,105,0.4)]">XEM KẾT QUẢ</button>
            </div>
 
            {fgdResult && (
