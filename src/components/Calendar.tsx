@@ -119,9 +119,8 @@ const JOB_CATEGORIES = [
   { id: 'khai_nghiep', label: 'Khai nghiệp (bắt đầu công việc mới)', keywords: ['Khai nghiệp', 'Nhậm chức', 'Nhận việc', 'Khai trương'] },
   { id: 'cau_tu', label: 'Cầu tự (cầu con cái)', keywords: ['Cầu tự', 'Cầu phúc'] },
   { id: 'khai_giang', label: 'Khai giảng, đăng ký khóa học', keywords: ['Nhập học', 'Khai giảng'] },
-  { id: 'chua_benh', label: 'Chữa bệnh', keywords: ['Chữa bệnh', 'Cầu y', 'Cầu sức khỏe'] },
-  { id: 'nhan_nuoi', label: 'Nhận con nuôi, nhận giúp việc', keywords: ['Nhận con nuôi', 'Nhận người giúp việc'] },
-  { id: 'nham_chuc', label: 'Nhậm chức, nhận việc', keywords: ['Nhậm chức', 'Nhận việc'] }
+  { id: 'chua_benh', label: 'Cầu sức khỏe, chữa bệnh', keywords: ['Chữa bệnh', 'Cầu y', 'Cầu sức khỏe'] },
+  { id: 'nhan_nuoi', label: 'Nhận con nuôi, nhận giúp việc', keywords: ['Nhận con nuôi', 'Nhận người giúp việc'] }
 ];
 
 const translateArray = (arr: string[], map: Record<string, string>) => {
