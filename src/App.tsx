@@ -71,12 +71,12 @@ const HelpContent = ({ module }: { module: string }) => {
     case 'calendar':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-           <h3 className="font-bold text-brand text-lg uppercase tracking-widest mb-4">Hướng dẫn sử dụng Lịch Vạn niên AI</h3>
+           <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn sử dụng Lịch Vạn niên AI</h3>
            <p>Ứng dụng Lịch Vạn niên AI được thiết kế với công nghệ lõi API sử dụng thư viện mã nguồn mở Lunar-javascript, là tài liệu tích hợp các lý luận cổ đại Trung Hoa về thiên văn, trạch cát, thuật số làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu theo bộ sách cổ "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy, trạch cát truyền thống.</p>
            <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc bình thường.</p>
            <p>Điểm khác biệt với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
            <p>Để ghi chú vào lịch bạn chỉ cần nháy thực đơn Thêm sự kiện và điền các thông tin cần thiết, sau đó lưu sự kiện.</p>
-           <p className="font-bold text-sky-400 mt-4">Ngoài ra, Lịch Vạn niên AI còn có các tính năng chuyên sâu:</p>
+           <p className="font-bold text-sky-400 mt-4 font-sans">Ngoài ra, Lịch Vạn niên AI còn có các tính năng chuyên sâu:</p>
            <ul className="list-none space-y-2">
              <li><strong className="text-white">(1). Xem ngày chi tiết:</strong> Để biết tính chất tốt, xấu của ngày đó;</li>
              <li><strong className="text-white">(2). Tìm các ngày tốt trong một tháng:</strong> Có thể tìm ngày tốt chung hoặc có thể tìm ngày tốt cho từng việc;</li>
@@ -87,10 +87,10 @@ const HelpContent = ({ module }: { module: string }) => {
     case 'pdf':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Xử lý PDF</h3>
+          <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn sử dụng Xử lý PDF</h3>
           <p>Cung cấp bộ công cụ cắt, ghép, và sắp xếp lại trang PDF bằng thao tác kéo thả. Đặc biệt có tính năng chuyển PDF sang Word (.docx), tự động làm sạch ký hiệu thừa và định dạng chuẩn font Times New Roman dùng cho hành chính.</p>
-          <h4 className="font-bold text-white">Công cụ này có 3 chức năng:</h4>
-          <p className="font-bold text-sky-400">1. Cắt và tách file PDF:</p>
+          <h4 className="font-bold text-white font-sans">Công cụ này có 3 chức năng:</h4>
+          <p className="font-bold text-sky-400 font-sans">1. Cắt và tách file PDF:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Bạn tải lên file PDF bất kỳ;</li>
             <li>Bước 2: Xuất hiện giao diện của từng trang PDF. Tại đây, bạn đưa chuột vào từng trang xuất hiện 3 nút công cụ: Nút màu vàng có chấm đen (di chuyển trang), Nút màu xanh (copy trang), Nút màu đỏ (xóa trang).</li>
@@ -98,13 +98,13 @@ const HelpContent = ({ module }: { module: string }) => {
             - <strong>Cách 1:</strong> Chọn các trang bất kỳ. Nhấn nút "Xuất n trang chọn" ➔ Lưu file.<br/>
             - <strong>Cách 2:</strong> Chọn khoảng cách chia tách ➔ Nhấn "Tải Zip" để tách hàng loạt.</li>
           </ul>
-          <p className="font-bold text-sky-400">2. Ghép file PDF</p>
+          <p className="font-bold text-sky-400 font-sans">2. Ghép file PDF</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải lên các file PDF cần ghép.</li>
             <li>Bước 2: Edit hoặc biên tập lại các file PDF (thêm, bớt, xóa, di chuyển).</li>
             <li>Bước 3: Chọn "Ghép & Tải xuống".</li>
           </ul>
-          <p className="font-bold text-sky-400">3. Chuyển sang file word</p>
+          <p className="font-bold text-sky-400 font-sans">3. Chuyển sang file word</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải file PDF cần chuyển.</li>
             <li>Bước 2: Tải file word đã được chuyển.</li>
@@ -114,7 +114,7 @@ const HelpContent = ({ module }: { module: string }) => {
     case 'ocr':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Trích xuất OCR</h3>
+          <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn sử dụng Trích xuất OCR</h3>
           <p>Sử dụng Trí tuệ nhân tạo (AI) chạy nội bộ (Offline) để nhận diện và bóc tách văn bản từ hình ảnh JPG/PNG. Đảm bảo bảo mật tuyệt đối 100% tài liệu nhạy cảm do dữ liệu không bị gửi lên mạng.</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Tải hình ảnh có text cần trích xuất thành văn bản</li>
@@ -126,7 +126,7 @@ const HelpContent = ({ module }: { module: string }) => {
     case 'scanner':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">Hướng dẫn Scan tài liệu</h3>
+          <h3 className="font-bold text-brand text-lg font-sans">Hướng dẫn Scan tài liệu</h3>
           <p>Chức năng này bạn nên sử dụng trên điện thoại. Mặc định sau khi scan sẽ xuất thành file PDF ở dạng bản màu hoặc đen trắng.</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Bước 1: Đặt văn bản cần scan ngay ngắn trên mặt phẳng;</li>
@@ -201,7 +201,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
 
   // THIẾT LẬP QUYỀN ADMIN (Bạn thay đổi danh sách email quản trị tại đây)
-  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
+  const ADMIN_EMAILS = ['hungvdtn@gmail.com', 'vuxuanhung@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
 
   useEffect(() => {
@@ -307,15 +307,14 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4 md:gap-6">
-            {/* TÀI KHOẢN ĐĂNG NHẬP NẰM ĐƠN ĐỘC LÀM ĐIỂM NHẤN */}
+            {/* TÀI KHOẢN ĐĂNG NHẬP NẰM ĐƠN ĐỘC LÀM ĐIỂM NHẤN - ĐÃ ẨN TÊN THEO YÊU CẦU */}
             {user ? (
-              <div className="flex items-center gap-3 bg-[#1e293b]/50 px-3 py-1.5 rounded-full border border-[#1e293b]">
+              <div className="flex items-center gap-2 bg-[#1e293b]/50 p-1.5 pr-3 rounded-full border border-[#1e293b]">
                  <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.3)]" title={user.email || ''} />
-                 <span className="text-sm font-bold text-slate-200 hidden sm:block font-sans">{user.displayName}</span>
-                 <button onClick={handleLogout} className="ml-2 text-[10px] uppercase tracking-widest font-bold text-slate-400 hover:text-rose-400 hidden sm:block transition-colors"><LogOut size={16} /></button>
+                 <button onClick={handleLogout} className="text-slate-400 hover:text-rose-400 transition-colors ml-1" title="Đăng xuất"><LogOut size={18} /></button>
               </div>
             ) : (
-              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20">
+              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-bg-dark text-xs font-bold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand/20 font-sans">
                  <LogIn size={16} /> Đăng nhập
               </button>
             )}
