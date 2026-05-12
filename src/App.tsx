@@ -16,8 +16,7 @@ import Calendar from './components/Calendar';
 
 // --- IMPORT FIREBASE ---
 import { auth, db, googleProvider } from './firebase';
-// THÊM: signInWithRedirect để hỗ trợ đăng nhập trên Điện thoại
-import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 
 type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin'; 
@@ -36,7 +35,7 @@ const AdminPanel = () => {
            snap.forEach(doc => {
               const data = doc.data();
               if (data.userId && !uniqueUsers.has(data.userId)) {
-                 uniqueUsers.set(data.userId, data.email || 'Ẩn danh (Do chính sách bảo mật Firebase)');
+                 uniqueUsers.set(data.userId, data.email || 'Tài khoản cũ (Chưa lưu Email)');
               }
            });
            
@@ -61,7 +60,7 @@ const AdminPanel = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
                     <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID thiết bị đã lưu sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng tài khoản đã lưu sự kiện</p>
                  </div>
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
@@ -77,8 +76,8 @@ const AdminPanel = () => {
                    <table className="w-full text-sm text-left text-slate-300 whitespace-nowrap">
                      <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50">
                        <tr>
-                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase Auth)</th>
-                         <th className="px-6 py-3 rounded-tr-lg">Email / Định danh</th>
+                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase)</th>
+                         <th className="px-6 py-3 rounded-tr-lg">Địa chỉ Email</th>
                        </tr>
                      </thead>
                      <tbody>
@@ -231,24 +230,17 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false); 
-  const [showOneTap, setShowOneTap] = useState(false);
 
   // QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP
   const [user, setUser] = useState<User | null>(null);
 
-  // THIẾT LẬP QUYỀN ADMIN
-  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
+  // THIẾT LẬP QUYỀN ADMIN (Bạn thay đổi danh sách email quản trị tại đây)
+  const ADMIN_EMAILS = ['hungvdtn@gmail.com', 'vuxuanhung@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => { 
         setUser(currentUser); 
-        // Hiển thị khung popup "Đăng nhập nhanh" nếu chưa đăng nhập sau 2.5 giây
-        if (!currentUser) {
-           setTimeout(() => setShowOneTap(true), 2500);
-        } else {
-           setShowOneTap(false);
-        }
     });
     return () => unsubscribe();
   }, []);
@@ -390,28 +382,6 @@ export default function App() {
           </div>
         </div>
       </main>
-
-      {/* POPUP ĐĂNG NHẬP NHANH BẰNG GOOGLE TỰ ĐỘNG HIỆN LÊN */}
-      <AnimatePresence>
-        {showOneTap && !user && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: 20 }} 
-            className="fixed bottom-24 left-4 right-4 md:bottom-auto md:top-20 md:left-auto md:right-8 z-[100] bg-[#0f172a] rounded-xl shadow-[0_0_50px_rgba(56,189,248,0.4)] p-4 flex items-center gap-4 border border-sky-500 md:max-w-sm"
-          >
-             <div className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-inner">
-                <img src="https://www.google.com/favicon.ico" alt="G" className="w-5 h-5" />
-             </div>
-             <div className="flex-1">
-               <p className="text-sm font-bold text-white font-sans">Tiếp tục sử dụng với tài khoản</p>
-               <p className="text-[11px] text-sky-400 font-sans mt-0.5">Đăng nhập nhanh bằng Google</p>
-             </div>
-             <button onClick={() => { handleLogin(); setShowOneTap(false); }} className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-sm font-sans transition-colors whitespace-nowrap shadow-md">Tiếp tục</button>
-             <button onClick={() => setShowOneTap(false)} className="text-slate-400 hover:text-rose-400 p-1 transition-colors"><X size={16}/></button>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* HIỂN THỊ BẢNG TRỢ GIÚP NỔI BÊN TRÊN */}
       {showHelpModal && <DraggableHelp activeModule={activeModule} onClose={() => setShowHelpModal(false)} />}
