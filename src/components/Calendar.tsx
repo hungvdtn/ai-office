@@ -917,7 +917,7 @@ export default function Calendar() {
                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block">Báo trước</label>
                   <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors">
                     <option value={0}>Đúng giờ</option>
-                    <option value={15}>15 phút</option>
+                    <option value={30}>30 phút</option>
                     <option value={60}>1 tiếng</option>
                     <option value={1440}>1 ngày (24h)</option>
                   </select>
