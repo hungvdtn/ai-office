@@ -35,8 +35,8 @@ const AdminPanel = () => {
            snap.forEach(doc => {
               const data = doc.data();
               if (data.userId && !uniqueUsers.has(data.userId)) {
-                 // Nếu trong tương lai DB có lưu email, nó sẽ hiển thị ở đây
-                 uniqueUsers.set(data.userId, data.email || 'Ẩn danh (Do chính sách bảo mật Firebase)');
+                 // Ưu tiên hiển thị Email, nếu là sự kiện cũ chưa lưu email thì báo "Tài khoản cũ"
+                 uniqueUsers.set(data.userId, data.email || 'Tài khoản cũ (Chưa lưu Email)');
               }
            });
            
@@ -48,7 +48,7 @@ const AdminPanel = () => {
   }, []);
 
   return (
-     <div className="p-4 md:p-8 text-slate-200 animate-in fade-in duration-500">
+     <div className="p-4 md:p-8 text-slate-200 animate-in fade-in duration-500 font-sans">
         <h2 className="text-xl md:text-2xl font-bold text-brand mb-8 flex items-center gap-3">
            <Users size={28} /> Bảng điều khiển Quản trị viên (Admin)
         </h2>
@@ -61,7 +61,7 @@ const AdminPanel = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
                     <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID thiết bị đã lưu sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng tài khoản đã lưu sự kiện</p>
                  </div>
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
@@ -77,8 +77,8 @@ const AdminPanel = () => {
                    <table className="w-full text-sm text-left text-slate-300">
                      <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50">
                        <tr>
-                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase Auth)</th>
-                         <th className="px-6 py-3 rounded-tr-lg">Email / Định danh</th>
+                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase)</th>
+                         <th className="px-6 py-3 rounded-tr-lg">Địa chỉ Email</th>
                        </tr>
                      </thead>
                      <tbody>
@@ -94,7 +94,6 @@ const AdminPanel = () => {
                      </tbody>
                    </table>
                  </div>
-                 <p className="text-xs text-slate-500 mt-4 italic">* Ghi chú: Vì lý do bảo mật quyền riêng tư của Google, hệ thống mặc định ẩn Email và chỉ nhận diện qua chuỗi ID thiết bị độc nhất.</p>
               </div>
            </div>
         )}
