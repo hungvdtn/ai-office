@@ -93,8 +93,9 @@ const getManualYiJi = (trucIdx: number) => {
 };
 
 const SHEN_SHA_MAP: Record<string, string> = {
-  '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普 hộ': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '六儀': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý', '吉神': 'Cát thần', '地财': 'Địa tài', '月解': 'Nguyệt giải', '直性': 'Trực tính', '月德合': 'Nguyệt đức hợp', '天德合': 'Thiên đức hợp', '月空合': 'Nguyệt không hợp', '人专': 'Nhân chuyên', '杀贡': 'Sát cống', '四相': 'Tứ tướng', '不将': 'Bất tương', '岁合': 'Tuế hợp', '大明': 'Đại minh', '神在': 'Thần tại', '金匮': 'Kim quỹ', '阴将': 'Âm tướng', '阳将': 'Dương tướng', '天刑': 'Thiên hình', '岁禄': 'Tuế lộc', '大红砂': 'Đại hồng sa', '续世': 'Tục thế', '續世': 'Tục thế',
-  '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九空': 'Cửu không', '九坎': 'Cửu khảm', '重日': 'Trùng nhật', '复日': 'Phục nhật', '天狗': 'Thiên cẩu', '游 họa': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '四击': 'Tứ kích', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '五虚': 'Ngũ hư', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '九焦': 'Cửu tiêu', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thọ tử', '离巢': 'Ly sàng', '赤口': 'Xích khẩu', '绝烟': 'Tuyệt yên', '厌': 'Yếm', '四耗': 'Tứ hao', '五辰': 'Ngũ thần', '破败': 'Phá bại', '雷公': 'Lôi công', '八座': 'Bát tọa'
+  '天恩': 'Thiên ân', '天喜': 'Thiên hỷ', '月德': 'Nguyệt đức', '天官': 'Thiên quan', '天福': 'Thiên phúc', '福生': 'Phúc sinh', '月恩': 'Nguyệt ân', '天马': 'Thiên mã', '三合': 'Tam hợp', '母仓': 'Mẫu thương', '六合': 'Lục hợp', '五富': 'Ngũ phú', '解神': 'Giải thần', '益后': 'Ích hậu', '天医': 'Thiên y', '天财': 'Thiên tài', '生气': 'Sinh khí', '福厚': 'Phúc hậu', '天德': 'Thiên đức', '月空': 'Nguyệt không', '圣心': 'Thánh tâm', '阳德': 'Dương đức', '王日': 'Vương nhật', '驿马': 'Dịch mã', '天后': 'Thiên hậu', '鸣吠': 'Minh phệ', '敬心': 'Kính tâm', '普护': 'Phổ hộ', '守日': 'Thủ nhật', '天巫': 'Thiên vu', '福德': 'Phúc đức', '岁德': 'Tuế đức', '阴德': 'Âm đức', '官日': 'Quan nhật', '吉期': 'Cát kỳ', '玉宇': 'Ngọc vũ', '金堂': 'Kim đường', '敬安': 'Kính an', '时德': 'Thời đức', '民日': 'Dân nhật', '天赦': 'Thiên xá', '时阳': 'Thời dương', '要安': 'Yếu an', '相日': 'Tương nhật', '宝光': 'Bảo quang', '天仓': 'Thiên thương', '五合': 'Ngũ hợp', '鸣吠对': 'Minh phệ đối', '临日': 'Lâm nhật', '天愿': 'Thiên nguyện', '六仪': 'Lục nghi', '六儀': 'Lục nghi', '玉堂': 'Ngọc đường', '明堂': 'Minh đường', '司命': 'Tư mệnh', '青龙': 'Thanh long', '黄道': 'Hoàng đạo', '直星': 'Trực tinh', '天贵': 'Thiên quý', '吉神': 'Cát thần', '地财': 'Địa tài', '月解': 'Nguyệt giải', '直性': 'Trực tính', '月德合': 'Nguyệt đức hợp', '天德合': 'Thiên đức hợp', '月空合': 'Nguyệt không hợp', '人专': 'Nhân chuyên', '杀贡': 'Sát cống', '四相': 'Tứ tướng', '不将': 'Bất tương', '岁合': 'Tuế hợp', '大明': 'Đại minh', '神在': 'Thần tại', '金匮': 'Kim quỹ', '阴将': 'Âm tướng', '阳将': 'Dương tướng', '天刑': 'Thiên hình', '岁禄': 'Tuế lộc', '大红砂': 'Đại hồng sa', '续世': 'Tục thế', '續世': 'Tục thế',
+  '时阴': 'Thời âm', '除神': 'Trừ thần', '四耗': 'Tứ hao', '五辰': 'Ngũ thần', '破败': 'Phá bại', '雷公': 'Lôi công', '八座': 'Bát tọa', '天瘟': 'Thiên ôn', '四击': 'Tứ kích', '九空': 'Cửu không', '血忌': 'Huyết kỵ', '九焦': 'Cửu tiêu', '五虚': 'Ngũ hư', '复日': 'Phục nhật', '重日': 'Trùng nhật',
+  '土府': 'Thổ phủ', '天罡': 'Thiên cương', '死神': 'Tử thần', '月刑': 'Nguyệt hình', '大耗': 'Đại hao', '小耗': 'Tiểu hao', '孤辰': 'Cô thần', '寡宿': 'Quả tú', '劫煞': 'Kiếp sát', '灾煞': 'Tai sát', '岁破': 'Tuế phá', '岁煞': 'Tuế sát', '白虎': 'Bạch hổ', '朱雀': 'Chu tước', '玄武': 'Huyền vũ', '勾陈': 'Câu trận', '腾蛇': 'Đằng xà', '归忌': 'Quy kỵ', '厌对': 'Yếm đối', '招摇': 'Chiêu dao', '血支': 'Huyết chi', '九坎': 'Cửu khảm', '天狗': 'Thiên cẩu', '游祸': 'Du họa', '咸池': 'Hàm trì', '往亡': 'Vãng vong', '月煞': 'Nguyệt sát', '月虚': 'Nguyệt hư', '月客': 'Nguyệt khách', '阴错': 'Âm thác', '阳错': 'Dương thác', '耗客': 'Hao khách', '触水龙': 'Xúc thủy long', '四废': 'Tứ phế', '土符': 'Thổ phù', '大煞': 'Đại sát', '死气': 'Tử khí', '八龙': 'Bát long', '地囊': 'Địa nang', '天贼': 'Thiên tặc', '八风': 'Bát phong', '五墓': 'Ngũ mộ', '七乌': 'Thất ô', '天吏': 'Thiên lại', '致死': 'Trí tử', '月建': 'Nguyệt kiến', '土瘟': 'Thổ ôn', '天牢': 'Thiên lao', '孤阳': 'Cô dương', '绝阴': 'Tuyệt âm', '飞廉': 'Phi liêm', '大部': 'Đại bộ', '黑道': 'Hắc đạo', '月破': 'Nguyệt phá', '天火': 'Thiên hỏa', '月厌': 'Nguyệt yếm', '地火': 'Địa hỏa', '冰消瓦陷': 'Băng tiêu ngõa hãm', '荒芜': 'Hoang vu', '神隔': 'Thần cách', '月害': 'Nguyệt hại', '小空亡': 'Tiểu không vong', '大空亡': 'Đại không vong', '天狱': 'Thiên ngục', '天平': 'Thiên bình', '死符': 'Tử phù', '地贼': 'Địa tặc', '四穷': 'Tứ cùng', '五离': 'Ngũ ly', '八专': 'Bát chuyên', '横天': 'Hoành thiên', '受死': 'Thọ tử', '离巢': 'Ly sàng', '赤口': 'Xích khẩu', '绝烟': 'Tuyệt yên', '厌': 'Yếm'
 };
 
 // --- THƯ VIỆN Ý NGHĨA CÁC SAO CHI TIẾT (HOVER TOOLTIP) ---
@@ -273,7 +274,7 @@ const STAR_MEANINGS: Record<string, string> = {
 };
 
 const YI_JI_MAP: Record<string, string> = {
-  '嫁娶': 'Cưới hỏi', '出行': 'Xuất hành', '动土': 'Động thổ', '祈福': 'Cầu phúc', '祭祀': 'Tế tự', '交易': 'Giao dịch', '纳财': 'Nạp tài', '开市': 'Khai trương', '安床': 'An sàng', '安葬': 'An táng', '入殓': 'Nhập liệm', '修造': 'Sửa chữa', '拆卸': 'Tháo dỡ', '起基': 'Khởi công', '移徙': 'Di dời', '入宅': 'Nhập trạch', '纳采': 'Đính hôn', '订盟': 'Đính ước', '裁衣': 'May áo', '冠笄': 'Cắt tóc', '开仓': 'Mở kho', '纳畜': 'Chăn nuôi', '破土': 'Phá thổ', '启钻': 'Khởi cữu', '伐木': 'Đốn gỗ', '理发': 'Cắt tóc', '沐浴': 'Tắm gội', '治病': 'Chữa bệnh', '破屋': 'Phá nhà', '坏垣': 'Phá tường', '扫舍': 'Quét dọn', '开池': 'Mở ao', '开厕': 'Mở nhà vệ sinh', '造庙': 'Xây đền', '塞穴': 'Lấp hang', '余事勿取': 'Các việc khác không nên làm', '诸事不宜': 'Mọi việc đều kỵ', '造桥': 'Xây cầu', '塑绘': 'Tạc tượng', '开渠': 'Đào mương', '穿井': 'Đào giếng', '栽种': 'Gieo trồng', '结网': 'Giăng lưới', '畋猎': 'Săn bắn', '捕捉': 'Bắt thú', '教牛马': 'Huấn luyện thú', '造畜稠': 'Làm chuồng', '立券': 'Ký hợp đồng', '开光': 'Khai quang', '竖柱': 'Dựng cột', '上梁': 'Cất nóc', '造门': 'Làm cửa', '安香': 'Đặt bát hương', '解除': 'Giải oan', '求医': 'Cầu y', '会亲友': 'Họp mặt', '进人口': 'Nhận con nuôi', '纳奴妾': 'Nhận người giúp việc', '修墓': 'Sửa mộ', '造葬': 'Xây mộ', '探病': 'Thăm bệnh', '赴任': 'Nhậm chức', '割蜜': 'Thu hoạch mật', '酝酿': 'Ủ rượu', '合帐': 'Làm màn', '放水': 'Tháo nước', '造车器': 'Đóng xe', '造船': 'Đóng thuyền', '修水门': 'Sửa cống', '补垣': 'Vá tường', '平治道涂': 'Làm đường', '修表章': 'Dâng sớ', '祈嗣': 'Cầu tự', '入学': 'Nhập học'
+  '嫁娶': 'Cưới hỏi', '出行': 'Xuất hành', '动土': 'Động thổ', '祈福': 'Cầu phúc', '祭祀': 'Tế tự', '交易': 'Giao dịch', '纳财': 'Nạp tài', '开市': 'Khai trương', '安床': 'An sàng', '安葬': 'An táng', '入殓': 'Nhập liệm', '修造': 'Sửa chữa', '拆卸': 'Tháo dỡ', '起基': 'Khởi công', '移徙': 'Di dời', '入宅': 'Nhập trạch', '纳采': 'Đính hôn', '订盟': 'Đính ước', '裁衣': 'May áo', '冠笄': 'Cắt tóc', '开仓': 'Mở kho', '纳畜': 'Chăn nuôi', '破土': 'Phá thổ', '启钻': 'Khởi cữu', '伐木': 'Đốn gỗ', '理发': 'Cắt tóc', '沐浴': 'Tắm gội', '治病': 'Chữa bệnh', '破屋': 'Phá nhà', '坏垣': 'Phá tường', '扫舍': 'Quét dọn', '开池': 'Mở ao', '开厕': 'Mở nhà vệ sinh', '造庙': 'Xây đền', '塞穴': 'Lấp hang', '余事勿取': 'Các việc khác không nên làm', '诸事不宜': 'Mọi việc đều kỵ', '造桥': 'Xây cầu', '塑绘': 'Tạc tượng', '开渠': 'Đào mương', '穿井': 'Đào giếng', '栽种': 'Gieo trồng', '结网': 'Giăng lưới', '畋猎': 'Săn bắn', '捕捉': 'Bắt thú', '教牛马': 'Huấn luyện thú', '造畜稠': 'Làm chuồng', '立券': 'Ký hợp đồng', '开光': 'Khai quang', '竖柱': 'Dựng cột', '上梁': 'Cất nóc', '造门': 'Làm cửa', '安香': 'Đặt bát hương', '解除': 'Giải oan', '求医': 'Cầu y', '会亲友': 'Họp mặt', '进人口': 'Nhận con nuôi', '纳奴妾': 'Nhận người giúp việc', '修墓': 'Sửa mộ', '造葬': 'Xây mộ', '探病': 'Thăm bệnh', '赴任': 'Nhậm chức', '割蜜': 'Thu hoạch mật', '酝酿': 'Ủ rượu', '合帐': 'Làm màn', '放水': 'Tháo nước', '造车器': 'Đóng xe', '造船': 'Đóng thuyền', '修水门': 'Sửa cống', '补垣': 'Vá tường', '平治道涂': 'Làm đường', '修表章': 'Dâng sớ', '祈嗣': 'Cầu tự', '入学': 'Nhập học', '求嗣': 'Cầu tự', '挂匾': 'Treo biển', '出火': 'Di dời bát hương', '安门': 'Dựng cửa', '谢土': 'Tạ thổ', '作灶': 'Làm bếp', '移柩': 'Di quan', '修坟': 'Sửa mộ', '架马': 'Lên đòn dông', '作梁': 'Cất nóc', '无': 'Không', '合寿木': 'Làm quan tài', '破木': 'Chẻ gỗ'
 };
 
 const JOB_CATEGORIES = [
@@ -297,9 +298,12 @@ const JOB_CATEGORIES = [
   { id: 'nhan_nuoi', label: 'Nhận con nuôi, nhận giúp việc', keywords: ['Nhận con nuôi', 'Nhận người giúp việc'] }
 ];
 
+// Hàm Translate loại bỏ 100% tiếng Trung bằng mã Regex
 const translateArray = (arr: string[], map: Record<string, string>) => {
   if (!arr || arr.length === 0) return [];
-  return arr.map(item => map[item] || item);
+  return arr.map(item => map[item] || item)
+            .filter(item => !/[\u4e00-\u9fa5]/.test(item))
+            .filter(item => item !== 'Không'); // Xóa bỏ chữ Không bị thừa
 };
 
 const getDayEvaluation = (date: Date) => {
@@ -382,7 +386,6 @@ const getDayDetails = (date: Date) => {
     const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
     const lunar = solar.getLunar();
     
-    // 1. Tiết khí & Hướng xuất hành
     const currentJieQi = lunar.getJieQi() || lunar.getPrevJieQi().getName();
     const JIE_QI_MAP: any = {
       '立春': 'Lập Xuân', '雨水': 'Vũ Thủy', '惊蛰': 'Kinh Trập', '春分': 'Xuân Phân',
@@ -587,6 +590,10 @@ export default function Calendar() {
   const [fgdJob, setFgdJob] = useState('');
   const [fgdResult, setFgdResult] = useState<any>(null);
 
+  const [qLunarDay, setQLunarDay] = useState('');
+  const [qLunarMonth, setQLunarMonth] = useState('');
+  const [qLunarYear, setQLunarYear] = useState('');
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -694,6 +701,27 @@ export default function Calendar() {
             setCResult("Không tìm thấy ngày Âm lịch hợp lệ trong năm này!"); setCResultDate(null);
         }
     }
+  };
+
+  const handleQuickLunarSearch = () => {
+    const d = parseInt(qLunarDay), m = parseInt(qLunarMonth), y = parseInt(qLunarYear);
+    if (!d || !m || !y) return alert("Vui lòng nhập đầy đủ Ngày, Tháng, Năm âm lịch!");
+    try {
+        let found = null;
+        const start = new Date(y, 0, 1);
+        for(let i=0; i<380; i++) {
+            const td = new Date(start.getTime() + i*86400000); 
+            const ln = getLunarDate(td);
+            if (ln.day === d && ln.monthNum === m) { found = td; break; }
+        }
+        if (found) {
+            setSelectedDate(found);
+            setCurrentDate(found);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            alert("Không tìm thấy ngày Âm lịch này!");
+        }
+    } catch(e) {}
   };
 
   const handleFindGoodDays = () => {
@@ -998,6 +1026,17 @@ export default function Calendar() {
               </div>
             </div>
           </div>
+
+          {/* TÌM NHANH NGÀY ÂM LỊCH */}
+          <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-4 sm:p-6 shadow-xl mt-6 flex flex-col sm:flex-row items-center gap-4 font-sans">
+             <span className="text-emerald-400 font-bold uppercase tracking-widest text-sm whitespace-nowrap flex items-center gap-2"><Search size={18}/> Tìm nhanh Âm lịch</span>
+             <div className="flex gap-2 w-full sm:w-auto flex-1">
+                <input type="number" placeholder="Ngày" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-2.5 text-center text-slate-200 focus:border-emerald-500 focus:outline-none font-sans text-sm" />
+                <input type="number" placeholder="Tháng" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-2.5 text-center text-slate-200 focus:border-emerald-500 focus:outline-none font-sans text-sm" />
+                <input type="number" placeholder="Năm" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-2.5 text-center text-slate-200 focus:border-emerald-500 focus:outline-none font-sans text-sm" />
+             </div>
+             <button onClick={handleQuickLunarSearch} className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-[0_0_15px_rgba(5,150,105,0.4)] whitespace-nowrap font-sans text-sm">ĐI TỚI NGÀY</button>
+          </div>
         </>
       )}
 
@@ -1106,7 +1145,7 @@ export default function Calendar() {
                               </div>
                               <div className="space-y-4 text-sm text-slate-300 font-sans">
                                  <div>
-                                    <strong className="text-white">1. Thông chung: </strong>
+                                    <strong className="text-white">1. Thông tin chung: </strong>
                                     Là <span className="text-amber-400 font-bold">{item.evalData.text.toLowerCase()}</span>. {item.evalData.generalDesc} 
                                     <br/>Trực <span className="text-amber-400 font-bold">{item.detData.truc}</span>. Kiểu ngày: <span className={item.evalData.isHoangDao ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>{item.evalData.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span>.
                                  </div>
@@ -1165,6 +1204,7 @@ export default function Calendar() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-[#1e293b] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
               
+              {/* HEADER UI */}
               <div className="p-6 bg-[#1e293b]/30 border-b border-[#1e293b] flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-amber-500 text-[#05070a] rounded-2xl flex items-center justify-center font-black text-3xl font-sans shadow-lg">{selectedDate.getDate()}</div>
@@ -1178,6 +1218,7 @@ export default function Calendar() {
 
               <div className="p-6 overflow-y-auto custom-scrollbar text-slate-300 space-y-6 text-sm font-sans leading-relaxed bg-[#05070a]">
                 
+                {/* 1. THÔNG TIN CHUNG */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">1. Thông tin chung về ngày</h4>
                   <p className="font-sans">
@@ -1217,12 +1258,14 @@ export default function Calendar() {
                   </p>
                 </div>
 
+                {/* 2. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Mức độ phù hợp công việc</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Việc nên làm và không nên làm</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
                   <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
                 </div>
 
+                {/* 3. GIỜ HOÀNG ĐẠO VÀ XUNG KHẮC */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Giờ Hoàng đạo & Xung khắc</h4>
                   <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}.</p>
@@ -1230,6 +1273,7 @@ export default function Calendar() {
                   <p className="font-sans">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span>, bị xung với ngày này, làm việc gì cũng cần tránh khởi sự vào giờ chính xung.</p>
                 </div>
 
+                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
