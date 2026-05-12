@@ -16,7 +16,8 @@ import Calendar from './components/Calendar';
 
 // --- IMPORT FIREBASE ---
 import { auth, db, googleProvider } from './firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+// THÊM: signInWithRedirect để hỗ trợ đăng nhập trên Điện thoại
+import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 
 type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin'; 
@@ -35,8 +36,7 @@ const AdminPanel = () => {
            snap.forEach(doc => {
               const data = doc.data();
               if (data.userId && !uniqueUsers.has(data.userId)) {
-                 // Ưu tiên hiển thị Email, nếu là sự kiện cũ chưa lưu email thì báo "Tài khoản cũ"
-                 uniqueUsers.set(data.userId, data.email || 'Tài khoản cũ (Chưa lưu Email)');
+                 uniqueUsers.set(data.userId, data.email || 'Ẩn danh (Do chính sách bảo mật Firebase)');
               }
            });
            
@@ -61,7 +61,7 @@ const AdminPanel = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
                     <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng tài khoản đã lưu sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID thiết bị đã lưu sự kiện</p>
                  </div>
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
@@ -73,12 +73,12 @@ const AdminPanel = () => {
 
               <div className="bg-[#0f172a] p-6 rounded-2xl border border-[#1e293b]">
                  <h3 className="text-brand font-bold uppercase tracking-widest mb-4">Danh sách tài khoản sử dụng</h3>
-                 <div className="overflow-x-auto">
-                   <table className="w-full text-sm text-left text-slate-300">
+                 <div className="overflow-x-auto custom-scrollbar">
+                   <table className="w-full text-sm text-left text-slate-300 whitespace-nowrap">
                      <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50">
                        <tr>
-                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase)</th>
-                         <th className="px-6 py-3 rounded-tr-lg">Địa chỉ Email</th>
+                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase Auth)</th>
+                         <th className="px-6 py-3 rounded-tr-lg">Email / Định danh</th>
                        </tr>
                      </thead>
                      <tbody>
@@ -201,7 +201,7 @@ const DraggableHelp = ({ activeModule, onClose }: { activeModule: string, onClos
   return (
     <div 
       className="fixed z-50 bg-[#0f172a]/95 backdrop-blur-xl border-2 border-brand/50 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col"
-      style={{ left: pos.x, top: pos.y, width: 400, height: 500, resize: 'both', overflow: 'hidden' }}
+      style={{ left: pos.x, top: pos.y, width: window.innerWidth > 400 ? 400 : window.innerWidth - 40, height: 500, resize: 'both', overflow: 'hidden' }}
     >
       <div 
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
@@ -236,7 +236,7 @@ export default function App() {
   // QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP
   const [user, setUser] = useState<User | null>(null);
 
-  // THIẾT LẬP QUYỀN ADMIN (Bạn thay đổi danh sách email quản trị tại đây)
+  // THIẾT LẬP QUYỀN ADMIN
   const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
@@ -253,7 +253,23 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (error) { console.error(error); } };
+  // --- THUẬT TOÁN ĐĂNG NHẬP THÔNG MINH CHO MOBILE ---
+  const handleLogin = async () => { 
+    try { 
+      // Nhận diện thiết bị di động để dùng cơ chế Redirect (Tránh bị chặn Popup)
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+         await signInWithRedirect(auth, googleProvider);
+      } else {
+         await signInWithPopup(auth, googleProvider); 
+      }
+    } catch (error) { 
+      console.error("Lỗi đăng nhập:", error); 
+      // Phương án dự phòng nếu Popup bị chặn trên máy tính
+      try { await signInWithRedirect(auth, googleProvider); } catch(e) { console.error(e); }
+    } 
+  };
+  
   const handleLogout = async () => { try { await signOut(auth); } catch (error) { console.error(error); } };
 
   const modules = [
@@ -327,7 +343,6 @@ export default function App() {
             {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Trợ giúp</span>}
           </button>
 
-          {/* LOGO AIBTeM ĐƯỢC CHUYỂN XUỐNG DƯỚI CÙNG VÀ CĂN TRÁI CHO ĐỒNG BỘ */}
           <div className="px-6 mt-2">
             <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className={`flex items-center transition-transform hover:scale-105 origin-left ${!(isSidebarOpen || isMobileMenuOpen) ? 'hidden' : ''}`}>
               <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
@@ -350,7 +365,6 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4 md:gap-6">
-            {/* TÀI KHOẢN ĐĂNG NHẬP (ẨN TÊN, HIỂN THỊ ẢNH ĐẠI DIỆN) */}
             {user ? (
               <div className="flex items-center gap-2 bg-[#1e293b]/50 p-1.5 pr-3 rounded-full border border-[#1e293b]">
                  <img src={user.photoURL || ''} alt="Avatar" className="w-8 h-8 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.3)]" title={user.email || ''} />
@@ -380,14 +394,14 @@ export default function App() {
         </div>
       </main>
 
-      {/* POPUP ĐĂNG NHẬP NHANH BẰNG GOOGLE TỰ ĐỘNG HIỆN LÊN */}
+      {/* POPUP ĐĂNG NHẬP NHANH BẰNG GOOGLE TỰ ĐỘNG HIỆN LÊN (ĐÃ CHUYỂN XUỐNG DƯỚI CHO MOBILE) */}
       <AnimatePresence>
         {showOneTap && !user && (
           <motion.div 
-            initial={{ opacity: 0, y: -20 }} 
+            initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: -20 }} 
-            className="fixed top-20 right-4 md:right-8 z-50 bg-[#0f172a] rounded-xl shadow-[0_0_30px_rgba(56,189,248,0.2)] p-4 flex items-center gap-4 border border-sky-900 max-w-sm"
+            exit={{ opacity: 0, y: 20 }} 
+            className="fixed bottom-6 left-4 right-4 md:bottom-auto md:top-20 md:left-auto md:right-8 z-50 bg-[#0f172a] rounded-xl shadow-[0_0_30px_rgba(56,189,248,0.2)] p-4 flex items-center gap-4 border border-sky-900 md:max-w-sm"
           >
              <div className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-inner">
                 <img src="https://www.google.com/favicon.ico" alt="G" className="w-5 h-5" />
