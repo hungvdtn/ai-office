@@ -253,20 +253,17 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- THUẬT TOÁN ĐĂNG NHẬP THÔNG MINH CHO MOBILE ---
+  // --- THUẬT TOÁN ĐĂNG NHẬP CHỐNG CHẶN POPUP ---
   const handleLogin = async () => { 
     try { 
-      // Nhận diện thiết bị di động để dùng cơ chế Redirect (Tránh bị chặn Popup)
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-         await signInWithRedirect(auth, googleProvider);
-      } else {
-         await signInWithPopup(auth, googleProvider); 
-      }
-    } catch (error) { 
+      await signInWithPopup(auth, googleProvider); 
+    } catch (error: any) { 
       console.error("Lỗi đăng nhập:", error); 
-      // Phương án dự phòng nếu Popup bị chặn trên máy tính
-      try { await signInWithRedirect(auth, googleProvider); } catch(e) { console.error(e); }
+      if (error.code === 'auth/popup-blocked') {
+         alert("Trình duyệt đang chặn cửa sổ đăng nhập. Vui lòng cấp quyền (Cho phép mở Pop-up) để tiếp tục.");
+      } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+         alert("LỖI BẢO MẬT TRÌNH DUYỆT: Nếu bạn đang mở web từ ứng dụng Zalo/Facebook, vui lòng bấm vào nút 3 chấm ở góc phải màn hình, chọn 'Mở bằng trình duyệt' (Chrome/Safari) để có thể đăng nhập Google!");
+      }
     } 
   };
   
@@ -394,23 +391,23 @@ export default function App() {
         </div>
       </main>
 
-      {/* POPUP ĐĂNG NHẬP NHANH BẰNG GOOGLE TỰ ĐỘNG HIỆN LÊN (ĐÃ CHUYỂN XUỐNG DƯỚI CHO MOBILE) */}
+      {/* POPUP ĐĂNG NHẬP NHANH BẰNG GOOGLE TỰ ĐỘNG HIỆN LÊN */}
       <AnimatePresence>
         {showOneTap && !user && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             exit={{ opacity: 0, y: 20 }} 
-            className="fixed bottom-6 left-4 right-4 md:bottom-auto md:top-20 md:left-auto md:right-8 z-50 bg-[#0f172a] rounded-xl shadow-[0_0_30px_rgba(56,189,248,0.2)] p-4 flex items-center gap-4 border border-sky-900 md:max-w-sm"
+            className="fixed bottom-24 left-4 right-4 md:bottom-auto md:top-20 md:left-auto md:right-8 z-[100] bg-[#0f172a] rounded-xl shadow-[0_0_50px_rgba(56,189,248,0.4)] p-4 flex items-center gap-4 border border-sky-500 md:max-w-sm"
           >
              <div className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-inner">
                 <img src="https://www.google.com/favicon.ico" alt="G" className="w-5 h-5" />
              </div>
              <div className="flex-1">
-               <p className="text-sm font-bold text-white">Tiếp tục sử dụng với tài khoản</p>
-               <p className="text-[11px] text-sky-400 mt-0.5">Đăng nhập nhanh bằng Google</p>
+               <p className="text-sm font-bold text-white font-sans">Tiếp tục sử dụng với tài khoản</p>
+               <p className="text-[11px] text-sky-400 font-sans mt-0.5">Đăng nhập nhanh bằng Google</p>
              </div>
-             <button onClick={() => { handleLogin(); setShowOneTap(false); }} className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap shadow-md">Tiếp tục</button>
+             <button onClick={() => { handleLogin(); setShowOneTap(false); }} className="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-sm font-sans transition-colors whitespace-nowrap shadow-md">Tiếp tục</button>
              <button onClick={() => setShowOneTap(false)} className="text-slate-400 hover:text-rose-400 p-1 transition-colors"><X size={16}/></button>
           </motion.div>
         )}
