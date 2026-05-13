@@ -301,8 +301,13 @@ export default function App() {
                 audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
             }
             if ('Notification' in window && Notification.permission === 'granted') { 
-                new Notification('Lịch Sự Kiện', { body: `Tới giờ: ${ev.title}\nLúc: ${ev.time}`, icon: '/favicon.ico' }); 
-            }
+    new Notification(`BÁO THỨC: ${ev.title}`, { 
+        body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
+        icon: '/Logo_anh.png', 
+        requireInteraction: true, // Bắt buộc thông báo nằm lỳ trên màn hình cho đến khi tắt
+        vibrate: [200, 100, 200, 100, 200, 100, 200] // Rung mạnh trên điện thoại Android
+    }); 
+}
         }
       });
     };
