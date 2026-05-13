@@ -250,7 +250,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- THUẬT TOÁN BÁO THỨC TOÀN CẦU KÈM VƯỢT RÀO CẢN DI ĐỘNG ---
+  // --- THUẬT TOÁN BÁO SỰ KIỆN KÈM VƯỢT RÀO CẢN DI ĐỘNG ---
   useEffect(() => {
     // Khởi tạo Audio
     audioRef.current = new Audio('/nhac_bao_hieu.mp3');
@@ -312,7 +312,7 @@ export default function App() {
             
             // BẮN THÔNG BÁO HỆ THỐNG VỚI QUYỀN ƯU TIÊN CAO
             if ('Notification' in window && Notification.permission === 'granted') { 
-                new Notification(`BÁO THỨC: ${ev.title}`, { 
+                new Notification(`BÁO VIỆC: ${ev.title}`, { 
                     body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
                     icon: '/Logo_anh.png', 
                     requireInteraction: true, // Bắt buộc thông báo nằm lỳ trên màn hình cho đến khi tắt
@@ -476,7 +476,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* --- GIAO DIỆN BÁO ĐỘNG SỰ KIỆN TOÀN CẦU --- */}
+      {/* --- GIAO DIỆN BÁO SỰ KIỆN --- */}
       <AnimatePresence>
          {ringingEvent && (
             <motion.div 
@@ -489,7 +489,7 @@ export default function App() {
                   <Bell className="text-rose-600 animate-pulse" size={40} />
                </div>
                <div className="text-center">
-                 <p className="text-rose-100 font-bold uppercase tracking-widest text-xs mb-1">Báo thức sự kiện</p>
+                 <p className="text-rose-100 font-bold uppercase tracking-widest text-xs mb-1">Báo sự kiện</p>
                  <h3 className="text-xl md:text-2xl font-black text-white">{ringingEvent.title}</h3>
                  <p className="text-base font-bold text-rose-200 mt-2 flex items-center justify-center gap-2">
                     <Clock size={18}/> Thời gian: {ringingEvent.time}
