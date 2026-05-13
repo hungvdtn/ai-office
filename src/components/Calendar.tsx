@@ -825,7 +825,7 @@ export default function Calendar() {
         <div key={`cur-${d}`} onClick={() => setSelectedDate(dateObj)} className={`h-20 sm:h-28 lg:h-32 border border-[#1e293b] p-1 sm:p-2 lg:p-3 cursor-pointer transition-all flex flex-col relative group ${isSelected ? 'bg-sky-900/30 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] z-10' : 'bg-[#0a0f18] hover:bg-[#1e293b]'} ${isToday ? 'ring-1 ring-sky-500/50' : ''}`}>
           <div className="flex justify-between items-start font-sans">
             <span className={`text-lg sm:text-2xl font-bold ${solarColor}`}>{d}</span>
-            <span className={`text-[12px] sm:text-sm font-semibold ${lunar.day === 1 || lunar.day === 15 ? 'text-sky-400 font-bold' : 'text-slate-400'}`}>{lunar.day === 1 ? `${lunar.day}/${lunar.monthStr}` : lunar.day}</span>
+            <span className={`text-[12px] sm:text-sm font-semibold ${lunar.day === 1 || lunar.day === 15 ? 'text-sky-400 font-bold' : 'text-slate-400'}`}>{(lunar.day === 1 || lunar.day === 15) ? `${lunar.day}/${lunar.monthStr}` : lunar.day}</span>
           </div>
           <div className="mt-auto overflow-hidden font-sans">
             {solarHoliday && <div className={`text-[9px] sm:text-xs ${isSolarDayOff ? 'text-red-500' : 'text-amber-500'} leading-tight truncate font-semibold`}>{solarHoliday.name}</div>}
