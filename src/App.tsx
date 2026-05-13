@@ -6,7 +6,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, Scan, Languages, ChevronRight, HelpCircle, Menu, X, 
-  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut, Users
+  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut, Users, Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
@@ -16,7 +16,7 @@ import Calendar from './components/Calendar';
 
 // --- IMPORT FIREBASE ---
 import { auth, db, googleProvider } from './firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 
 type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin'; 
@@ -35,7 +35,7 @@ const AdminPanel = () => {
            snap.forEach(doc => {
               const data = doc.data();
               if (data.userId && !uniqueUsers.has(data.userId)) {
-                 uniqueUsers.set(data.userId, data.email || 'Tài khoản cũ (Chưa lưu Email)');
+                 uniqueUsers.set(data.userId, data.email || 'Ẩn danh (Do chính sách bảo mật Firebase)');
               }
            });
            
@@ -60,7 +60,7 @@ const AdminPanel = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
                     <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng tài khoản đã lưu sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID thiết bị đã lưu sự kiện</p>
                  </div>
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
@@ -76,8 +76,8 @@ const AdminPanel = () => {
                    <table className="w-full text-sm text-left text-slate-300 whitespace-nowrap">
                      <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50">
                        <tr>
-                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase)</th>
-                         <th className="px-6 py-3 rounded-tr-lg">Địa chỉ Email</th>
+                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase Auth)</th>
+                         <th className="px-6 py-3 rounded-tr-lg">Email / Định danh</th>
                        </tr>
                      </thead>
                      <tbody>
@@ -105,11 +105,11 @@ const HelpContent = ({ module }: { module: string }) => {
   switch (module) {
     case 'calendar':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
            <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Lịch Vạn niên AI</h3>
            <p>Ứng dụng Lịch Vạn niên AI được thiết kế với công nghệ lõi API sử dụng thư viện mã nguồn mở Lunar-javascript, là tài liệu tích hợp các lý luận cổ đại Trung Hoa về thiên văn, trạch cát, thuật số làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu theo bộ sách cổ "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy, trạch cát truyền thống.</p>
            <p>Lịch Vạn niên AI được bổ sung đầy đủ các ngày lễ tết theo quy định của Việt Nam. Ngày có đánh dấu màu đỏ là các ngày Chủ Nhật và các ngày lễ, Tết được nghỉ làm việc; ngày đánh dấu màu vàng là các ngày lễ/kỷ niệm thông thường, không được nghỉ; ngày màu trắng là ngày làm việc bình thường.</p>
-           <p>Điểm khác biệt với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
+           <p>Điểm khác biệt với các Lịch Vạn niên khác, Lịch Vạn niên AI còn có thể giúp người sử dụng lập lịch làm việc, bổ sung các sự kiện cần ghi nhớ vào lịch, đồng thời cài đặt cảnh báo nhắc lịch công việc bằng trình duyệt (tiếng kêu ting ting). Bạn có thể cài đặt cảnh báo trước 15 phút, 30 phút, trước 1 tiếng hoặc trước 1 ngày.</p>
            <p>Để ghi chú vào lịch bạn chỉ cần nháy thực đơn Thêm sự kiện và điền các thông tin cần thiết, sau đó lưu sự kiện.</p>
            <p className="font-bold text-sky-400 mt-4">Ngoài ra, Lịch Vạn niên AI còn có các tính năng chuyên sâu:</p>
            <ul className="list-none space-y-2">
@@ -121,7 +121,7 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'pdf':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Xử lý PDF</h3>
           <p>Cung cấp bộ công cụ cắt, ghép, và sắp xếp lại trang PDF bằng thao tác kéo thả. Đặc biệt có tính năng chuyển PDF sang Word (.docx), tự động làm sạch ký hiệu thừa và định dạng chuẩn font Times New Roman dùng cho hành chính.</p>
           <h4 className="font-bold text-white">Công cụ này có 3 chức năng:</h4>
@@ -148,7 +148,7 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'ocr':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">Hướng dẫn sử dụng Trích xuất OCR</h3>
           <p>Sử dụng Trí tuệ nhân tạo (AI) chạy nội bộ (Offline) để nhận diện và bóc tách văn bản từ hình ảnh JPG/PNG. Đảm bảo bảo mật tuyệt đối 100% tài liệu nhạy cảm do dữ liệu không bị gửi lên mạng.</p>
           <ul className="list-disc pl-5 space-y-1">
@@ -160,7 +160,7 @@ const HelpContent = ({ module }: { module: string }) => {
       );
     case 'scanner':
       return (
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed">
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">Hướng dẫn Scan tài liệu</h3>
           <p>Chức năng này bạn nên sử dụng trên điện thoại. Mặc định sau khi scan sẽ xuất thành file PDF ở dạng bản màu hoặc đen trắng.</p>
           <ul className="list-disc pl-5 space-y-1">
@@ -234,8 +234,13 @@ export default function App() {
   // QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP
   const [user, setUser] = useState<User | null>(null);
 
-  // THIẾT LẬP QUYỀN ADMIN (Bạn thay đổi danh sách email quản trị tại đây)
-  const ADMIN_EMAILS = ['hungvdtn@gmail.com', 'vuxuanhung@gmail.com'];
+  // --- TRẠNG THÁI QUẢN LÝ BÁO THỨC (ALARM) ---
+  const [ringingEvent, setRingingEvent] = useState<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const alarmedIds = useRef<Set<string>>(new Set());
+
+  // THIẾT LẬP QUYỀN ADMIN
+  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
   useEffect(() => {
@@ -245,17 +250,72 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- THUẬT TOÁN ĐĂNG NHẬP CHỐNG CHẶN POPUP ---
+  // --- THUẬT TOÁN BÁO THỨC TOÀN CẦU (GLOBAL ALARM) ---
+  useEffect(() => {
+    // Khởi tạo Audio, tự động lặp lại cho đến khi tắt
+    audioRef.current = new Audio('/nhac_bao_hieu.mp3');
+    audioRef.current.loop = true;
+
+    const checkAlarms = () => {
+      const savedEvents = localStorage.getItem('user_events');
+      if (!savedEvents) return;
+      const events = JSON.parse(savedEvents);
+      const now = new Date();
+
+      events.forEach((ev: any) => {
+        const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); 
+        const [evH, evM] = ev.time.split(':').map(Number);
+        const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
+        const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
+        
+        const alarmKey = `${ev.id}-${now.getHours()}-${now.getMinutes()}`;
+
+        // Kiểm tra xem đã đến giờ chưa và đã báo ở phút này chưa
+        if (
+            remindTime.getFullYear() === now.getFullYear() && 
+            remindTime.getMonth() === now.getMonth() && 
+            remindTime.getDate() === now.getDate() && 
+            remindTime.getHours() === now.getHours() && 
+            remindTime.getMinutes() === now.getMinutes() &&
+            !alarmedIds.current.has(alarmKey)
+        ) {
+            alarmedIds.current.add(alarmKey);
+            setRingingEvent(ev); // Bật giao diện Chuông
+            if (audioRef.current) {
+                audioRef.current.play().catch(e => console.log('Trình duyệt tạm chặn âm thanh do chưa tương tác', e));
+            }
+            // Hỗ trợ hiển thị thêm Notification hệ thống
+            if ('Notification' in window && Notification.permission === 'granted') { 
+                new Notification('Lịch Sự Kiện', { body: `Tới giờ: ${ev.title}\nLúc: ${ev.time}`, icon: '/favicon.ico' }); 
+            }
+        }
+      });
+    };
+
+    // Kiểm tra liên tục mỗi 10 giây
+    const interval = setInterval(checkAlarms, 10000); 
+    return () => clearInterval(interval);
+  }, []);
+
+  const stopAlarm = () => {
+      if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+      }
+      setRingingEvent(null);
+  };
+
   const handleLogin = async () => { 
     try { 
-      await signInWithPopup(auth, googleProvider); 
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+         await signInWithRedirect(auth, googleProvider);
+      } else {
+         await signInWithPopup(auth, googleProvider); 
+      }
     } catch (error: any) { 
       console.error("Lỗi đăng nhập:", error); 
-      if (error.code === 'auth/popup-blocked') {
-         alert("Trình duyệt đang chặn cửa sổ đăng nhập. Vui lòng cấp quyền (Cho phép mở Pop-up) để tiếp tục.");
-      } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-         alert("LỖI BẢO MẬT TRÌNH DUYỆT: Nếu bạn đang mở web từ ứng dụng Zalo/Facebook, vui lòng bấm vào nút 3 chấm ở góc phải màn hình, chọn 'Mở bằng trình duyệt' (Chrome/Safari) để có thể đăng nhập Google!");
-      }
+      try { await signInWithRedirect(auth, googleProvider); } catch(e) { console.error(e); }
     } 
   };
   
@@ -272,7 +332,6 @@ export default function App() {
     { id: 'gemini', label: 'Trợ lý Gemini', icon: Sparkles, isExternal: true, url: 'https://gemini.google.com/app' },
   ];
 
-  // Bổ sung module Admin vào danh sách menu nếu đúng Email quản trị viên
   const displayModules = [...modules];
   if (isAdmin) {
      displayModules.push({ id: 'admin', label: 'Admin (Quản trị)', icon: Users });
@@ -280,7 +339,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full max-w-[100vw] bg-[#05070a] text-[#e2e8f0] overflow-hidden relative">
-      {/* CSS TOÀN CỤC ĐỂ ÉP FONT SANS-SERIF CHO TOÀN BỘ ỨNG DỤNG */}
       <style dangerouslySetInnerHTML={{__html: `
         * {
           font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
@@ -383,7 +441,40 @@ export default function App() {
         </div>
       </main>
 
-      {/* HIỂN THỊ BẢNG TRỢ GIÚP NỔI BÊN TRÊN */}
+      {/* --- GIAO DIỆN BÁO ĐỘNG SỰ KIỆN TOÀN CẦU --- */}
+      <AnimatePresence>
+         {ringingEvent && (
+            <motion.div 
+               initial={{ opacity: 0, scale: 0.9, y: 50 }} 
+               animate={{ opacity: 1, scale: 1, y: 0 }} 
+               exit={{ opacity: 0, scale: 0.9, y: 50 }} 
+               className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[200] bg-rose-600 rounded-2xl shadow-[0_0_80px_rgba(225,29,72,0.6)] p-6 md:p-8 flex flex-col items-center gap-4 border-2 border-rose-400 w-[90%] max-w-sm"
+            >
+               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-inner animate-bounce">
+                  <Bell className="text-rose-600 animate-pulse" size={40} />
+               </div>
+               <div className="text-center">
+                 <p className="text-rose-100 font-bold uppercase tracking-widest text-xs mb-1">Báo thức sự kiện</p>
+                 <h3 className="text-xl md:text-2xl font-black text-white">{ringingEvent.title}</h3>
+                 <p className="text-base font-bold text-rose-200 mt-2 flex items-center justify-center gap-2">
+                    <Clock size={18}/> Thời gian: {ringingEvent.time}
+                 </p>
+                 {ringingEvent.location && (
+                    <p className="text-sm font-medium text-rose-100 mt-1 flex items-center justify-center gap-1">
+                       <MapPin size={16}/> {ringingEvent.location}
+                    </p>
+                 )}
+               </div>
+               <button 
+                  onClick={stopAlarm} 
+                  className="mt-4 bg-white text-rose-600 hover:bg-rose-100 w-full px-6 py-3 rounded-xl font-black uppercase tracking-widest transition-colors shadow-lg"
+               >
+                  ĐÃ HIỂU / TẮT CHUÔNG
+               </button>
+            </motion.div>
+         )}
+      </AnimatePresence>
+
       {showHelpModal && <DraggableHelp activeModule={activeModule} onClose={() => setShowHelpModal(false)} />}
     </div>
   );
