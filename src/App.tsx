@@ -250,27 +250,35 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- THUẬT TOÁN BÁO THỨC TOÀN CẦU KÈM VƯỢT RÀO CẢN ÂM THANH TRÊN ĐIỆN THOẠI ---
+  // --- THUẬT TOÁN BÁO THỨC TOÀN CẦU KÈM VƯỢT RÀO CẢN DI ĐỘNG ---
   useEffect(() => {
     // Khởi tạo Audio
     audioRef.current = new Audio('/nhac_bao_hieu.mp3');
     audioRef.current.loop = true;
     audioRef.current.load();
 
-    // Trick để "Mở khóa âm thanh" cho trình duyệt di động bằng tương tác đầu tiên
-    const unlockAudio = () => {
+    // Trick để "Mở khóa âm thanh" và "Xin quyền Thông báo" bằng tương tác ĐẦU TIÊN của người dùng
+    const unlockAudioAndNotify = () => {
+      // 1. Xin quyền thông báo ngay khi người dùng chạm vào màn hình (Bắt buộc với iOS/Android)
+      if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+          Notification.requestPermission();
+      }
+
+      // 2. Mở khóa Audio
       if (audioRef.current) {
         audioRef.current.play().then(() => {
           audioRef.current!.pause();
           audioRef.current!.currentTime = 0;
         }).catch(() => {});
       }
-      window.removeEventListener('click', unlockAudio);
-      window.removeEventListener('touchstart', unlockAudio);
+      
+      // Hủy lắng nghe sau khi đã mở khóa thành công
+      window.removeEventListener('click', unlockAudioAndNotify);
+      window.removeEventListener('touchstart', unlockAudioAndNotify);
     };
 
-    window.addEventListener('click', unlockAudio);
-    window.addEventListener('touchstart', unlockAudio);
+    window.addEventListener('click', unlockAudioAndNotify);
+    window.addEventListener('touchstart', unlockAudioAndNotify);
 
     const checkAlarms = () => {
       const savedEvents = localStorage.getItem('user_events');
@@ -297,17 +305,20 @@ export default function App() {
         ) {
             alarmedIds.current.add(alarmKey);
             setRingingEvent(ev); // Bật giao diện Chuông
+            
             if (audioRef.current) {
                 audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
             }
+            
+            // BẮN THÔNG BÁO HỆ THỐNG VỚI QUYỀN ƯU TIÊN CAO
             if ('Notification' in window && Notification.permission === 'granted') { 
-    new Notification(`BÁO THỨC: ${ev.title}`, { 
-        body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
-        icon: '/Logo_anh.png', 
-        requireInteraction: true, // Bắt buộc thông báo nằm lỳ trên màn hình cho đến khi tắt
-        vibrate: [200, 100, 200, 100, 200, 100, 200] // Rung mạnh trên điện thoại Android
-    }); 
-}
+                new Notification(`BÁO THỨC: ${ev.title}`, { 
+                    body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
+                    icon: '/Logo_anh.png', 
+                    requireInteraction: true, // Bắt buộc thông báo nằm lỳ trên màn hình cho đến khi tắt
+                    vibrate: [200, 100, 200, 100, 200, 100, 200] // Rung mạnh trên điện thoại Android
+                }); 
+            }
         }
       });
     };
@@ -316,8 +327,8 @@ export default function App() {
     const interval = setInterval(checkAlarms, 10000); 
     return () => {
         clearInterval(interval);
-        window.removeEventListener('click', unlockAudio);
-        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('click', unlockAudioAndNotify);
+        window.removeEventListener('touchstart', unlockAudioAndNotify);
     };
   }, []);
 
