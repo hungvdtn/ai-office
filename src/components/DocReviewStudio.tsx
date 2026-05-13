@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // ============================================================================
 // KHAI BÁO API KEY CỦA GOOGLE GEMINI
 // ============================================================================
-const GEMINI_API_KEY = 'AIzaSyDkBZdDGW3ARF9YZyuGA2t5p58myRP33Gk'; 
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY; 
 
 interface TextError {
   id: string;
