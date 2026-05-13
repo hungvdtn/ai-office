@@ -7,7 +7,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // ============================================================================
 // KHAI BÁO API KEY CỦA GOOGLE GEMINI
 // ============================================================================
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY; 
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+// Thêm dòng này để test xem web đã nhận Key từ Vercel chưa:
+console.log("Trạng thái nạp API Key:", GEMINI_API_KEY ? "ĐÃ NẠP THÀNH CÔNG" : "THẤT BẠI - KEY RỖNG"); 
 
 interface TextError {
   id: string;
