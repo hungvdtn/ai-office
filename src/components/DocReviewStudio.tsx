@@ -49,11 +49,16 @@ export default function DocReviewStudio() {
     }
   };
 
-  // 2. GỬI TEXT CHO GEMINI AI ĐỂ TÌM LỖI
+  // 2. GỬI TEXT CHO GEMINI AI ĐỂ TÌM LỖI (BẢN NÂNG CẤP CHỐNG LỖI JSON)
   const analyzeTextWithAI = async (text: string) => {
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      
+      // Bổ sung cấu hình ép buộc AI trả về chuẩn JSON 100%
+      const model = genAI.getGenerativeModel({ 
+          model: "gemini-1.5-flash",
+          generationConfig: { responseMimeType: "application/json" }
+      });
 
       const prompt = `Bạn là một chuyên gia ngôn ngữ và hành chính công của Việt Nam. 
       Hãy rà soát kỹ văn bản sau để tìm các lỗi: 
@@ -61,28 +66,28 @@ export default function DocReviewStudio() {
       2. Sai ngữ pháp.
       3. Sai thể thức văn bản (như cách viết hoa "CỘNG HÒA", "Kính gửi", các danh từ riêng...).
       
-      Trả về kết quả DƯỚI DẠNG MỘT MẢNG JSON hợp lệ. TUYỆT ĐỐI KHÔNG giải thích gì thêm ngoài JSON.
-      Cấu trúc mỗi object trong mảng phải là:
+      YÊU CẦU BẮT BUỘC VỀ ĐẦU RA:
+      - Trả về kết quả là một MẢNG JSON (JSON Array).
+      - CHỈ xuất ra những lỗi nghiêm trọng nhất để tránh quá tải dữ liệu.
+      - Tuyệt đối không dùng dấu ngoặc kép (") hoặc dấu xuống dòng bên trong giá trị của các trường original, suggestion, description.
+      
+      Cấu trúc MỖI đối tượng trong mảng phải chính xác như sau:
       {
-        "id": "chuỗi ngẫu nhiên duy nhất",
-        "original": "chính xác từ hoặc cụm từ bị sai được trích xuất từ văn bản gốc",
+        "id": "Tạo một mã ngẫu nhiên (ví dụ: err_1)",
+        "original": "chính xác từ hoặc cụm từ bị sai",
         "suggestion": "từ hoặc cụm từ đúng",
-        "type": "chinh-ta" (hoặc "the-thuc", "ngu-phap"),
+        "type": "chinh-ta", 
         "description": "Lý do sai và quy tắc đúng"
       }
 
       Văn bản cần rà soát:
-      """
-      ${text}
-      """`;
+      ${text}`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      let aiText = response.text();
+      const aiText = response.text(); 
       
-      // Làm sạch chuỗi trả về để ép kiểu JSON
-      aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-      
+      // Lúc này aiText đã được Google bảo chứng là JSON hợp lệ
       const parsedErrors: TextError[] = JSON.parse(aiText);
       const formattedErrors = parsedErrors.map(err => ({ ...err, status: 'pending' as const }));
       
@@ -90,7 +95,7 @@ export default function DocReviewStudio() {
       setStep('review');
     } catch (error) {
       console.error("Lỗi AI:", error);
-      alert("Quá trình kết nối AI thất bại. Vui lòng kiểm tra lại API Key hoặc kết nối mạng.");
+      alert("Hệ thống gặp sự cố khi giải mã dữ liệu từ AI. Văn bản có thể chứa các cấu trúc phức tạp gây nhiễu. Vui lòng thử lại với một văn bản khác hoặc chia nhỏ file.");
       setStep('upload');
     }
   };
