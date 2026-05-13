@@ -50,7 +50,7 @@ export default function DocReviewStudio() {
   const analyzeTextWithAI = async (text: string) => {
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const prompt = `Bạn là một chuyên gia ngôn ngữ và hành chính công của Việt Nam. 
       Hãy rà soát kỹ văn bản sau để tìm các lỗi: 
