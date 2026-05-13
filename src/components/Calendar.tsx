@@ -614,25 +614,6 @@ export default function Calendar() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') { Notification.requestPermission(); }
-    const interval = setInterval(() => {
-      const now = new Date();
-      events.forEach(ev => {
-        const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); const [evH, evM] = ev.time.split(':').map(Number);
-        const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
-        const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
-        
-        if (remindTime.getFullYear() === now.getFullYear() && remindTime.getMonth() === now.getMonth() && remindTime.getDate() === now.getDate() && remindTime.getHours() === now.getHours() && remindTime.getMinutes() === now.getMinutes()) {
-            const msg = `SỰ KIỆN: ${ev.title} ${ev.location ? `\n📍 Địa điểm: ${ev.location}` : ''}\n⏰ Lúc: ${ev.time}`;
-            if ('Notification' in window && Notification.permission === 'granted') { new Notification('Lịch Vạn Niên', { body: msg, icon: '/favicon.ico' }); } 
-            else { alert(msg); }
-        }
-      });
-    }, 60000); 
-    return () => clearInterval(interval);
-  }, [events]);
-
   const openModalForAdd = () => { 
     if (!auth.currentUser) { setShowLoginPrompt(true); return; }
     setEditingId(null); setNewEventTitle(''); setNewEventLocation(''); setNewEventTime('08:00'); setNewReminderAdvance(0); setShowEventModal(true); 
@@ -1354,6 +1335,7 @@ export default function Calendar() {
                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Báo trước</label>
                   <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors font-sans">
                     <option value={0}>Đúng giờ</option>
+                    <option value={15}>15 phút</option>
                     <option value={30}>30 phút</option>
                     <option value={60}>1 tiếng</option>
                     <option value={1440}>1 ngày (24h)</option>
