@@ -35,7 +35,7 @@ const AdminPanel = () => {
            snap.forEach(doc => {
               const data = doc.data();
               if (data.userId && !uniqueUsers.has(data.userId)) {
-                 uniqueUsers.set(data.userId, data.email || 'Ẩn danh (Do chính sách bảo mật Firebase)');
+                 uniqueUsers.set(data.userId, data.email || 'Tài khoản cũ (Chưa lưu Email)');
               }
            });
            
@@ -60,7 +60,7 @@ const AdminPanel = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
                     <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng ID thiết bị đã lưu sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng tài khoản đã lưu sự kiện</p>
                  </div>
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
@@ -240,7 +240,7 @@ export default function App() {
   const alarmedIds = useRef<Set<string>>(new Set());
 
   // THIẾT LẬP QUYỀN ADMIN
-  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
+  const ADMIN_EMAILS = ['hungvdtn@gmail.com', 'vuxuanhung@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
   useEffect(() => {
@@ -250,11 +250,27 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- THUẬT TOÁN BÁO THỨC TOÀN CẦU (GLOBAL ALARM) ---
+  // --- THUẬT TOÁN BÁO THỨC TOÀN CẦU KÈM VƯỢT RÀO CẢN ÂM THANH TRÊN ĐIỆN THOẠI ---
   useEffect(() => {
-    // Khởi tạo Audio, tự động lặp lại cho đến khi tắt
+    // Khởi tạo Audio
     audioRef.current = new Audio('/nhac_bao_hieu.mp3');
     audioRef.current.loop = true;
+    audioRef.current.load();
+
+    // Trick để "Mở khóa âm thanh" cho trình duyệt di động bằng tương tác đầu tiên
+    const unlockAudio = () => {
+      if (audioRef.current) {
+        audioRef.current.play().then(() => {
+          audioRef.current!.pause();
+          audioRef.current!.currentTime = 0;
+        }).catch(() => {});
+      }
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
 
     const checkAlarms = () => {
       const savedEvents = localStorage.getItem('user_events');
@@ -270,7 +286,7 @@ export default function App() {
         
         const alarmKey = `${ev.id}-${now.getHours()}-${now.getMinutes()}`;
 
-        // Kiểm tra xem đã đến giờ chưa và đã báo ở phút này chưa
+        // Kiểm tra giờ và chặn báo lặp lại trong cùng 1 phút
         if (
             remindTime.getFullYear() === now.getFullYear() && 
             remindTime.getMonth() === now.getMonth() && 
@@ -282,9 +298,8 @@ export default function App() {
             alarmedIds.current.add(alarmKey);
             setRingingEvent(ev); // Bật giao diện Chuông
             if (audioRef.current) {
-                audioRef.current.play().catch(e => console.log('Trình duyệt tạm chặn âm thanh do chưa tương tác', e));
+                audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
             }
-            // Hỗ trợ hiển thị thêm Notification hệ thống
             if ('Notification' in window && Notification.permission === 'granted') { 
                 new Notification('Lịch Sự Kiện', { body: `Tới giờ: ${ev.title}\nLúc: ${ev.time}`, icon: '/favicon.ico' }); 
             }
@@ -294,7 +309,11 @@ export default function App() {
 
     // Kiểm tra liên tục mỗi 10 giây
     const interval = setInterval(checkAlarms, 10000); 
-    return () => clearInterval(interval);
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+    };
   }, []);
 
   const stopAlarm = () => {
@@ -448,7 +467,7 @@ export default function App() {
                initial={{ opacity: 0, scale: 0.9, y: 50 }} 
                animate={{ opacity: 1, scale: 1, y: 0 }} 
                exit={{ opacity: 0, scale: 0.9, y: 50 }} 
-               className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[200] bg-rose-600 rounded-2xl shadow-[0_0_80px_rgba(225,29,72,0.6)] p-6 md:p-8 flex flex-col items-center gap-4 border-2 border-rose-400 w-[90%] max-w-sm"
+               className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[200] bg-rose-600 rounded-2xl shadow-[0_0_80px_rgba(225,29,72,0.6)] p-6 md:p-8 flex flex-col items-center gap-4 border-2 border-rose-400 w-[90%] max-w-sm font-sans"
             >
                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-inner animate-bounce">
                   <Bell className="text-rose-600 animate-pulse" size={40} />
