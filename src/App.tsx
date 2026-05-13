@@ -13,13 +13,14 @@ import PDFProcessor from './components/PDFProcessor';
 import OCRStudio from './components/OCRStudio';
 import Scanner from './components/Scanner';
 import Calendar from './components/Calendar';
+import DocReviewStudio from './components/DocReviewStudio';
 
 // --- IMPORT FIREBASE ---
 import { auth, db, googleProvider } from './firebase';
 import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 
-type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin'; 
+type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin' | 'docreview'; 
 
 // --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN ---
 const AdminPanel = () => {
@@ -361,6 +362,7 @@ export default function App() {
     { id: 'pdf', label: 'Xử lý PDF', icon: FileText },
     { id: 'ocr', label: 'Trích xuất OCR', icon: Languages },
     { id: 'scanner', label: 'Scan Tài liệu', icon: Scan },
+    { id: 'docreview', label: 'Rà soát Văn bản', icon: FileText },
     { id: 'qrcode', label: 'Tạo mã QR', icon: QrCode, isExternal: true, url: 'https://lamchuaigiaoduc.vn/qrcode/' },
     { id: 'idphoto', label: 'Tạo ảnh thẻ', icon: ImageIcon, isExternal: true, url: 'https://lamchuaigiaoduc.vn/id-photo/' },
     { id: 'search', label: 'Tra cứu địa phương', icon: Search, isExternal: true, url: 'https://tracuu.hungvdtn.vn/' },
@@ -470,6 +472,7 @@ export default function App() {
                 {activeModule === 'scanner' && <Scanner />}
                 {activeModule === 'calendar' && <Calendar />}
                 {activeModule === 'admin' && <AdminPanel />}
+                {activeModule === 'docreview' && <DocReviewStudio />}
               </motion.div>
             </AnimatePresence>
           </div>
