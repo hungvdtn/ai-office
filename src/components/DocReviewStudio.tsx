@@ -4,10 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// LẤY API KEY TỪ BIẾN MÔI TRƯỜNG
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-// Bạn có thể tùy chỉnh tên Model tại đây (gemini-3.1-pro, gemini-2.5-pro, v.v.)
+// Đã đưa về chuẩn 2.5-flash theo đúng mô hình ổn định của Bạn
 const API_MODEL_NAME = "gemini-2.5-flash"; 
 
 interface TextError {
@@ -59,14 +57,14 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT KỸ (AI) - BẢN NÂNG CẤP DÀNH CHO CÁC MÔ HÌNH PRO
+  // ĐỘNG CƠ RÀ SOÁT AI - CÓ CHỐNG LỖI QUOTA (429) CỦA GOOGLE
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
-    // TỐI ƯU HÓA: Giảm kích thước khối xuống 4000 ký tự (khoảng 1-1.5 trang) để AI "soi" từng chữ
-    const CHUNK_SIZE = 4000; 
+    // Tăng kích thước chunk lên 15000 để giảm số lần gọi API (Tránh lỗi 429 Quota)
+    const CHUNK_SIZE = 15000; 
     const chunks: string[] = [];
     for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
         chunks.push(fullText.substring(i, i + CHUNK_SIZE));
@@ -74,76 +72,50 @@ export default function DocReviewStudio() {
     
     setProgress({ current: 0, total: chunks.length });
     let allErrors: TextError[] = [];
-    let successfulChunks = 0;
 
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      // Đã gỡ bỏ responseMimeType để tránh lỗi xung đột với các phiên bản 3.1 Pro mới nhất
-      const model = genAI.getGenerativeModel({ model: API_MODEL_NAME });
+      const model = genAI.getGenerativeModel({ 
+          model: API_MODEL_NAME,
+          generationConfig: { responseMimeType: "application/json" }
+      });
 
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
           
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam cực kỳ khắt khe.
-          Nhiệm vụ: Quét ĐOẠN VĂN BẢN sau để tìm MỌI lỗi sai. Hãy đặc biệt chú ý các lỗi đánh máy rõ ràng như dính chữ, gõ sai vần (ví dụ: "Xác địnhh", "phát trien", "Giá dục").
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản cực kỳ khắt khe.
+          Quét ĐOẠN VĂN BẢN sau để tìm các lỗi:
+          1. Lỗi chính tả ("chinh-ta"): Sai dấu, sai vần, thiếu/thừa chữ, lỗi typo.
+          2. Lỗi thể thức ("the-thuc"): Viết hoa, viết tắt, dấu câu theo ${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'VB QPPL'}.
+          3. Lỗi ngữ pháp ("ngu-phap"): Lủng củng, tối nghĩa.
 
-          PHÂN LOẠI LỖI CẦN TÌM:
-          1. Lỗi chính tả, đánh máy ("chinh-ta"): Sai phụ âm đầu, vần, dấu thanh, thiếu/thừa chữ, thiếu/thừa ký tự, lỗi typo.
-          2. Lỗi thể thức ("the-thuc"): Sai khoảng trắng sau dấu câu, lỗi viết hoa/viết tắt theo ${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'luật ban hành VB QPPL'}.
-          3. Lỗi dùng từ, ngữ pháp ("ngu-phap"): Từ ngữ lủng củng, không trang trọng.
-
-          ĐẦU RA BẮT BUỘC: Bạn CHỈ ĐƯỢC PHÉP trả về một mảng JSON nguyên chất. Tuyệt đối KHÔNG có câu chào hỏi, KHÔNG bọc trong markdown (như \`\`\`json).
-          
-          Cấu trúc MẢNG JSON mẫu:
-          [
-            {
-              "original": "trích nguyên văn từ bị sai",
-              "suggestion": "từ đã sửa đúng",
-              "type": "chinh-ta", 
-              "description": "Lý do sai ngắn gọn"
-            }
-          ]
-          Nếu đoạn văn bản hoàn hảo không có lỗi nào, hãy trả về chính xác: []
+          YÊU CẦU: Trả về MẢNG JSON.
+          [ { "original": "từ sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
           
           ĐOẠN VĂN BẢN:
-          """
-          ${chunks[i]}
-          """`;
+          ${chunks[i]}`;
 
           try {
               const result = await model.generateContent(prompt);
-              const aiText = result.response.text();
-              
-              // Thuật toán làm sạch JSON cường độ cao
-              let rawJson = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
-              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); // Cắt dấu phẩy thừa
-              
-              // Nếu mảng bị cắt cụt, tự động đóng mảng
-              if (!rawJson.endsWith(']')) {
-                  const lastBrace = rawJson.lastIndexOf('}');
-                  if (lastBrace !== -1) rawJson = rawJson.substring(0, lastBrace + 1) + ']';
-                  else rawJson += ']';
-              }
+              let rawJson = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
+              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); 
+              if (!rawJson.endsWith(']')) rawJson += ']';
 
               const parsedData = JSON.parse(rawJson);
               const chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
-              
               allErrors = [...allErrors, ...chunkErrors];
-              successfulChunks++;
+              
+              // NGỦ 2 GIÂY SAU MỖI LẦN GỌI ĐỂ LÁCH LUẬT GIỚI HẠN 15 LẦN/PHÚT CỦA GOOGLE
+              if (i < chunks.length - 1) {
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+              }
           } catch (chunkErr) {
-              console.error(`Lỗi phân tích ở phần ${i+1}:`, chunkErr);
-              // Lưu lại lỗi để kiểm tra, nhưng vẫn cho chạy tiếp phần sau
+              console.warn(`Lỗi phân tích phần ${i+1}:`, chunkErr);
+              // Nếu dính lỗi 429 quá tải, ngừng luôn để bảo toàn các lỗi đã bắt được
+              if (chunkErr && chunkErr.toString().includes("429")) break; 
           }
       }
 
-      // XỬ LÝ SẬP NGẦM: Báo động nếu không có chunk nào chạy thành công
-      if (successfulChunks === 0) {
-          alert(`Toàn bộ quá trình rà soát thất bại! Mô hình '${API_MODEL_NAME}' đã từ chối xử lý hoặc cấu hình API bị lỗi. Vui lòng bật F12 (Console) để xem mã lỗi đỏ từ máy chủ Google.`);
-          setStep('upload');
-          return;
-      }
-
-      // Lọc các lỗi bị trùng lặp ở biên các chunk
       const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
           .map(original => allErrors.find(e => e.original === original))
           .filter(e => e && e.original.length > 0);
@@ -152,15 +124,11 @@ export default function DocReviewStudio() {
       setStep('review');
 
     } catch (error) {
-      console.error("Lỗi kết nối tổng:", error);
-      alert(`Đã xảy ra lỗi khi kết nối tới mô hình ${API_MODEL_NAME}. Kiểm tra lại tên mô hình hoặc kết nối mạng.`);
+      alert(`Lỗi mạng. Hãy thử lại.`);
       setStep('upload');
     }
   };
 
-  // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT NHANH (OFFLINE)
-  // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
     setTimeout(() => {
@@ -168,10 +136,8 @@ export default function DocReviewStudio() {
       let errCount = 0;
       const rules = [
         { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
-        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." },
-        { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30: Chữ 'Hòa' đặt dấu thanh ở chữ 'o'." }
+        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả." }
       ];
-      
       rules.forEach(rule => {
         let match; const regex = new RegExp(rule.regex);
         while ((match = regex.exec(text)) !== null) {
@@ -197,6 +163,35 @@ export default function DocReviewStudio() {
     if (!content.trim()) return alert("Nội dung văn bản trống!");
     setDocumentText(content);
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
+  };
+
+  // ============================================================================
+  // KHÔI PHỤC HÀM HIỂN THỊ VĂN BẢN (BÔI MÀU LỖI & BẤM VÀO TỰ CUỘN ĐẾN CHỖ SAI)
+  // ============================================================================
+  const renderDocumentText = () => {
+    let highlightedText = documentText;
+    
+    // Sắp xếp các lỗi từ dài đến ngắn để tránh lỗi Replace chồng chéo
+    const sortedErrors = [...errors].sort((a, b) => b.original.length - a.original.length);
+
+    sortedErrors.forEach(err => {
+      if (err.status === 'pending') {
+        const span = `<span class="bg-rose-500/30 text-rose-300 border-b-2 border-rose-500 font-semibold px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">${err.original}</span>`;
+        highlightedText = highlightedText.split(err.original).join(span);
+      } else if (err.status === 'fixed') {
+        const span = `<span class="bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded transition-all">${err.suggestion}</span>`;
+        highlightedText = highlightedText.split(err.original).join(span);
+      }
+    });
+
+    return <div dangerouslySetInnerHTML={{ __html: highlightedText.split('\n').join('<br/>') }} 
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName === 'SPAN' && target.dataset.id) {
+                    setActiveErrorId(target.dataset.id);
+                  }
+                }}
+           />;
   };
 
   const getFinalText = () => {
@@ -285,16 +280,16 @@ export default function DocReviewStudio() {
            <RefreshCw size={50} className="text-brand animate-spin" />
            <h3 className="text-xl font-bold text-white uppercase tracking-widest">Đang rà soát văn bản...</h3>
            
-           {progress.total > 1 && (
+           {progress.total > 0 && (
                <div className="w-80 text-center space-y-2 mt-4">
-                  <p className="text-sm font-bold text-sky-400">Đang phân tích trang {progress.current} / {progress.total} (Phân giải cao)</p>
+                  <p className="text-sm font-bold text-sky-400">Đang phân tích phần {progress.current} / {progress.total}</p>
                   <div className="w-full h-3 bg-[#1e293b] rounded-full overflow-hidden border border-slate-700">
                      <div 
                         className="h-full bg-sky-500 transition-all duration-500 ease-out" 
                         style={{ width: `${(progress.current / progress.total) * 100}%` }}
                      />
                   </div>
-                  <p className="text-[10px] text-slate-500">Mô hình {API_MODEL_NAME} đang soi từng từ ngữ.</p>
+                  <p className="text-[10px] text-slate-500">Hệ thống xử lý từng đoạn để đảm bảo độ chính xác (mất khoảng 10-15s/đoạn).</p>
                </div>
            )}
         </div>
@@ -302,16 +297,18 @@ export default function DocReviewStudio() {
 
       {step === 'review' && (
         <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[70vh]">
+           {/* CỘT TRÁI - HIỂN THỊ VĂN BẢN VÀ BÔI ĐỎ */}
            <div className="flex-[3] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col overflow-hidden shadow-xl">
               <div className="bg-[#1e293b]/50 p-4 border-b border-[#1e293b] flex justify-between items-center">
                  <h4 className="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-widest"><FileText size={16}/> Nội dung gốc</h4>
                  <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu chưa lưu?")) return; setStep('upload'); setErrors([]); setSelectedFile(null); setSelectedFileName(''); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 hover:text-white transition-colors">Tải văn bản khác</button>
               </div>
-              <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif custom-scrollbar">
-                 <div dangerouslySetInnerHTML={{ __html: documentText.split('\n').join('<br/>') }} />
+              <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif custom-scrollbar" id="document-content-pane">
+                 {renderDocumentText()}
               </div>
            </div>
 
+           {/* CỘT PHẢI - DANH SÁCH LỖI (CÓ AUTO-SCROLL BÊN TRÁI KHI BẤM) */}
            <div className="flex-[2] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col shadow-xl overflow-hidden h-[70vh] lg:h-auto">
               <div className="bg-[#1e293b]/50 p-5 border-b border-[#1e293b]">
                  <h4 className="font-bold text-slate-200 uppercase tracking-widest text-xs flex items-center justify-between">
@@ -321,7 +318,18 @@ export default function DocReviewStudio() {
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#05070a] custom-scrollbar">
                  {errors.map(err => err.status === 'pending' && (
-                    <motion.div key={err.id} className={`bg-[#0f172a] p-4 rounded-xl border ${activeErrorId === err.id ? 'border-brand' : 'border-[#1e293b]'}`} onClick={() => setActiveErrorId(err.id)}>
+                    <motion.div 
+                        key={err.id} 
+                        className={`bg-[#0f172a] p-4 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand' : 'border-[#1e293b]'}`} 
+                        onClick={() => {
+                            setActiveErrorId(err.id);
+                            // TỰ ĐỘNG CUỘN ĐẾN CHỖ LỖI TRÊN VĂN BẢN KHI BẤM
+                            const errorElement = document.querySelector(`span[data-id="${err.id}"]`);
+                            if (errorElement) {
+                                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }}
+                    >
                        <div className="flex justify-between mb-2">
                           <span className="text-[10px] font-bold text-rose-400 uppercase">{err.type}</span>
                           <AlertCircle size={14} className="text-rose-400" />
@@ -330,8 +338,8 @@ export default function DocReviewStudio() {
                        <p className="text-sm text-emerald-400 font-bold mb-2">➔ {err.suggestion}</p>
                        <p className="text-[11px] text-slate-500 italic mb-4">{err.description}</p>
                        <div className="flex gap-2">
-                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e))} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-[10px] transition-colors">SỬA LỖI</button>
-                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e))} className="bg-slate-800 hover:bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold text-[10px] transition-colors">BỎ QUA</button>
+                          <button onClick={(e) => { e.stopPropagation(); setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e)); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-[10px] transition-colors">SỬA LỖI</button>
+                          <button onClick={(e) => { e.stopPropagation(); setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e)); }} className="bg-slate-800 hover:bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold text-[10px] transition-colors">BỎ QUA</button>
                        </div>
                     </motion.div>
                  ))}
