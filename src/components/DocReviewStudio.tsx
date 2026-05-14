@@ -4,8 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// LẤY API KEY TỪ BIẾN MÔI TRƯỜNG MÁY CHỦ (KHÔNG ĐIỀN TRỰC TIẾP)
+// ============================================================================
+// KHAI BÁO BIẾN MÔI TRƯỜNG VÀ TÊN MÔ HÌNH AI
+// ============================================================================
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// BẠN CÓ THỂ THAY ĐỔI TÊN MÔ HÌNH Ở ĐÂY TÙY THEO TÀI KHOẢN AI STUDIO CỦA BẠN
+const API_MODEL_NAME = "gemini-2.5-flash"; 
 
 interface TextError {
   id: string;
@@ -26,18 +30,17 @@ export default function DocReviewStudio() {
   const [docType, setDocType] = useState<'hanh-chinh' | 'qppl'>('hanh-chinh');
   const [pasteText, setPasteText] = useState('');
   
-  // Trạng thái lưu tên file để hiển thị cho người dùng biết
+  // KHẮC PHỤC LỖI MẤT FILE: Sử dụng state để lưu trữ file cứng
   const [selectedFileName, setSelectedFileName] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Giao tiếp với App.tsx để hiển thị cảnh báo khi rời trang
   useEffect(() => {
     const hasUnsavedChanges = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending'));
     (window as any).isDocReviewing = hasUnsavedChanges;
     return () => { (window as any).isDocReviewing = false; };
   }, [step, errors]);
 
-  // Cảnh báo khi người dùng đóng/tải lại trình duyệt
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if ((window as any).isDocReviewing) {
@@ -49,16 +52,17 @@ export default function DocReviewStudio() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // Bắt sự kiện chọn file để hiển thị tên file
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
        setSelectedFileName(file.name);
+       setSelectedFile(file); // Lưu cứng file vào bộ nhớ
     }
   };
 
   const removeSelectedFile = () => {
     setSelectedFileName('');
+    setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -67,7 +71,6 @@ export default function DocReviewStudio() {
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing');
-    
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
@@ -109,7 +112,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI) - ĐÃ BỔ SUNG TRÌNH DỌN RÁC JSON (JSON CLEANER)
+  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI) - CÓ TỰ ĐỘNG KHÔI PHỤC JSON BỊ ĐỨT ĐOẠN
   // ============================================================================
   const runAIReview = async (text: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key trên máy chủ!");
@@ -117,13 +120,12 @@ export default function DocReviewStudio() {
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ 
-          model: "gemini-2.5-flash",
+          model: API_MODEL_NAME, // Gọi tên mô hình theo cài đặt phía trên
           generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 } 
       });
 
       const prompt = `Bạn là chuyên gia rà soát văn bản hành chính Việt Nam. 
       Loại văn bản: ${docType === 'hanh-chinh' ? 'Hành chính (NĐ 30/2020)' : 'Quy phạm Pháp luật'}.
-      Hãy tìm TẤT CẢ các lỗi chính tả, diễn đạt, và thể thức.
       
       YÊU CẦU ĐẦU RA BẮT BUỘC (JSON OBJECT):
       {
@@ -136,32 +138,50 @@ export default function DocReviewStudio() {
           }
         ]
       }
-      TUYỆT ĐỐI không để lại dấu phẩy thừa ở cuối mảng hay cuối object.
+      LƯU Ý CỰC KỲ QUAN TRỌNG: Để đảm bảo JSON không bị cắt cụt do giới hạn token, CHỈ xuất ra tối đa 40 lỗi tiêu biểu và quan trọng nhất.
       
-      Văn bản: ${text.substring(0, 15000)}`;
+      Văn bản: ${text.substring(0, 60000)}`; // Cho phép đọc sâu tới 60.000 ký tự (khoảng 30 trang)
 
       const result = await model.generateContent(prompt);
       const aiText = result.response.text();
       
       let parsedData;
+      let rawJson = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+
       try {
-        // Thử parse JSON chuẩn
-        parsedData = JSON.parse(aiText);
+        parsedData = JSON.parse(rawJson);
       } catch (err) {
-        console.warn("JSON bị gãy, đang thử dọn rác (Cleaner)...", err);
-        // THUẬT TOÁN DỌN RÁC: Xóa dấu phẩy thừa ở cuối (Trailing commas) - Thủ phạm gây lỗi 90%
-        const cleanedText = aiText.replace(/,\s*([\]}])/g, '$1');
-        parsedData = JSON.parse(cleanedText);
+        console.warn("JSON từ AI bị cắt cụt, đang kích hoạt Trình khôi phục...", err);
+        try {
+            // THUẬT TOÁN CỨU VÃN JSON BỊ CẮT CỤT TỪ AI
+            let cleanedText = rawJson.replace(/,\s*([\]}])/g, '$1'); // Xóa dấu phẩy thừa
+            
+            // Nếu AI đang viết dở một Object, ta cắt bỏ Object dở dang đó đi
+            if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
+                const lastBraceIndex = cleanedText.lastIndexOf('}');
+                if (lastBraceIndex !== -1) {
+                    cleanedText = cleanedText.substring(0, lastBraceIndex + 1);
+                }
+            }
+            
+            // Đảm bảo đóng mảng và đóng object chính
+            if (!cleanedText.endsWith(']}') && cleanedText.includes('"errors": [')) {
+                cleanedText += ']}';
+            }
+
+            parsedData = JSON.parse(cleanedText);
+        } catch (recoveryErr) {
+            throw new Error("Dữ liệu lỗi quá nặng, không thể khôi phục.");
+        }
       }
 
-      // Trích xuất mảng errors từ object trả về
       const errorList = parsedData.errors || parsedData || [];
-      
       setErrors(errorList.map((err: any, idx: number) => ({ ...err, id: err.id || `ai_${idx}`, status: 'pending' })));
       setStep('review');
+
     } catch (error) {
       console.error("Lỗi AI hoặc JSON parse:", error);
-      alert("AI gặp sự cố khi đóng gói kết quả (lỗi cấu trúc dữ liệu). Hãy thử tính năng Rà soát nhanh hoặc chia nhỏ văn bản.");
+      alert("AI bị quá tải khi xử lý văn bản quá dài. Hệ thống đã cố gắng khôi phục nhưng thất bại. Hãy cắt văn bản thành các đoạn 10 trang để rà soát, hoặc dùng Rà soát Nhanh.");
       setStep('upload');
     }
   };
@@ -169,11 +189,17 @@ export default function DocReviewStudio() {
   const startReview = async (mode: 'offline' | 'ai') => {
     let content = inputType === 'paste' ? pasteText : "";
     if (inputType === 'upload') {
-      const file = fileInputRef.current?.files?.[0];
-      if (!file) return alert("Vui lòng chọn hoặc tải file Word (.docx) lên trước!");
-      const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
-      content = result.value;
+      if (!selectedFile) return alert("Vui lòng chọn hoặc tải file Word (.docx) lên trước!");
+      
+      try {
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        content = result.value;
+      } catch (e) {
+        return alert("Lỗi trích xuất chữ từ file Word. Đảm bảo file không bị khóa password.");
+      }
     }
+    
     if (!content.trim()) return alert("Nội dung văn bản trống!");
     setDocumentText(content);
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
@@ -186,7 +212,7 @@ export default function DocReviewStudio() {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy văn bản đã sửa vào khay nhớ tạm!"));
+    navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy toàn bộ văn bản (đã sửa lỗi) vào khay nhớ tạm!"));
   };
 
   const exportToWord = () => {
@@ -216,13 +242,13 @@ export default function DocReviewStudio() {
                  </div>
                  
                  {inputType === 'upload' ? (
-                    selectedFileName ? (
+                    selectedFile ? (
                         <div className="border-2 border-sky-500 rounded-xl p-8 text-center bg-sky-900/20 relative">
                             <FileText size={40} className="mx-auto text-sky-400 mb-3" />
                             <p className="text-sm text-white font-bold mb-1 truncate px-4">{selectedFileName}</p>
                             <p className="text-[10px] text-emerald-400 uppercase font-bold mb-4">Đã tải file thành công</p>
                             <button onClick={removeSelectedFile} className="flex items-center justify-center gap-2 mx-auto text-xs text-rose-400 hover:text-rose-300 font-bold bg-rose-500/10 px-4 py-2 rounded-lg transition-colors">
-                               <Trash2 size={14} /> XÓA FILE NÀY
+                               <Trash2 size={14} /> ĐỔI FILE KHÁC
                             </button>
                         </div>
                     ) : (
@@ -267,6 +293,7 @@ export default function DocReviewStudio() {
         <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] space-y-4">
            <RefreshCw size={50} className="text-brand animate-spin" />
            <h3 className="text-xl font-bold text-white uppercase tracking-widest">Đang rà soát văn bản...</h3>
+           <p className="text-slate-400 text-sm">Quá trình rà soát văn bản dài có thể mất từ 10 - 30 giây.</p>
         </div>
       )}
 
@@ -275,7 +302,7 @@ export default function DocReviewStudio() {
            <div className="flex-[3] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col overflow-hidden shadow-xl">
               <div className="bg-[#1e293b]/50 p-4 border-b border-[#1e293b] flex justify-between items-center">
                  <h4 className="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-widest"><FileText size={16}/> Nội dung gốc</h4>
-                 <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu chưa lưu?")) return; setStep('upload'); setErrors([]); setSelectedFileName(''); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 hover:text-white transition-colors">Tải văn bản khác</button>
+                 <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu chưa lưu?")) return; setStep('upload'); setErrors([]); setSelectedFile(null); setSelectedFileName(''); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 hover:text-white transition-colors">Tải văn bản khác</button>
               </div>
               <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif custom-scrollbar">
                  <div dangerouslySetInnerHTML={{ __html: documentText.split('\n').join('<br/>') }} />
