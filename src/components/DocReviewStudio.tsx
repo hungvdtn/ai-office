@@ -9,7 +9,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // ============================================================================
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 // BẠN CÓ THỂ THAY ĐỔI TÊN MÔ HÌNH Ở ĐÂY TÙY THEO TÀI KHOẢN AI STUDIO CỦA BẠN
-const API_MODEL_NAME = "gemini-2.5-flash"; 
+const API_MODEL_NAME = "gemini-3-flash"; 
 
 interface TextError {
   id: string;
@@ -112,7 +112,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI) - CÓ TỰ ĐỘNG KHÔI PHỤC JSON BỊ ĐỨT ĐOẠN
+  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI) - PROMPT SIÊU CHI TIẾT THEO TIÊU CHÍ CHUYÊN GIA
   // ============================================================================
   const runAIReview = async (text: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key trên máy chủ!");
@@ -120,27 +120,49 @@ export default function DocReviewStudio() {
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ 
-          model: API_MODEL_NAME, // Gọi tên mô hình theo cài đặt phía trên
+          model: API_MODEL_NAME, 
           generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 } 
       });
 
-      const prompt = `Bạn là chuyên gia rà soát văn bản hành chính Việt Nam. 
-      Loại văn bản: ${docType === 'hanh-chinh' ? 'Hành chính (NĐ 30/2020)' : 'Quy phạm Pháp luật'}.
+      // PROMPT ĐƯỢC NÂNG CẤP DỰA TRÊN BỘ TIÊU CHÍ KHẮT KHE CỦA NGƯỜI DÙNG
+      const prompt = `Bạn là một Chuyên gia Rà soát Văn bản Hành chính và Pháp luật cực kỳ khó tính và tỉ mỉ tại Việt Nam.
+      Văn bản đầu vào có độ dài lớn. BẠN PHẢI QUÉT KỸ TỪNG DÒNG, TUYỆT ĐỐI KHÔNG ĐƯỢC LƯỜI BIẾNG HAY BỎ SÓT LỖI.
       
+      HÃY TÌM TẤT CẢ CÁC LỖI DỰA TRÊN 3 NHÓM TIÊU CHÍ BẮT BUỘC SAU (Ưu tiên số 1 và 2):
+
+      1. LỖI CHÍNH TẢ (Type: "chinh-ta"):
+      - Lỗi phụ âm đầu: Nhầm lẫn ch/tr (chung thực -> trung thực), s/x (sản suất -> sản xuất), l/n, r/d/gi.
+      - Lỗi dấu thanh: Nhầm dấu hỏi/ngã (nổi lo -> nỗi lo), thiếu dấu.
+      - Lỗi vần: Nhầm ch/t (bách ngát -> bát ngát), n/ng.
+      - Sai từ ghép/Hán Việt: cọ sát (sai) -> cọ xát (đúng), chẵng lẻ (sai) -> chẳng lẽ (đúng).
+      - Sai quy tắc viết hoa danh từ riêng, viết tắt.
+
+      2. LỖI KỸ THUẬT ĐÁNH MÁY (Type: "the-thuc"):
+      - Lỗi đánh máy (Typo): Thiếu/thừa chữ, nhảy chữ, đảo ngược thứ tự (đcươ -> được, nhung -> nhưng), lặp từ; thừa/thiếu ký tự trong một từ (chu đáo -> chuu đá).
+      - Lỗi khoảng trắng: Không có khoảng trắng sau dấu câu (. , : ; ! ?), hoặc thừa nhiều khoảng trắng giữa các từ.
+      - Lỗi đánh số/liệt kê: Số thứ tự không liên tục, sai định dạng.
+      - Lỗi viết tắt không đúng quy định. Lỗi trình bày tham chiếu.
+
+      3. LỖI CAO CẤP (Type: "ngu-phap"):
+      - Ngữ pháp: Cấu trúc câu sai, sai trật tự từ, thiếu chủ ngữ/vị ngữ, đặt dấu câu sai vị trí; thiếu dấu câu.
+      - Dùng từ: Dùng từ lóng, từ không phù hợp văn phong hành chính trang trọng, câu lủng củng, tối nghĩa.
+      - Logic: Nội dung mâu thuẫn.
+
       YÊU CẦU ĐẦU RA BẮT BUỘC (JSON OBJECT):
       {
         "errors": [
           {
-            "original": "từ bị sai",
-            "suggestion": "từ đúng",
-            "type": "chinh-ta",
-            "description": "giải thích"
+            "original": "chính xác cụm từ bị sai",
+            "suggestion": "cụm từ đúng",
+            "type": "chinh-ta", // Hoặc "the-thuc", "ngu-phap"
+            "description": "Giải thích rõ lỗi thuộc nhóm nào trong 3 nhóm trên."
           }
         ]
       }
-      LƯU Ý CỰC KỲ QUAN TRỌNG: Để đảm bảo JSON không bị cắt cụt do giới hạn token, CHỈ xuất ra tối đa 40 lỗi tiêu biểu và quan trọng nhất.
+      LƯU Ý QUAN TRỌNG: Hãy trích xuất TỐI ĐA 60 lỗi rõ ràng nhất để đảm bảo JSON không bị đứt gãy. Tuyệt đối không để lại dấu phẩy thừa ở cuối mảng JSON.
       
-      Văn bản: ${text.substring(0, 60000)}`; // Cho phép đọc sâu tới 60.000 ký tự (khoảng 30 trang)
+      Văn bản cần rà soát: 
+      ${text.substring(0, 60000)}`;
 
       const result = await model.generateContent(prompt);
       const aiText = result.response.text();
@@ -151,27 +173,17 @@ export default function DocReviewStudio() {
       try {
         parsedData = JSON.parse(rawJson);
       } catch (err) {
-        console.warn("JSON từ AI bị cắt cụt, đang kích hoạt Trình khôi phục...", err);
+        console.warn("JSON bị cắt cụt, đang khôi phục...", err);
         try {
-            // THUẬT TOÁN CỨU VÃN JSON BỊ CẮT CỤT TỪ AI
-            let cleanedText = rawJson.replace(/,\s*([\]}])/g, '$1'); // Xóa dấu phẩy thừa
-            
-            // Nếu AI đang viết dở một Object, ta cắt bỏ Object dở dang đó đi
+            let cleanedText = rawJson.replace(/,\s*([\]}])/g, '$1'); 
             if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
                 const lastBraceIndex = cleanedText.lastIndexOf('}');
-                if (lastBraceIndex !== -1) {
-                    cleanedText = cleanedText.substring(0, lastBraceIndex + 1);
-                }
+                if (lastBraceIndex !== -1) cleanedText = cleanedText.substring(0, lastBraceIndex + 1);
             }
-            
-            // Đảm bảo đóng mảng và đóng object chính
-            if (!cleanedText.endsWith(']}') && cleanedText.includes('"errors": [')) {
-                cleanedText += ']}';
-            }
-
+            if (!cleanedText.endsWith(']}') && cleanedText.includes('"errors": [')) cleanedText += ']}';
             parsedData = JSON.parse(cleanedText);
         } catch (recoveryErr) {
-            throw new Error("Dữ liệu lỗi quá nặng, không thể khôi phục.");
+            throw new Error("Dữ liệu lỗi nặng.");
         }
       }
 
@@ -180,8 +192,8 @@ export default function DocReviewStudio() {
       setStep('review');
 
     } catch (error) {
-      console.error("Lỗi AI hoặc JSON parse:", error);
-      alert("AI bị quá tải khi xử lý văn bản quá dài. Hệ thống đã cố gắng khôi phục nhưng thất bại. Hãy cắt văn bản thành các đoạn 10 trang để rà soát, hoặc dùng Rà soát Nhanh.");
+      console.error("Lỗi AI:", error);
+      alert("Hệ thống quá tải hoặc AI trả về định dạng gãy. Khuyến nghị: Hãy chia nhỏ văn bản thành các đoạn 5-10 trang để rà soát đạt độ chính xác 100%.");
       setStep('upload');
     }
   };
