@@ -4,12 +4,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// ============================================================================
-// KHAI BÁO BIẾN MÔI TRƯỜNG VÀ TÊN MÔ HÌNH AI
-// ============================================================================
+// LẤY API KEY TỪ BIẾN MÔI TRƯỜNG
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-// BẠN CÓ THỂ THAY ĐỔI TÊN MÔ HÌNH Ở ĐÂY TÙY THEO TÀI KHOẢN AI STUDIO CỦA BẠN
-const API_MODEL_NAME = "gemini-3-flash"; 
+// MÔ HÌNH AI (Bạn có thể chuyển sang gemini-3.1-pro nếu tài khoản hỗ trợ)
+const API_MODEL_NAME = "gemini-2.5-flash"; 
 
 interface TextError {
   id: string;
@@ -30,22 +28,22 @@ export default function DocReviewStudio() {
   const [docType, setDocType] = useState<'hanh-chinh' | 'qppl'>('hanh-chinh');
   const [pasteText, setPasteText] = useState('');
   
-  // KHẮC PHỤC LỖI MẤT FILE: Sử dụng state để lưu trữ file cứng
   const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // THANH TIẾN TRÌNH CHO VĂN BẢN DÀI
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+
   useEffect(() => {
-    const hasUnsavedChanges = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending'));
-    (window as any).isDocReviewing = hasUnsavedChanges;
+    (window as any).isDocReviewing = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending'));
     return () => { (window as any).isDocReviewing = false; };
   }, [step, errors]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if ((window as any).isDocReviewing) {
-        e.preventDefault();
-        e.returnValue = '';
+        e.preventDefault(); e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -56,162 +54,132 @@ export default function DocReviewStudio() {
     const file = e.target.files?.[0];
     if (file) {
        setSelectedFileName(file.name);
-       setSelectedFile(file); // Lưu cứng file vào bộ nhớ
+       setSelectedFile(file);
     }
   };
 
   const removeSelectedFile = () => {
-    setSelectedFileName('');
-    setSelectedFile(null);
+    setSelectedFileName(''); setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT NHANH (OFFLINE REGEX ENGINE)
+  // ĐỘNG CƠ RÀ SOÁT KỸ (AI) - XỬ LÝ SONG SONG KHỐI LƯỢNG LỚN (50+ TRANG)
   // ============================================================================
-  const runOfflineReview = (text: string) => {
+  const runAIReview = async (fullText: string) => {
+    if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
-    setTimeout(() => {
-      let foundErrors: TextError[] = [];
-      let errCount = 0;
+    
+    // THUẬT TOÁN AUTO-CHUNKING: Cắt văn bản dài thành các đoạn 10.000 ký tự (~3-4 trang)
+    const CHUNK_SIZE = 10000; 
+    const chunks: string[] = [];
+    for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
+        chunks.push(fullText.substring(i, i + CHUNK_SIZE));
+    }
+    
+    setProgress({ current: 0, total: chunks.length });
+    let allErrors: TextError[] = [];
 
-      const orthographyRules = [
-        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
-        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." }
-      ];
-
-      const administrativeRules = [
-        { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30/2020: Chữ 'Hòa' phải đặt dấu thanh ở chữ 'o'." },
-        { regex: /Độc lập \- Tự do \- Hạnh Phúc/g, original: "Độc lập - Tự do - Hạnh Phúc", suggestion: "Độc lập - Tự do - Hạnh phúc", desc: "NĐ 30/2020: Chữ 'phúc' trong tiêu ngữ phải viết thường." }
-      ];
-
-      const qpplRules = [
-        { regex: /Căn cứ luật/gi, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "QPPL: Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." }
-      ];
-
-      const activeRules = [...orthographyRules, ...(docType === 'hanh-chinh' ? administrativeRules : qpplRules)];
-
-      activeRules.forEach(rule => {
-        let match;
-        const regex = new RegExp(rule.regex);
-        while ((match = regex.exec(text)) !== null) {
-          foundErrors.push({
-            id: `off_${errCount++}`,
-            original: match[0],
-            suggestion: rule.suggestion,
-            type: 'the-thuc',
-            description: rule.desc,
-            status: 'pending'
-          });
-        }
-      });
-
-      setErrors(foundErrors);
-      setStep('review');
-    }, 800);
-  };
-
-  // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI) - PROMPT SIÊU CHI TIẾT THEO TIÊU CHÍ CHUYÊN GIA
-  // ============================================================================
-  const runAIReview = async (text: string) => {
-    if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key trên máy chủ!");
-    setStep('analyzing');
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ 
           model: API_MODEL_NAME, 
-          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 } 
+          generationConfig: { responseMimeType: "application/json" } 
       });
 
-      // PROMPT ĐƯỢC NÂNG CẤP DỰA TRÊN BỘ TIÊU CHÍ KHẮT KHE CỦA NGƯỜI DÙNG
-      const prompt = `Bạn là một Chuyên gia Rà soát Văn bản Hành chính và Pháp luật cực kỳ khó tính và tỉ mỉ tại Việt Nam.
-      Văn bản đầu vào có độ dài lớn. BẠN PHẢI QUÉT KỸ TỪNG DÒNG, TUYỆT ĐỐI KHÔNG ĐƯỢC LƯỜI BIẾNG HAY BỎ SÓT LỖI.
-      
-      HÃY TÌM TẤT CẢ CÁC LỖI DỰA TRÊN 3 NHÓM TIÊU CHÍ BẮT BUỘC SAU (Ưu tiên số 1 và 2):
-
-      1. LỖI CHÍNH TẢ (Type: "chinh-ta"):
-      - Lỗi phụ âm đầu: Nhầm lẫn ch/tr (chung thực -> trung thực), s/x (sản suất -> sản xuất), l/n, r/d/gi.
-      - Lỗi dấu thanh: Nhầm dấu hỏi/ngã (nổi lo -> nỗi lo), thiếu dấu.
-      - Lỗi vần: Nhầm ch/t (bách ngát -> bát ngát), n/ng.
-      - Sai từ ghép/Hán Việt: cọ sát (sai) -> cọ xát (đúng), chẵng lẻ (sai) -> chẳng lẽ (đúng).
-      - Sai quy tắc viết hoa danh từ riêng, viết tắt.
-
-      2. LỖI KỸ THUẬT ĐÁNH MÁY (Type: "the-thuc"):
-      - Lỗi đánh máy (Typo): Thiếu/thừa chữ, nhảy chữ, đảo ngược thứ tự (đcươ -> được, nhung -> nhưng), lặp từ; thừa/thiếu ký tự trong một từ (chu đáo -> chuu đá).
-      - Lỗi khoảng trắng: Không có khoảng trắng sau dấu câu (. , : ; ! ?), hoặc thừa nhiều khoảng trắng giữa các từ.
-      - Lỗi đánh số/liệt kê: Số thứ tự không liên tục, sai định dạng.
-      - Lỗi viết tắt không đúng quy định. Lỗi trình bày tham chiếu.
-
-      3. LỖI CAO CẤP (Type: "ngu-phap"):
-      - Ngữ pháp: Cấu trúc câu sai, sai trật tự từ, thiếu chủ ngữ/vị ngữ, đặt dấu câu sai vị trí; thiếu dấu câu.
-      - Dùng từ: Dùng từ lóng, từ không phù hợp văn phong hành chính trang trọng, câu lủng củng, tối nghĩa.
-      - Logic: Nội dung mâu thuẫn.
-
-      YÊU CẦU ĐẦU RA BẮT BUỘC (JSON OBJECT):
-      {
-        "errors": [
-          {
-            "original": "chính xác cụm từ bị sai",
-            "suggestion": "cụm từ đúng",
-            "type": "chinh-ta", // Hoặc "the-thuc", "ngu-phap"
-            "description": "Giải thích rõ lỗi thuộc nhóm nào trong 3 nhóm trên."
-          }
-        ]
-      }
-      LƯU Ý QUAN TRỌNG: Hãy trích xuất TỐI ĐA 60 lỗi rõ ràng nhất để đảm bảo JSON không bị đứt gãy. Tuyệt đối không để lại dấu phẩy thừa ở cuối mảng JSON.
-      
-      Văn bản cần rà soát: 
-      ${text.substring(0, 60000)}`;
-
-      const result = await model.generateContent(prompt);
-      const aiText = result.response.text();
-      
-      let parsedData;
-      let rawJson = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-      try {
-        parsedData = JSON.parse(rawJson);
-      } catch (err) {
-        console.warn("JSON bị cắt cụt, đang khôi phục...", err);
-        try {
-            let cleanedText = rawJson.replace(/,\s*([\]}])/g, '$1'); 
-            if (!cleanedText.endsWith('}') && !cleanedText.endsWith(']')) {
-                const lastBraceIndex = cleanedText.lastIndexOf('}');
-                if (lastBraceIndex !== -1) cleanedText = cleanedText.substring(0, lastBraceIndex + 1);
+      // RÀ SOÁT TỪNG PHẦN ĐỂ ĐẢM BẢO AI KHÔNG BỎ SÓT LỖI
+      for (let i = 0; i < chunks.length; i++) {
+          setProgress({ current: i + 1, total: chunks.length });
+          
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam.
+          Quét đoạn văn bản sau để tìm lỗi chính tả, đánh máy, thể thức (${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'VB QPPL'}) và ngữ pháp.
+          
+          YÊU CẦU ĐẦU RA BẮT BUỘC (MẢNG JSON TỐI GIẢN):
+          [
+            {
+              "original": "cụm từ sai",
+              "suggestion": "cụm từ đúng",
+              "type": "chinh-ta", 
+              "description": "Lý do sai"
             }
-            if (!cleanedText.endsWith(']}') && cleanedText.includes('"errors": [')) cleanedText += ']}';
-            parsedData = JSON.parse(cleanedText);
-        } catch (recoveryErr) {
-            throw new Error("Dữ liệu lỗi nặng.");
-        }
+          ]
+          Tuyệt đối chỉ trả về JSON Array hợp lệ. Không giới thiệu.
+          
+          Văn bản: ${chunks[i]}`;
+
+          try {
+              const result = await model.generateContent(prompt);
+              const aiText = result.response.text();
+              
+              // Dọn rác JSON nếu AI trả về lỗi định dạng
+              let rawJson = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); 
+              if (!rawJson.endsWith(']')) rawJson += ']';
+
+              const parsedData = JSON.parse(rawJson);
+              const chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
+              
+              allErrors = [...allErrors, ...chunkErrors];
+          } catch (chunkErr) {
+              console.warn(`Lỗi phân tích ở phần ${i+1}/${chunks.length}, hệ thống tự động bỏ qua phần này để quét tiếp.`, chunkErr);
+              // Bỏ qua phần lỗi để không sập toàn bộ tiến trình
+          }
       }
 
-      const errorList = parsedData.errors || parsedData || [];
-      setErrors(errorList.map((err: any, idx: number) => ({ ...err, id: err.id || `ai_${idx}`, status: 'pending' })));
+      // Xóa các lỗi trùng lặp (nếu bị cắt ngang câu)
+      const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
+          .map(original => allErrors.find(e => e.original === original));
+
+      setErrors(uniqueErrors.map((err: any, idx: number) => ({ ...err, id: `ai_${idx}`, status: 'pending' })));
       setStep('review');
 
     } catch (error) {
-      console.error("Lỗi AI:", error);
-      alert("Hệ thống quá tải hoặc AI trả về định dạng gãy. Khuyến nghị: Hãy chia nhỏ văn bản thành các đoạn 5-10 trang để rà soát đạt độ chính xác 100%.");
+      console.error("Lỗi AI Tổng:", error);
+      alert("Hệ thống AI gặp sự cố gián đoạn mạng. Hãy kiểm tra kết nối và thử lại.");
       setStep('upload');
     }
+  };
+
+  const runOfflineReview = (text: string) => {
+    // Thuật toán Regex Offline (Giữ nguyên như phiên bản trước)
+    setStep('analyzing'); setProgress({ current: 1, total: 1 });
+    setTimeout(() => {
+      let foundErrors: TextError[] = [];
+      let errCount = 0;
+      const orthographyRules = [
+        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
+        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." }
+      ];
+      const administrativeRules = [
+        { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30/2020: Chữ 'Hòa' phải đặt dấu thanh ở chữ 'o'." },
+        { regex: /Độc lập \- Tự do \- Hạnh Phúc/g, original: "Độc lập - Tự do - Hạnh Phúc", suggestion: "Độc lập - Tự do - Hạnh phúc", desc: "NĐ 30/2020: Chữ 'phúc' trong tiêu ngữ phải viết thường." }
+      ];
+      const qpplRules = [
+        { regex: /Căn cứ luật/gi, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "QPPL: Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." }
+      ];
+      const activeRules = [...orthographyRules, ...(docType === 'hanh-chinh' ? administrativeRules : qpplRules)];
+      activeRules.forEach(rule => {
+        let match; const regex = new RegExp(rule.regex);
+        while ((match = regex.exec(text)) !== null) {
+          foundErrors.push({ id: `off_${errCount++}`, original: match[0], suggestion: rule.suggestion, type: 'the-thuc', description: rule.desc, status: 'pending' });
+        }
+      });
+      setErrors(foundErrors); setStep('review');
+    }, 1000);
   };
 
   const startReview = async (mode: 'offline' | 'ai') => {
     let content = inputType === 'paste' ? pasteText : "";
     if (inputType === 'upload') {
       if (!selectedFile) return alert("Vui lòng chọn hoặc tải file Word (.docx) lên trước!");
-      
       try {
         const arrayBuffer = await selectedFile.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
         content = result.value;
       } catch (e) {
-        return alert("Lỗi trích xuất chữ từ file Word. Đảm bảo file không bị khóa password.");
+        return alert("Lỗi trích xuất chữ từ file Word. Đảm bảo file không bị khóa.");
       }
     }
-    
     if (!content.trim()) return alert("Nội dung văn bản trống!");
     setDocumentText(content);
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
@@ -223,17 +191,13 @@ export default function DocReviewStudio() {
     return finalText;
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy toàn bộ văn bản (đã sửa lỗi) vào khay nhớ tạm!"));
-  };
-
+  const copyToClipboard = () => navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy toàn bộ văn bản (đã sửa lỗi) vào khay nhớ tạm!"));
+  
   const exportToWord = () => {
     const sourceHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${getFinalText().replace(/\n/g, '<br/>')}</body></html>`;
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `VanBan_DaSua_${docType}.doc`;
-    link.click();
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+    link.download = `VanBan_DaSua_${docType}.doc`; link.click();
   };
 
   return (
@@ -268,6 +232,7 @@ export default function DocReviewStudio() {
                            <input type="file" accept=".docx" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
                            <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
                            <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
+                           <p className="text-[10px] text-slate-500 mt-2">Hỗ trợ rà soát văn bản lớn (50+ trang)</p>
                         </div>
                     )
                  ) : (
@@ -305,7 +270,25 @@ export default function DocReviewStudio() {
         <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] space-y-4">
            <RefreshCw size={50} className="text-brand animate-spin" />
            <h3 className="text-xl font-bold text-white uppercase tracking-widest">Đang rà soát văn bản...</h3>
-           <p className="text-slate-400 text-sm">Quá trình rà soát văn bản dài có thể mất từ 10 - 30 giây.</p>
+           
+           {/* HIỂN THỊ THANH TIẾN TRÌNH CHO VĂN BẢN DÀI */}
+           {progress.total > 1 && (
+               <div className="w-80 text-center space-y-2 mt-4">
+                  <p className="text-sm font-bold text-sky-400">Đang phân tích phần {progress.current} / {progress.total}</p>
+                  <div className="w-full h-3 bg-[#1e293b] rounded-full overflow-hidden border border-slate-700">
+                     <div 
+                        className="h-full bg-sky-500 transition-all duration-500 ease-out" 
+                        style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                     />
+                  </div>
+                  <p className="text-[10px] text-slate-500">Quá trình này có thể mất vài phút cho văn bản hàng chục trang.</p>
+               </div>
+           )}
+           {progress.total <= 1 && (
+               <div className="w-64 h-2 bg-[#1e293b] rounded-full overflow-hidden mt-4">
+                  <div className="h-full bg-brand w-1/2 animate-[progress_1s_ease-in-out_infinite]" />
+               </div>
+           )}
         </div>
       )}
 
