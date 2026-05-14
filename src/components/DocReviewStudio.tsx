@@ -6,7 +6,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // LẤY API KEY TỪ BIẾN MÔI TRƯỜNG
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-// MÔ HÌNH AI (Bạn có thể chuyển sang gemini-3.1-pro nếu tài khoản hỗ trợ)
+
+// Bạn có thể tùy chỉnh tên Model tại đây (gemini-3.1-pro, gemini-2.5-pro, v.v.)
 const API_MODEL_NAME = "gemini-3.1-pro"; 
 
 interface TextError {
@@ -32,7 +33,6 @@ export default function DocReviewStudio() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // THANH TIẾN TRÌNH CHO VĂN BẢN DÀI
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
@@ -42,9 +42,7 @@ export default function DocReviewStudio() {
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if ((window as any).isDocReviewing) {
-        e.preventDefault(); e.returnValue = '';
-      }
+      if ((window as any).isDocReviewing) { e.preventDefault(); e.returnValue = ''; }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -52,10 +50,7 @@ export default function DocReviewStudio() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-       setSelectedFileName(file.name);
-       setSelectedFile(file);
-    }
+    if (file) { setSelectedFileName(file.name); setSelectedFile(file); }
   };
 
   const removeSelectedFile = () => {
@@ -64,14 +59,14 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT KỸ (AI) - XỬ LÝ SONG SONG KHỐI LƯỢNG LỚN (50+ TRANG)
+  // ĐỘNG CƠ RÀ SOÁT KỸ (AI) - BẢN NÂNG CẤP DÀNH CHO CÁC MÔ HÌNH PRO
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
-    // THUẬT TOÁN AUTO-CHUNKING: Cắt văn bản dài thành các đoạn 10.000 ký tự (~3-4 trang)
-    const CHUNK_SIZE = 10000; 
+    // TỐI ƯU HÓA: Giảm kích thước khối xuống 4000 ký tự (khoảng 1-1.5 trang) để AI "soi" từng chữ
+    const CHUNK_SIZE = 4000; 
     const chunks: string[] = [];
     for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
         chunks.push(fullText.substring(i, i + CHUNK_SIZE));
@@ -79,86 +74,105 @@ export default function DocReviewStudio() {
     
     setProgress({ current: 0, total: chunks.length });
     let allErrors: TextError[] = [];
+    let successfulChunks = 0;
 
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ 
-          model: API_MODEL_NAME, 
-          generationConfig: { responseMimeType: "application/json" } 
-      });
+      // Đã gỡ bỏ responseMimeType để tránh lỗi xung đột với các phiên bản 3.1 Pro mới nhất
+      const model = genAI.getGenerativeModel({ model: API_MODEL_NAME });
 
-      // RÀ SOÁT TỪNG PHẦN ĐỂ ĐẢM BẢO AI KHÔNG BỎ SÓT LỖI
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
           
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam.
-          Quét đoạn văn bản sau để tìm lỗi chính tả, đánh máy, thể thức (${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'VB QPPL'}) và ngữ pháp.
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam cực kỳ khắt khe.
+          Nhiệm vụ: Quét ĐOẠN VĂN BẢN sau để tìm MỌI lỗi sai. Hãy đặc biệt chú ý các lỗi đánh máy rõ ràng như dính chữ, gõ sai vần (ví dụ: "Xác địnhh", "phát trien", "Giá dục").
+
+          PHÂN LOẠI LỖI CẦN TÌM:
+          1. Lỗi chính tả, đánh máy ("chinh-ta"): Sai phụ âm đầu, vần, dấu thanh, thiếu/thừa chữ, thiếu/thừa ký tự, lỗi typo.
+          2. Lỗi thể thức ("the-thuc"): Sai khoảng trắng sau dấu câu, lỗi viết hoa/viết tắt theo ${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'luật ban hành VB QPPL'}.
+          3. Lỗi dùng từ, ngữ pháp ("ngu-phap"): Từ ngữ lủng củng, không trang trọng.
+
+          ĐẦU RA BẮT BUỘC: Bạn CHỈ ĐƯỢC PHÉP trả về một mảng JSON nguyên chất. Tuyệt đối KHÔNG có câu chào hỏi, KHÔNG bọc trong markdown (như \`\`\`json).
           
-          YÊU CẦU ĐẦU RA BẮT BUỘC (MẢNG JSON TỐI GIẢN):
+          Cấu trúc MẢNG JSON mẫu:
           [
             {
-              "original": "cụm từ sai",
-              "suggestion": "cụm từ đúng",
+              "original": "trích nguyên văn từ bị sai",
+              "suggestion": "từ đã sửa đúng",
               "type": "chinh-ta", 
-              "description": "Lý do sai"
+              "description": "Lý do sai ngắn gọn"
             }
           ]
-          Tuyệt đối chỉ trả về JSON Array hợp lệ. Không giới thiệu.
+          Nếu đoạn văn bản hoàn hảo không có lỗi nào, hãy trả về chính xác: []
           
-          Văn bản: ${chunks[i]}`;
+          ĐOẠN VĂN BẢN:
+          """
+          ${chunks[i]}
+          """`;
 
           try {
               const result = await model.generateContent(prompt);
               const aiText = result.response.text();
               
-              // Dọn rác JSON nếu AI trả về lỗi định dạng
-              let rawJson = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); 
-              if (!rawJson.endsWith(']')) rawJson += ']';
+              // Thuật toán làm sạch JSON cường độ cao
+              let rawJson = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); // Cắt dấu phẩy thừa
+              
+              // Nếu mảng bị cắt cụt, tự động đóng mảng
+              if (!rawJson.endsWith(']')) {
+                  const lastBrace = rawJson.lastIndexOf('}');
+                  if (lastBrace !== -1) rawJson = rawJson.substring(0, lastBrace + 1) + ']';
+                  else rawJson += ']';
+              }
 
               const parsedData = JSON.parse(rawJson);
               const chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
               
               allErrors = [...allErrors, ...chunkErrors];
+              successfulChunks++;
           } catch (chunkErr) {
-              console.warn(`Lỗi phân tích ở phần ${i+1}/${chunks.length}, hệ thống tự động bỏ qua phần này để quét tiếp.`, chunkErr);
-              // Bỏ qua phần lỗi để không sập toàn bộ tiến trình
+              console.error(`Lỗi phân tích ở phần ${i+1}:`, chunkErr);
+              // Lưu lại lỗi để kiểm tra, nhưng vẫn cho chạy tiếp phần sau
           }
       }
 
-      // Xóa các lỗi trùng lặp (nếu bị cắt ngang câu)
+      // XỬ LÝ SẬP NGẦM: Báo động nếu không có chunk nào chạy thành công
+      if (successfulChunks === 0) {
+          alert(`Toàn bộ quá trình rà soát thất bại! Mô hình '${API_MODEL_NAME}' đã từ chối xử lý hoặc cấu hình API bị lỗi. Vui lòng bật F12 (Console) để xem mã lỗi đỏ từ máy chủ Google.`);
+          setStep('upload');
+          return;
+      }
+
+      // Lọc các lỗi bị trùng lặp ở biên các chunk
       const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
-          .map(original => allErrors.find(e => e.original === original));
+          .map(original => allErrors.find(e => e.original === original))
+          .filter(e => e && e.original.length > 0);
 
       setErrors(uniqueErrors.map((err: any, idx: number) => ({ ...err, id: `ai_${idx}`, status: 'pending' })));
       setStep('review');
 
     } catch (error) {
-      console.error("Lỗi AI Tổng:", error);
-      alert("Hệ thống AI gặp sự cố gián đoạn mạng. Hãy kiểm tra kết nối và thử lại.");
+      console.error("Lỗi kết nối tổng:", error);
+      alert(`Đã xảy ra lỗi khi kết nối tới mô hình ${API_MODEL_NAME}. Kiểm tra lại tên mô hình hoặc kết nối mạng.`);
       setStep('upload');
     }
   };
 
+  // ============================================================================
+  // ĐỘNG CƠ RÀ SOÁT NHANH (OFFLINE)
+  // ============================================================================
   const runOfflineReview = (text: string) => {
-    // Thuật toán Regex Offline (Giữ nguyên như phiên bản trước)
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
-      const orthographyRules = [
-        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
-        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." }
+      const rules = [
+        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
+        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." },
+        { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30: Chữ 'Hòa' đặt dấu thanh ở chữ 'o'." }
       ];
-      const administrativeRules = [
-        { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30/2020: Chữ 'Hòa' phải đặt dấu thanh ở chữ 'o'." },
-        { regex: /Độc lập \- Tự do \- Hạnh Phúc/g, original: "Độc lập - Tự do - Hạnh Phúc", suggestion: "Độc lập - Tự do - Hạnh phúc", desc: "NĐ 30/2020: Chữ 'phúc' trong tiêu ngữ phải viết thường." }
-      ];
-      const qpplRules = [
-        { regex: /Căn cứ luật/gi, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "QPPL: Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." }
-      ];
-      const activeRules = [...orthographyRules, ...(docType === 'hanh-chinh' ? administrativeRules : qpplRules)];
-      activeRules.forEach(rule => {
+      
+      rules.forEach(rule => {
         let match; const regex = new RegExp(rule.regex);
         while ((match = regex.exec(text)) !== null) {
           foundErrors.push({ id: `off_${errCount++}`, original: match[0], suggestion: rule.suggestion, type: 'the-thuc', description: rule.desc, status: 'pending' });
@@ -177,7 +191,7 @@ export default function DocReviewStudio() {
         const result = await mammoth.extractRawText({ arrayBuffer });
         content = result.value;
       } catch (e) {
-        return alert("Lỗi trích xuất chữ từ file Word. Đảm bảo file không bị khóa.");
+        return alert("Lỗi trích xuất chữ từ file Word.");
       }
     }
     if (!content.trim()) return alert("Nội dung văn bản trống!");
@@ -191,7 +205,7 @@ export default function DocReviewStudio() {
     return finalText;
   };
 
-  const copyToClipboard = () => navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy toàn bộ văn bản (đã sửa lỗi) vào khay nhớ tạm!"));
+  const copyToClipboard = () => navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy văn bản đã sửa vào bộ nhớ tạm!"));
   
   const exportToWord = () => {
     const sourceHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${getFinalText().replace(/\n/g, '<br/>')}</body></html>`;
@@ -232,7 +246,7 @@ export default function DocReviewStudio() {
                            <input type="file" accept=".docx" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
                            <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
                            <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
-                           <p className="text-[10px] text-slate-500 mt-2">Hỗ trợ rà soát văn bản lớn (50+ trang)</p>
+                           <p className="text-[10px] text-slate-500 mt-2">Hỗ trợ rà soát văn bản lớn</p>
                         </div>
                     )
                  ) : (
@@ -271,22 +285,16 @@ export default function DocReviewStudio() {
            <RefreshCw size={50} className="text-brand animate-spin" />
            <h3 className="text-xl font-bold text-white uppercase tracking-widest">Đang rà soát văn bản...</h3>
            
-           {/* HIỂN THỊ THANH TIẾN TRÌNH CHO VĂN BẢN DÀI */}
            {progress.total > 1 && (
                <div className="w-80 text-center space-y-2 mt-4">
-                  <p className="text-sm font-bold text-sky-400">Đang phân tích phần {progress.current} / {progress.total}</p>
+                  <p className="text-sm font-bold text-sky-400">Đang phân tích trang {progress.current} / {progress.total} (Phân giải cao)</p>
                   <div className="w-full h-3 bg-[#1e293b] rounded-full overflow-hidden border border-slate-700">
                      <div 
                         className="h-full bg-sky-500 transition-all duration-500 ease-out" 
                         style={{ width: `${(progress.current / progress.total) * 100}%` }}
                      />
                   </div>
-                  <p className="text-[10px] text-slate-500">Quá trình này có thể mất vài phút cho văn bản hàng chục trang.</p>
-               </div>
-           )}
-           {progress.total <= 1 && (
-               <div className="w-64 h-2 bg-[#1e293b] rounded-full overflow-hidden mt-4">
-                  <div className="h-full bg-brand w-1/2 animate-[progress_1s_ease-in-out_infinite]" />
+                  <p className="text-[10px] text-slate-500">Mô hình {API_MODEL_NAME} đang soi từng từ ngữ.</p>
                </div>
            )}
         </div>
