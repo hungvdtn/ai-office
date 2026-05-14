@@ -8,7 +8,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // Bạn có thể tùy chỉnh tên Model tại đây (gemini-3.1-pro, gemini-2.5-pro, v.v.)
-const API_MODEL_NAME = "gemini-3.1-pro"; 
+const API_MODEL_NAME = "gemini-2.5-flash"; 
 
 interface TextError {
   id: string;
