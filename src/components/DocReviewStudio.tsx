@@ -5,7 +5,7 @@ import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-// Đã đưa về chuẩn 2.5-flash theo đúng mô hình ổn định của Bạn
+// Mô hình 2.5-flash đã chứng minh độ ổn định cao với tài khoản của Bạn
 const API_MODEL_NAME = "gemini-2.5-flash"; 
 
 interface TextError {
@@ -57,13 +57,13 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT AI - CÓ CHỐNG LỖI QUOTA (429) CỦA GOOGLE
+  // ĐỘNG CƠ RÀ SOÁT AI - CÓ BỘ CHỐNG LỖI QUOTA 429 VÀ DELAY 4 GIÂY
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
-    // Tăng kích thước chunk lên 15000 để giảm số lần gọi API (Tránh lỗi 429 Quota)
+    // Nâng khối lượng đọc lên 15000 ký tự (khoảng 5 trang) để giảm số lần gọi API
     const CHUNK_SIZE = 15000; 
     const chunks: string[] = [];
     for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
@@ -72,6 +72,7 @@ export default function DocReviewStudio() {
     
     setProgress({ current: 0, total: chunks.length });
     let allErrors: TextError[] = [];
+    let isQuotaExceeded = false;
 
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -83,14 +84,14 @@ export default function DocReviewStudio() {
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
           
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản cực kỳ khắt khe.
-          Quét ĐOẠN VĂN BẢN sau để tìm các lỗi:
-          1. Lỗi chính tả ("chinh-ta"): Sai dấu, sai vần, thiếu/thừa chữ, lỗi typo.
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính cực kỳ khắt khe.
+          Quét ĐOẠN VĂN BẢN sau để tìm CÁC LỖI:
+          1. Lỗi chính tả, đánh máy ("chinh-ta"): Sai dấu, sai vần, thiếu/thừa chữ, dính chữ (ví dụ: phát trien, Xác địnhh).
           2. Lỗi thể thức ("the-thuc"): Viết hoa, viết tắt, dấu câu theo ${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'VB QPPL'}.
-          3. Lỗi ngữ pháp ("ngu-phap"): Lủng củng, tối nghĩa.
+          3. Lỗi ngữ pháp ("ngu-phap"): Lủng củng, dùng từ không chuẩn mực.
 
-          YÊU CẦU: Trả về MẢNG JSON.
-          [ { "original": "từ sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
+          YÊU CẦU: Trả về MẢNG JSON hợp lệ.
+          [ { "original": "trích chính xác từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
           
           ĐOẠN VĂN BẢN:
           ${chunks[i]}`;
@@ -105,15 +106,23 @@ export default function DocReviewStudio() {
               const chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
               allErrors = [...allErrors, ...chunkErrors];
               
-              // NGỦ 2 GIÂY SAU MỖI LẦN GỌI ĐỂ LÁCH LUẬT GIỚI HẠN 15 LẦN/PHÚT CỦA GOOGLE
+              // BỘ PHANH NHÂN TẠO: Nghỉ 4 giây để chống lỗi 429 của Google
               if (i < chunks.length - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  await new Promise(resolve => setTimeout(resolve, 4000));
               }
-          } catch (chunkErr) {
+          } catch (chunkErr: any) {
               console.warn(`Lỗi phân tích phần ${i+1}:`, chunkErr);
-              // Nếu dính lỗi 429 quá tải, ngừng luôn để bảo toàn các lỗi đã bắt được
-              if (chunkErr && chunkErr.toString().includes("429")) break; 
+              const errMsg = chunkErr?.message || chunkErr?.toString() || "";
+              // Bắt lỗi 429 và thông báo cho người dùng biết
+              if (errMsg.includes("429") || errMsg.includes("Quota")) {
+                  isQuotaExceeded = true;
+                  break; // Dừng lại, giữ những lỗi đã tìm được ở các trang trước
+              }
           }
+      }
+
+      if (isQuotaExceeded) {
+          alert("CẢNH BÁO: Bạn đã vượt quá giới hạn truy cập miễn phí của Google (Lỗi 429). Hệ thống đã tự động lưu lại các lỗi bắt được ở những trang đầu tiên. Bạn vui lòng đợi khoảng 1 phút trước khi rà soát tiếp các đoạn còn lại.");
       }
 
       const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
@@ -124,7 +133,7 @@ export default function DocReviewStudio() {
       setStep('review');
 
     } catch (error) {
-      alert(`Lỗi mạng. Hãy thử lại.`);
+      alert(`Lỗi mạng nội bộ. Hãy kiểm tra kết nối và thử lại.`);
       setStep('upload');
     }
   };
@@ -166,21 +175,25 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // KHÔI PHỤC HÀM HIỂN THỊ VĂN BẢN (BÔI MÀU LỖI & BẤM VÀO TỰ CUỘN ĐẾN CHỖ SAI)
+  // HIỂN THỊ VĂN BẢN (THUẬT TOÁN TÌM KIẾM REGEX BẤT CHẤP HOA/THƯỜNG)
   // ============================================================================
+  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   const renderDocumentText = () => {
     let highlightedText = documentText;
-    
-    // Sắp xếp các lỗi từ dài đến ngắn để tránh lỗi Replace chồng chéo
-    const sortedErrors = [...errors].sort((a, b) => b.original.length - a.original.length);
+    const sortedErrors = [...errors].sort((a, b) => (b.original || "").length - (a.original || "").length);
 
     sortedErrors.forEach(err => {
+      if (!err.original) return;
+      // gi: global (toàn bộ) & insensitive (không phân biệt chữ hoa/thường)
+      const regex = new RegExp(escapeRegExp(err.original), 'gi'); 
+      
       if (err.status === 'pending') {
-        const span = `<span class="bg-rose-500/30 text-rose-300 border-b-2 border-rose-500 font-semibold px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">${err.original}</span>`;
-        highlightedText = highlightedText.split(err.original).join(span);
+        const span = `<span class="bg-rose-500/30 text-rose-300 border-b-2 border-rose-500 font-semibold px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">$&</span>`;
+        highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
         const span = `<span class="bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded transition-all">${err.suggestion}</span>`;
-        highlightedText = highlightedText.split(err.original).join(span);
+        highlightedText = highlightedText.replace(regex, span);
       }
     });
 
@@ -196,7 +209,12 @@ export default function DocReviewStudio() {
 
   const getFinalText = () => {
     let finalText = documentText;
-    errors.forEach(err => { if (err.status === 'fixed') finalText = finalText.split(err.original).join(err.suggestion); });
+    errors.forEach(err => { 
+        if (err.status === 'fixed' && err.original) {
+            const regex = new RegExp(escapeRegExp(err.original), 'gi');
+            finalText = finalText.replace(regex, err.suggestion);
+        }
+    });
     return finalText;
   };
 
@@ -289,7 +307,7 @@ export default function DocReviewStudio() {
                         style={{ width: `${(progress.current / progress.total) * 100}%` }}
                      />
                   </div>
-                  <p className="text-[10px] text-slate-500">Hệ thống xử lý từng đoạn để đảm bảo độ chính xác (mất khoảng 10-15s/đoạn).</p>
+                  <p className="text-[10px] text-slate-500">Hệ thống xử lý từng đoạn với khoảng nghỉ 4s để đảm bảo đường truyền API ổn định.</p>
                </div>
            )}
         </div>
@@ -297,7 +315,6 @@ export default function DocReviewStudio() {
 
       {step === 'review' && (
         <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[70vh]">
-           {/* CỘT TRÁI - HIỂN THỊ VĂN BẢN VÀ BÔI ĐỎ */}
            <div className="flex-[3] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col overflow-hidden shadow-xl">
               <div className="bg-[#1e293b]/50 p-4 border-b border-[#1e293b] flex justify-between items-center">
                  <h4 className="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-widest"><FileText size={16}/> Nội dung gốc</h4>
@@ -308,7 +325,6 @@ export default function DocReviewStudio() {
               </div>
            </div>
 
-           {/* CỘT PHẢI - DANH SÁCH LỖI (CÓ AUTO-SCROLL BÊN TRÁI KHI BẤM) */}
            <div className="flex-[2] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col shadow-xl overflow-hidden h-[70vh] lg:h-auto">
               <div className="bg-[#1e293b]/50 p-5 border-b border-[#1e293b]">
                  <h4 className="font-bold text-slate-200 uppercase tracking-widest text-xs flex items-center justify-between">
@@ -323,11 +339,8 @@ export default function DocReviewStudio() {
                         className={`bg-[#0f172a] p-4 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand' : 'border-[#1e293b]'}`} 
                         onClick={() => {
                             setActiveErrorId(err.id);
-                            // TỰ ĐỘNG CUỘN ĐẾN CHỖ LỖI TRÊN VĂN BẢN KHI BẤM
                             const errorElement = document.querySelector(`span[data-id="${err.id}"]`);
-                            if (errorElement) {
-                                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
+                            if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }}
                     >
                        <div className="flex justify-between mb-2">
