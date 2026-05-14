@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // LẤY API KEY TỪ BIẾN MÔI TRƯỜNG
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 // MÔ HÌNH AI (Bạn có thể chuyển sang gemini-3.1-pro nếu tài khoản hỗ trợ)
-const API_MODEL_NAME = "gemini-2.5-flash"; 
+const API_MODEL_NAME = "gemini-3.1-pro"; 
 
 interface TextError {
   id: string;
