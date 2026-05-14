@@ -5,7 +5,6 @@ import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-// Mô hình 2.5-flash đã chứng minh độ ổn định cao với tài khoản của Bạn
 const API_MODEL_NAME = "gemini-2.5-flash"; 
 
 interface TextError {
@@ -24,7 +23,6 @@ export default function DocReviewStudio() {
   const [activeErrorId, setActiveErrorId] = useState<string | null>(null);
   
   const [inputType, setInputType] = useState<'upload' | 'paste'>('upload');
-  const [docType, setDocType] = useState<'hanh-chinh' | 'qppl'>('hanh-chinh');
   const [pasteText, setPasteText] = useState('');
   
   const [selectedFileName, setSelectedFileName] = useState<string>('');
@@ -57,13 +55,12 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT AI - CÓ BỘ CHỐNG LỖI QUOTA 429 VÀ DELAY 4 GIÂY
+  // ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN - PROMPT ĐƯỢC TỐI ƯU HÓA LUẬT LỆ
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
-    // Nâng khối lượng đọc lên 15000 ký tự (khoảng 5 trang) để giảm số lần gọi API
     const CHUNK_SIZE = 15000; 
     const chunks: string[] = [];
     for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
@@ -84,14 +81,24 @@ export default function DocReviewStudio() {
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
           
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính cực kỳ khắt khe.
-          Quét ĐOẠN VĂN BẢN sau để tìm CÁC LỖI:
-          1. Lỗi chính tả, đánh máy ("chinh-ta"): Sai dấu, sai vần, thiếu/thừa chữ, dính chữ (ví dụ: phát trien, Xác địnhh).
-          2. Lỗi thể thức ("the-thuc"): Viết hoa, viết tắt, dấu câu theo ${docType === 'hanh-chinh' ? 'NĐ 30/2020' : 'VB QPPL'}.
-          3. Lỗi ngữ pháp ("ngu-phap"): Lủng củng, dùng từ không chuẩn mực.
+          // PROMPT ĐÃ ĐƯỢC CẤY LUẬT NĐ 30 VÀ BỘ LỌC CHỐNG ẢO GIÁC
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam. Nhiệm vụ của bạn là bắt lỗi khắt khe, nhưng tuyệt đối không được báo lỗi sai sự thật.
+
+          QUY TẮC BẮT LỖI BẮT BUỘC (PHẢI TUÂN THỦ NGHIÊM NGẶT):
+          1. LỖI VÔ NGHĨA (CẤM BÁO): TUYỆT ĐỐI KHÔNG đưa vào kết quả nếu từ đề xuất (suggestion) giống hệt từ gốc (original).
+          2. LỖI ĐỊNH DẠNG (BỎ QUA): BỎ QUA các lỗi về thừa/thiếu khoảng trắng (dấu cách), gạch đầu dòng (-), số thứ tự bị đứt quãng.
+          3. DẤU THANH (CẨN THẬN): Đọc kỹ xem từ đã có dấu thanh chưa trước khi báo lỗi thiếu dấu. Không báo lỗi nếu do bảng mã Unicode tách chữ.
+          4. QUY TẮC NGHỊ ĐỊNH 30/2020: 
+             - KHÔNG viết hoa các chữ "khoản", "điểm" (trừ khi đứng đầu câu). Nếu văn bản viết hoa "Khoản 1", hãy sửa thành "khoản 1".
+             - CÓ viết hoa các chữ: "Luật", "Nghị định", "Nghị quyết", chữ "Số" (Ví dụ: Số: 12/NĐ-CP).
+
+          PHÂN LOẠI LỖI (CHỈ BẮT 3 LOẠI NÀY):
+          1. "chinh-ta": Sai phụ âm (ch/tr, s/x), sai vần, thiếu chữ, dính chữ (vd: Xác địnhh).
+          2. "the-thuc": Sai quy tắc viết hoa NĐ 30 như mục 4 ở trên.
+          3. "ngu-phap": Dùng từ lóng, câu tối nghĩa.
 
           YÊU CẦU: Trả về MẢNG JSON hợp lệ.
-          [ { "original": "trích chính xác từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
+          [ { "original": "từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
           
           ĐOẠN VĂN BẢN:
           ${chunks[i]}`;
@@ -103,26 +110,31 @@ export default function DocReviewStudio() {
               if (!rawJson.endsWith(']')) rawJson += ']';
 
               const parsedData = JSON.parse(rawJson);
-              const chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
+              let chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
+              
+              // BỘ LỌC CỨNG Ở CODE: Xóa bỏ các lỗi mà AI vẫn cố tình trả về giống hệt từ gốc
+              chunkErrors = chunkErrors.filter((err: any) => {
+                  const orig = (err.original || "").toString().trim().toLowerCase();
+                  const sugg = (err.suggestion || "").toString().trim().toLowerCase();
+                  return orig !== sugg && orig.length > 0;
+              });
+
               allErrors = [...allErrors, ...chunkErrors];
               
-              // BỘ PHANH NHÂN TẠO: Nghỉ 4 giây để chống lỗi 429 của Google
               if (i < chunks.length - 1) {
                   await new Promise(resolve => setTimeout(resolve, 4000));
               }
           } catch (chunkErr: any) {
-              console.warn(`Lỗi phân tích phần ${i+1}:`, chunkErr);
               const errMsg = chunkErr?.message || chunkErr?.toString() || "";
-              // Bắt lỗi 429 và thông báo cho người dùng biết
               if (errMsg.includes("429") || errMsg.includes("Quota")) {
                   isQuotaExceeded = true;
-                  break; // Dừng lại, giữ những lỗi đã tìm được ở các trang trước
+                  break; 
               }
           }
       }
 
       if (isQuotaExceeded) {
-          alert("CẢNH BÁO: Bạn đã vượt quá giới hạn truy cập miễn phí của Google (Lỗi 429). Hệ thống đã tự động lưu lại các lỗi bắt được ở những trang đầu tiên. Bạn vui lòng đợi khoảng 1 phút trước khi rà soát tiếp các đoạn còn lại.");
+          alert("CẢNH BÁO: Giới hạn API (Lỗi 429). Hệ thống đã lưu lại các lỗi ở những phần đầu tiên.");
       }
 
       const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
@@ -133,24 +145,31 @@ export default function DocReviewStudio() {
       setStep('review');
 
     } catch (error) {
-      alert(`Lỗi mạng nội bộ. Hãy kiểm tra kết nối và thử lại.`);
+      alert(`Lỗi kết nối mạng. Hãy thử lại.`);
       setStep('upload');
     }
   };
 
+  // ============================================================================
+  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE REGEX) - NHANH, CƠ BẢN
+  // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
       const rules = [
-        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
-        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả." }
+        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
+        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." },
+        { regex: /CỘNG HOÀ/g, original: "CỘNG HOÀ", suggestion: "CỘNG HÒA", desc: "Chữ 'Hòa' đặt dấu thanh ở chữ 'o'." },
+        { regex: /Hạnh Phúc/g, original: "Hạnh Phúc", suggestion: "Hạnh phúc", desc: "Chữ 'phúc' trong tiêu ngữ phải viết thường." },
+        { regex: /Căn cứ luật/g, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." },
+        { regex: / Khoản /g, original: " Khoản ", suggestion: " khoản ", desc: "Từ 'khoản' giữa câu không viết hoa theo NĐ 30." }
       ];
       rules.forEach(rule => {
         let match; const regex = new RegExp(rule.regex);
         while ((match = regex.exec(text)) !== null) {
-          foundErrors.push({ id: `off_${errCount++}`, original: match[0], suggestion: rule.suggestion, type: 'the-thuc', description: rule.desc, status: 'pending' });
+          foundErrors.push({ id: `off_${errCount++}`, original: match[0].trim(), suggestion: rule.suggestion.trim(), type: 'chinh-ta', description: rule.desc, status: 'pending' });
         }
       });
       setErrors(foundErrors); setStep('review');
@@ -160,7 +179,7 @@ export default function DocReviewStudio() {
   const startReview = async (mode: 'offline' | 'ai') => {
     let content = inputType === 'paste' ? pasteText : "";
     if (inputType === 'upload') {
-      if (!selectedFile) return alert("Vui lòng chọn hoặc tải file Word (.docx) lên trước!");
+      if (!selectedFile) return alert("Vui lòng tải file Word (.docx) lên trước!");
       try {
         const arrayBuffer = await selectedFile.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
@@ -175,7 +194,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // HIỂN THỊ VĂN BẢN (THUẬT TOÁN TÌM KIẾM REGEX BẤT CHẤP HOA/THƯỜNG)
+  // GIAO DIỆN VĂN BẢN (XỬ LÝ BÔI MÀU, CUỘN ĐỒNG BỘ)
   // ============================================================================
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -185,11 +204,11 @@ export default function DocReviewStudio() {
 
     sortedErrors.forEach(err => {
       if (!err.original) return;
-      // gi: global (toàn bộ) & insensitive (không phân biệt chữ hoa/thường)
       const regex = new RegExp(escapeRegExp(err.original), 'gi'); 
       
       if (err.status === 'pending') {
-        const span = `<span class="bg-rose-500/30 text-rose-300 border-b-2 border-rose-500 font-semibold px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">$&</span>`;
+        // Đã xóa border-b-2 (gạch chân), chỉ giữ màu nền. Thêm id để cuộn đồng bộ.
+        const span = `<span id="text-error-${err.id}" class="bg-rose-500/30 text-rose-300 px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">$&</span>`;
         highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
         const span = `<span class="bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded transition-all">${err.suggestion}</span>`;
@@ -201,7 +220,11 @@ export default function DocReviewStudio() {
                 onClick={(e) => {
                   const target = e.target as HTMLElement;
                   if (target.tagName === 'SPAN' && target.dataset.id) {
-                    setActiveErrorId(target.dataset.id);
+                    const errId = target.dataset.id;
+                    setActiveErrorId(errId);
+                    // CUỘN ĐỒNG BỘ: Bấm bên trái -> Cuộn bên phải
+                    const errorCard = document.getElementById(`error-card-${errId}`);
+                    if (errorCard) errorCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }
                 }}
            />;
@@ -224,7 +247,7 @@ export default function DocReviewStudio() {
     const sourceHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${getFinalText().replace(/\n/g, '<br/>')}</body></html>`;
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-    link.download = `VanBan_DaSua_${docType}.doc`; link.click();
+    link.download = `VanBan_DaSua.doc`; link.click();
   };
 
   return (
@@ -267,25 +290,16 @@ export default function DocReviewStudio() {
                  )}
               </div>
               <div className="space-y-4">
-                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Thiết lập</h3>
-                 <div className="space-y-2">
-                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${docType === 'hanh-chinh' ? 'border-emerald-500 bg-emerald-500/10' : 'border-[#1e293b]'}`}>
-                       <input type="radio" checked={docType === 'hanh-chinh'} onChange={() => setDocType('hanh-chinh')} className="hidden" />
-                       <span className="text-xs font-bold text-slate-300">Văn bản Hành chính (NĐ 30)</span>
-                    </label>
-                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${docType === 'qppl' ? 'border-emerald-500 bg-emerald-500/10' : 'border-[#1e293b]'}`}>
-                       <input type="radio" checked={docType === 'qppl'} onChange={() => setDocType('qppl')} className="hidden" />
-                       <span className="text-xs font-bold text-slate-300">Dự thảo VB Quy phạm Pháp luật</span>
-                    </label>
-                 </div>
-                 <div className="grid grid-cols-2 gap-2 pt-2">
-                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-1">
-                       <Type size={20} className="text-amber-400" />
-                       <span className="text-[10px] font-black text-white">RÀ SOÁT NHANH</span>
+                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Bắt đầu rà soát</h3>
+                 <p className="text-xs text-slate-400 mb-4">Hệ thống áp dụng chuẩn NĐ 30/2020/NĐ-CP cho văn bản hành chính.</p>
+                 <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2">
+                       <Type size={24} className="text-amber-400" />
+                       <span className="text-xs font-black text-white">RÀ SOÁT CHÍNH TẢ</span>
                     </button>
-                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-3 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center justify-center gap-1">
-                       <RefreshCw size={20} className="text-sky-400" />
-                       <span className="text-[10px] font-black text-white">RÀ SOÁT KỸ (AI)</span>
+                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-4 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center justify-center gap-2">
+                       <RefreshCw size={24} className="text-sky-400" />
+                       <span className="text-xs font-black text-white">RÀ SOÁT TOÀN DIỆN (AI)</span>
                     </button>
                  </div>
               </div>
@@ -300,14 +314,13 @@ export default function DocReviewStudio() {
            
            {progress.total > 0 && (
                <div className="w-80 text-center space-y-2 mt-4">
-                  <p className="text-sm font-bold text-sky-400">Đang phân tích phần {progress.current} / {progress.total}</p>
+                  <p className="text-sm font-bold text-sky-400">Đang phân tích đoạn {progress.current} / {progress.total}</p>
                   <div className="w-full h-3 bg-[#1e293b] rounded-full overflow-hidden border border-slate-700">
                      <div 
                         className="h-full bg-sky-500 transition-all duration-500 ease-out" 
                         style={{ width: `${(progress.current / progress.total) * 100}%` }}
                      />
                   </div>
-                  <p className="text-[10px] text-slate-500">Hệ thống xử lý từng đoạn với khoảng nghỉ 4s để đảm bảo đường truyền API ổn định.</p>
                </div>
            )}
         </div>
@@ -320,7 +333,7 @@ export default function DocReviewStudio() {
                  <h4 className="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-widest"><FileText size={16}/> Nội dung gốc</h4>
                  <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu chưa lưu?")) return; setStep('upload'); setErrors([]); setSelectedFile(null); setSelectedFileName(''); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 hover:text-white transition-colors">Tải văn bản khác</button>
               </div>
-              <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif custom-scrollbar" id="document-content-pane">
+              <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif custom-scrollbar relative">
                  {renderDocumentText()}
               </div>
            </div>
@@ -336,10 +349,12 @@ export default function DocReviewStudio() {
                  {errors.map(err => err.status === 'pending' && (
                     <motion.div 
                         key={err.id} 
-                        className={`bg-[#0f172a] p-4 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand' : 'border-[#1e293b]'}`} 
+                        id={`error-card-${err.id}`} // Bổ sung ID để cuộn đồng bộ từ văn bản
+                        className={`bg-[#0f172a] p-4 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'border-[#1e293b]'}`} 
                         onClick={() => {
                             setActiveErrorId(err.id);
-                            const errorElement = document.querySelector(`span[data-id="${err.id}"]`);
+                            // CUỘN ĐỒNG BỘ: Bấm bên phải -> Cuộn bên trái
+                            const errorElement = document.getElementById(`text-error-${err.id}`);
                             if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }}
                     >
