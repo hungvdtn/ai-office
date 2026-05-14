@@ -1,16 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, FileWarning } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, FileWarning, Copy, Type, Settings2, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// ============================================================================
-// KHAI BÁO API KEY CỦA GOOGLE GEMINI
-// ============================================================================
+// LẤY API KEY TỪ BIẾN MÔI TRƯỜNG MÁY CHỦ (KHÔNG ĐIỀN TRỰC TIẾP)
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-// Thêm dòng này để test xem web đã nhận Key từ Vercel chưa:
-console.log("Trạng thái nạp API Key:", GEMINI_API_KEY ? "ĐÃ NẠP THÀNH CÔNG" : "THẤT BẠI - KEY RỖNG"); 
 
 interface TextError {
   id: string;
@@ -26,277 +21,248 @@ export default function DocReviewStudio() {
   const [documentText, setDocumentText] = useState<string>('');
   const [errors, setErrors] = useState<TextError[]>([]);
   const [activeErrorId, setActiveErrorId] = useState<string | null>(null);
+  
+  const [inputType, setInputType] = useState<'upload' | 'paste'>('upload');
+  const [docType, setDocType] = useState<'hanh-chinh' | 'qppl'>('hanh-chinh');
+  const [pasteText, setPasteText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. ĐỌC FILE WORD BẰNG MAMMOTH
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Giao tiếp với App.tsx để hiển thị cảnh báo khi rời trang
+  useEffect(() => {
+    const hasUnsavedChanges = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending'));
+    (window as any).isDocReviewing = hasUnsavedChanges;
+    return () => { (window as any).isDocReviewing = false; };
+  }, [step, errors]);
 
+  // Cảnh báo khi người dùng đóng/tải lại trình duyệt
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if ((window as any).isDocReviewing) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // ============================================================================
+  // ĐỘNG CƠ RÀ SOÁT NHANH (OFFLINE REGEX ENGINE) - DỰA TRÊN CÁC VĂN BẢN BẠN CUNG CẤP
+  // ============================================================================
+  const runOfflineReview = (text: string) => {
+    setStep('analyzing');
+    
+    setTimeout(() => {
+      let foundErrors: TextError[] = [];
+      let errCount = 0;
+
+      // 1. QUY TẮC CHÍNH TẢ (Theo QĐ 1989/QĐ-BGDĐT)
+      const orthographyRules = [
+        { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
+        { regex: /lý luận/g, original: "lý luận", suggestion: "lí luận", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu viết là 'i'." },
+        { regex: /mỹ thuật/g, original: "mỹ thuật", suggestion: "mĩ thuật", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu viết là 'i'." },
+        { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." }
+      ];
+
+      // 2. QUY TẮC THỂ THỨC HÀNH CHÍNH (Nghị định 30/2020/NĐ-CP)
+      const administrativeRules = [
+        { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30/2020: Chữ 'Hòa' phải đặt dấu thanh ở chữ 'o'." },
+        { regex: /Độc lập \- Tự do \- Hạnh Phúc/g, original: "Độc lập - Tự do - Hạnh Phúc", suggestion: "Độc lập - Tự do - Hạnh phúc", desc: "NĐ 30/2020: Chữ 'phúc' trong tiêu ngữ phải viết thường." },
+        { regex: /số: /gi, original: "số: ", suggestion: "Số: ", desc: "NĐ 30/2020: Từ 'Số' phải viết hoa chữ cái đầu." }
+      ];
+
+      // 3. QUY TẮC VĂN BẢN QUY PHẠM PHÁP LUẬT (Dự thảo NĐ 78/2025/NĐ-CP)
+      const qpplRules = [
+        { regex: /Căn cứ luật/gi, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "QPPL: Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." },
+        { regex: /Điều (\d+)\.? /g, isPattern: true, validate: (m: string) => !m.includes('. '), desc: "QPPL: Sau chữ 'Điều' và số thứ tự phải có dấu chấm và khoảng trắng." }
+      ];
+
+      const activeRules = [...orthographyRules, ...(docType === 'hanh-chinh' ? administrativeRules : qpplRules)];
+
+      activeRules.forEach(rule => {
+        let match;
+        const regex = new RegExp(rule.regex);
+        while ((match = regex.exec(text)) !== null) {
+          foundErrors.push({
+            id: `off_${errCount++}`,
+            original: match[0],
+            suggestion: rule.isPattern ? match[0].replace(match[1], match[1] + '.') : rule.suggestion,
+            type: 'the-thuc',
+            description: rule.desc,
+            status: 'pending'
+          });
+        }
+      });
+
+      setErrors(foundErrors);
+      setStep('review');
+    }, 800);
+  };
+
+  // ============================================================================
+  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI - KẾT NỐI BIẾN MÔI TRƯỜNG)
+  // ============================================================================
+  const runAIReview = async (text: string) => {
+    if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key trên máy chủ!");
     setStep('analyzing');
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer });
-      const rawText = result.value;
-      setDocumentText(rawText);
-
-      // Gọi AI phân tích
-      await analyzeTextWithAI(rawText);
-    } catch (error) {
-      console.error("Lỗi đọc file:", error);
-      alert("Không thể đọc file Word này. Vui lòng đảm bảo định dạng .docx hợp lệ.");
-      setStep('upload');
-    }
-  };
-
-  // 2. GỬI TEXT CHO GEMINI AI ĐỂ TÌM LỖI
-  const analyzeTextWithAI = async (text: string) => {
-    try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = genAI.getGenerativeModel({ 
+          model: "gemini-1.5-flash",
+          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 } 
+      });
 
-      const prompt = `Bạn là một chuyên gia ngôn ngữ và hành chính công của Việt Nam. 
-      Hãy rà soát kỹ văn bản sau để tìm các lỗi: 
-      1. Sai chính tả tiếng Việt.
-      2. Sai ngữ pháp.
-      3. Sai thể thức văn bản (như cách viết hoa "CỘNG HÒA", "Kính gửi", các danh từ riêng...).
+      const prompt = `Bạn là chuyên gia rà soát văn bản hành chính Việt Nam. 
+      Loại văn bản: ${docType === 'hanh-chinh' ? 'Hành chính (NĐ 30/2020)' : 'Quy phạm Pháp luật'}.
+      Hãy tìm TẤT CẢ các lỗi chính tả, diễn đạt, và thể thức. Trả về MẢNG JSON duy nhất:
+      { "id": "string", "original": "từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta/the-thuc/ngu-phap", "description": "giải thích" }
       
-      YÊU CẦU BẮT BUỘC VỀ ĐẦU RA:
-      - Trả về kết quả là một MẢNG JSON (JSON Array).
-      - CHỈ xuất ra những lỗi nghiêm trọng nhất để tránh quá tải dữ liệu.
-      - Tuyệt đối không dùng dấu ngoặc kép (") hoặc dấu xuống dòng bên trong giá trị của các trường original, suggestion, description.
-      Cấu trúc mỗi object trong mảng phải là:
-      {
-        "id": "chuỗi ngẫu nhiên duy nhất",
-        "original": "chính xác từ hoặc cụm từ bị sai được trích xuất từ văn bản gốc",
-        "suggestion": "từ hoặc cụm từ đúng",
-        "type": "chinh-ta" (hoặc "the-thuc", "ngu-phap"),
-        "description": "Lý do sai và quy tắc đúng"
-      }
-
-      Văn bản cần rà soát:
-      """
-      ${text}
-      """`;
+      Văn bản: ${text.substring(0, 15000)}`; // Giới hạn độ dài để tránh lỗi token
 
       const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let aiText = response.text();
-      
-      // Làm sạch chuỗi trả về để ép kiểu JSON
-      aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      const parsedErrors: TextError[] = JSON.parse(aiText);
-      const formattedErrors = parsedErrors.map(err => ({ ...err, status: 'pending' as const }));
-      
-      setErrors(formattedErrors);
+      const aiText = result.response.text();
+      setErrors(JSON.parse(aiText).map((err: any) => ({ ...err, status: 'pending' })));
       setStep('review');
     } catch (error) {
-      console.error("Lỗi AI:", error);
-      alert("Quá trình kết nối AI thất bại. Vui lòng kiểm tra lại API Key hoặc kết nối mạng.");
+      alert("AI gặp sự cố khi phân tích. Hãy sử dụng Rà soát nhanh.");
       setStep('upload');
     }
   };
 
-  // 3. XỬ LÝ HÀNH ĐỘNG CHẤP NHẬN SỬA HOẶC BỎ QUA
-  const handleAction = (id: string, action: 'fixed' | 'ignored') => {
-    setErrors(errors.map(err => err.id === id ? { ...err, status: action } : err));
-    setActiveErrorId(null);
-  };
-
-  // 4. XUẤT FILE WORD KẾT QUẢ ĐÃ SỬA LỖI
-  const exportToWord = () => {
-    let finalText = documentText;
-    
-    // Thay thế các từ lỗi bằng từ đúng nếu đã bấm "Chấp nhận sửa"
-    errors.forEach(err => {
-      if (err.status === 'fixed') {
-        const regex = new RegExp(err.original, 'g');
-        finalText = finalText.replace(regex, err.suggestion);
-      }
-    });
-
-    // Ép Text thành định dạng MS Word HTML đơn giản
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
-    const footer = "</body></html>";
-    const sourceHTML = header + finalText.replace(/\n/g, '<br/>') + footer;
-    
-    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'VanBan_DaRaSoat.doc';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const getStatusBadge = (type: string) => {
-    switch (type) {
-      case 'chinh-ta': return <span className="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-widest">Chính tả</span>;
-      case 'the-thuc': return <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-widest">Thể thức</span>;
-      default: return <span className="bg-sky-500/20 text-sky-400 border border-sky-500/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-widest">Ngữ pháp</span>;
+  const startReview = async (mode: 'offline' | 'ai') => {
+    let content = inputType === 'paste' ? pasteText : "";
+    if (inputType === 'upload') {
+      const file = fileInputRef.current?.files?.[0];
+      if (!file) return alert("Vui lòng chọn file!");
+      const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+      content = result.value;
     }
+    if (!content.trim()) return alert("Nội dung trống!");
+    setDocumentText(content);
+    mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
   };
 
-  const renderDocumentText = () => {
-    let highlightedText = documentText;
-    
-    // Bôi màu các lỗi đang chờ xử lý và lỗi đã sửa
-    errors.forEach(err => {
-      if (err.status === 'pending') {
-        const span = `<span class="bg-rose-500/30 text-rose-300 border-b-2 border-rose-500 font-semibold px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">${err.original}</span>`;
-        // Replace lười (lưu ý: RegExp đơn giản này có thể thay thế cả từ nằm trong chữ khác nếu từ quá ngắn, nhưng phù hợp cho ứng dụng thực tế mức độ vừa)
-        highlightedText = highlightedText.split(err.original).join(span);
-      } else if (err.status === 'fixed') {
-        const span = `<span class="bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded transition-all">${err.suggestion}</span>`;
-        highlightedText = highlightedText.split(err.original).join(span);
-      }
-    });
-
-    return <div dangerouslySetInnerHTML={{ __html: highlightedText.replace(/\n/g, '<br/>') }} 
-                onClick={(e) => {
-                  const target = e.target as HTMLElement;
-                  if (target.tagName === 'SPAN' && target.dataset.id) {
-                    setActiveErrorId(target.dataset.id);
-                  }
-                }}
-           />;
+  const getFinalText = () => {
+    let finalText = documentText;
+    errors.forEach(err => { if (err.status === 'fixed') finalText = finalText.split(err.original).join(err.suggestion); });
+    return finalText;
   };
 
-  const pendingCount = errors.filter(e => e.status === 'pending').length;
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy văn bản đã sửa!"));
+  };
+
+  const exportToWord = () => {
+    const sourceHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${getFinalText().replace(/\n/g, '<br/>')}</body></html>`;
+    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `VanBan_DaSua.doc`;
+    link.click();
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 w-full pb-10 font-sans h-full flex flex-col">
+    <div className="space-y-6 w-full pb-10 font-sans h-full flex flex-col">
       <div className="flex items-center gap-3 border-b border-[#1e293b] pb-4">
-         <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center text-brand shadow-lg">
-            <FileWarning size={24} />
-         </div>
-         <div>
-            <h2 className="text-xl font-bold text-white uppercase tracking-widest font-sans">Rà soát Văn bản AI</h2>
-            <p className="text-xs text-slate-400 font-sans mt-1">Soát lỗi chính tả & Thể thức hành chính bằng Trí tuệ Nhân tạo Gemini</p>
-         </div>
+         <FileWarning size={24} className="text-brand" />
+         <h2 className="text-xl font-bold text-white uppercase tracking-widest">Rà soát Văn bản</h2>
       </div>
 
       {step === 'upload' && (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-           <input type="file" accept=".docx" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-           <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-10 max-w-xl w-full text-center shadow-2xl hover:border-brand/50 transition-all cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-              <div className="w-24 h-24 bg-[#1e293b] rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:bg-brand/20 transition-all">
-                 <UploadCloud size={40} className="text-slate-400 group-hover:text-brand" />
+           <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-8 max-w-4xl w-full shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                 <h3 className="text-lg font-bold text-sky-400 flex items-center gap-2 uppercase"><Settings2 size={18}/> 1. Đầu vào</h3>
+                 <div className="flex bg-[#1e293b]/50 p-1 rounded-lg">
+                    <button onClick={() => setInputType('upload')} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'upload' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Tải file Word</button>
+                    <button onClick={() => setInputType('paste')} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'paste' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Dán văn bản</button>
+                 </div>
+                 {inputType === 'upload' ? (
+                    <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center cursor-pointer bg-[#05070a] hover:border-sky-500 transition-colors">
+                       <input type="file" accept=".docx" ref={fileInputRef} className="hidden" />
+                       <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
+                       <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
+                    </div>
+                 ) : (
+                    <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder="Dán nội dung vào đây..." className="w-full h-40 bg-[#05070a] border border-slate-600 rounded-xl p-4 text-slate-200 text-sm focus:outline-none" />
+                 )}
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2 font-sans">Tải lên file Word (.docx)</h3>
-              <p className="text-slate-400 text-sm mb-8 font-sans">Click hoặc kéo thả file văn bản cần rà soát vào đây. Hệ thống sẽ tự động quét lỗi toàn diện bằng công nghệ AI của Google.</p>
-              <button className="bg-brand text-bg-dark font-bold px-8 py-3 rounded-xl hover:scale-105 transition-transform shadow-[0_0_20px_rgba(56,189,248,0.3)]">
-                 CHỌN FILE ĐỂ BẮT ĐẦU
-              </button>
+              <div className="space-y-4">
+                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Thiết lập</h3>
+                 <div className="space-y-2">
+                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${docType === 'hanh-chinh' ? 'border-emerald-500 bg-emerald-500/10' : 'border-[#1e293b]'}`}>
+                       <input type="radio" checked={docType === 'hanh-chinh'} onChange={() => setDocType('hanh-chinh')} className="hidden" />
+                       <span className="text-xs font-bold text-slate-300">Văn bản Hành chính (NĐ 30)</span>
+                    </label>
+                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${docType === 'qppl' ? 'border-emerald-500 bg-emerald-500/10' : 'border-[#1e293b]'}`}>
+                       <input type="radio" checked={docType === 'qppl'} onChange={() => setDocType('qppl')} className="hidden" />
+                       <span className="text-xs font-bold text-slate-300">Dự thảo VB Quy phạm Pháp luật</span>
+                    </label>
+                 </div>
+                 <div className="grid grid-cols-2 gap-2 pt-2">
+                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition flex flex-col items-center gap-1">
+                       <Type size={20} className="text-amber-400" />
+                       <span className="text-[10px] font-black text-white">RÀ SOÁT NHANH</span>
+                    </button>
+                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-3 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center gap-1">
+                       <RefreshCw size={20} className="text-sky-400" />
+                       <span className="text-[10px] font-black text-white">RÀ SOÁT KỸ (AI)</span>
+                    </button>
+                 </div>
+              </div>
            </div>
         </div>
       )}
 
       {step === 'analyzing' && (
-        <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] space-y-4">
            <RefreshCw size={50} className="text-brand animate-spin" />
-           <h3 className="text-xl font-bold text-white font-sans">AI đang đọc và phân tích văn bản...</h3>
-           <p className="text-slate-400 font-sans animate-pulse">Đang rà soát ngôn từ và đối chiếu quy chuẩn Hành chính</p>
-           <div className="w-64 h-2 bg-[#1e293b] rounded-full overflow-hidden">
-              <div className="h-full bg-brand w-1/2 animate-[progress_1s_ease-in-out_infinite]" />
-           </div>
+           <h3 className="text-xl font-bold text-white uppercase tracking-widest">Đang rà soát văn bản...</h3>
         </div>
       )}
 
       {step === 'review' && (
         <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[70vh]">
-           {/* CỘT TRÁI */}
            <div className="flex-[3] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col overflow-hidden shadow-xl">
               <div className="bg-[#1e293b]/50 p-4 border-b border-[#1e293b] flex justify-between items-center">
-                 <h4 className="font-bold text-slate-200 flex items-center gap-2 text-sm uppercase tracking-widest"><FileText size={18} className="text-sky-400"/> Nội dung văn bản gốc</h4>
-                 <button onClick={() => {setStep('upload'); setErrors([]); setDocumentText('');}} className="text-xs font-semibold text-slate-400 hover:text-white transition-colors bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                    Tải file khác
-                 </button>
+                 <h4 className="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-widest"><FileText size={16}/> Nội dung gốc</h4>
+                 <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu?")) return; setStep('upload'); setErrors([]); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Tải file khác</button>
               </div>
               <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif">
-                 {renderDocumentText()}
+                 <div dangerouslySetInnerHTML={{ __html: documentText.split('\n').join('<br/>') }} />
               </div>
            </div>
 
-           {/* CỘT PHẢI */}
            <div className="flex-[2] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col shadow-xl overflow-hidden h-[70vh] lg:h-auto">
               <div className="bg-[#1e293b]/50 p-5 border-b border-[#1e293b]">
-                 <h4 className="font-bold text-slate-200 uppercase tracking-widest text-sm flex items-center justify-between">
-                    <span>Bảng báo lỗi tự động</span>
-                    {pendingCount > 0 ? (
-                       <span className="bg-rose-500 text-white px-2 py-0.5 rounded-full text-xs animate-pulse">{pendingCount} lỗi cần xử lý</span>
-                    ) : (
-                       <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-full text-xs">Đã sạch lỗi</span>
-                    )}
+                 <h4 className="font-bold text-slate-200 uppercase tracking-widest text-xs flex items-center justify-between">
+                    <span>Danh sách lỗi</span>
+                    <span className="bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px]">{errors.filter(e=>e.status==='pending').length} lỗi</span>
                  </h4>
               </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#05070a]">
-                 <AnimatePresence>
-                    {errors.map((err) => (
-                       err.status === 'pending' && (
-                          <motion.div 
-                             key={err.id}
-                             initial={{ opacity: 0, x: 20 }}
-                             animate={{ opacity: 1, x: 0 }}
-                             exit={{ opacity: 0, scale: 0.9 }}
-                             className={`bg-[#0f172a] p-5 rounded-xl border transition-all cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_20px_rgba(56,189,248,0.2)]' : 'border-[#1e293b] hover:border-slate-600'}`}
-                             onClick={() => setActiveErrorId(err.id)}
-                          >
-                             <div className="flex justify-between items-start mb-3">
-                                {getStatusBadge(err.type)}
-                                <AlertCircle size={16} className="text-rose-400" />
-                             </div>
-                             
-                             <div className="mb-4">
-                                <p className="text-sm text-slate-400 mb-1">Từ bị lỗi:</p>
-                                <div className="text-lg font-bold text-rose-400 line-through decoration-rose-500/50">{err.original}</div>
-                             </div>
-
-                             <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                                <p className="text-xs text-emerald-500/70 font-bold uppercase tracking-widest mb-1">AI Đề xuất sửa thành:</p>
-                                <div className="text-lg font-bold text-emerald-400 flex items-center gap-2">
-                                   <Check size={18} /> {err.suggestion}
-                                </div>
-                             </div>
-
-                             <p className="text-sm text-slate-400 mb-5 italic border-l-2 border-[#1e293b] pl-3 py-1">
-                                {err.description}
-                             </p>
-
-                             <div className="flex gap-2">
-                                <button onClick={(e) => { e.stopPropagation(); handleAction(err.id, 'fixed'); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition">
-                                   <Check size={16} /> CHẤP NHẬN SỬA
-                                </button>
-                                <button onClick={(e) => { e.stopPropagation(); handleAction(err.id, 'ignored'); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg font-bold transition">
-                                   BỎ QUA
-                                </button>
-                             </div>
-                          </motion.div>
-                       )
-                    ))}
-                 </AnimatePresence>
-                 
-                 {pendingCount === 0 && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center text-center p-8">
-                       <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
-                          <Check size={32} className="text-emerald-400" />
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#05070a] custom-scrollbar">
+                 {errors.map(err => err.status === 'pending' && (
+                    <motion.div key={err.id} className={`bg-[#0f172a] p-4 rounded-xl border ${activeErrorId === err.id ? 'border-brand' : 'border-[#1e293b]'}`} onClick={() => setActiveErrorId(err.id)}>
+                       <div className="flex justify-between mb-2">
+                          <span className="text-[10px] font-bold text-rose-400 uppercase">{err.type}</span>
+                          <AlertCircle size={14} className="text-rose-400" />
                        </div>
-                       <h4 className="text-emerald-400 font-bold text-lg mb-2">Hoàn tất rà soát!</h4>
-                       <p className="text-slate-400 text-sm">Văn bản đã được chỉnh sửa hoàn thiện. Khuyến nghị đối chiếu các vị trí lỗi và sửa trực tiếp trên file Word gốc để giữ nguyên định dạng Bảng biểu, Căn lề chuẩn xác nhất.</p>
+                       <p className="text-sm text-rose-300 line-through mb-1">{err.original}</p>
+                       <p className="text-sm text-emerald-400 font-bold mb-2">➔ {err.suggestion}</p>
+                       <p className="text-[11px] text-slate-500 italic mb-4">{err.description}</p>
+                       <div className="flex gap-2">
+                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e))} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-bold text-[10px]">SỬA LỖI</button>
+                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e))} className="bg-slate-800 text-slate-400 px-4 py-2 rounded-lg font-bold text-[10px]">BỎ QUA</button>
+                       </div>
                     </motion.div>
+                 ))}
+                 {errors.length > 0 && errors.every(e => e.status !== 'pending') && (
+                    <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">HOÀN TẤT!</p></div>
                  )}
               </div>
-
-              <div className="p-4 border-t border-[#1e293b] bg-[#1e293b]/30">
-                 <button 
-                    onClick={exportToWord}
-                    className={`w-full py-4 rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${pendingCount === 0 ? 'bg-brand text-bg-dark hover:scale-[1.02] shadow-[0_0_20px_rgba(56,189,248,0.4)]' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
-                 >
-                    <Download size={20} /> Tải file Text đã sửa lỗi (.doc)
-                 </button>
+              <div className="p-4 border-t border-[#1e293b] grid grid-cols-2 gap-2">
+                 <button onClick={copyToClipboard} className="bg-slate-800 text-slate-300 py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2"><Copy size={14}/> COPY TẤT CẢ</button>
+                 <button onClick={exportToWord} className="bg-brand text-bg-dark py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2"><Download size={14}/> TẢI FILE WORD</button>
               </div>
            </div>
         </div>
