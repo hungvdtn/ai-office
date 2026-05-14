@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, FileWarning, Copy, Type, Settings2, ShieldCheck } from 'lucide-react';
+import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, FileWarning, Copy, Type, Settings2, ShieldCheck, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -25,6 +25,9 @@ export default function DocReviewStudio() {
   const [inputType, setInputType] = useState<'upload' | 'paste'>('upload');
   const [docType, setDocType] = useState<'hanh-chinh' | 'qppl'>('hanh-chinh');
   const [pasteText, setPasteText] = useState('');
+  
+  // Trạng thái lưu tên file để hiển thị cho người dùng biết
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Giao tiếp với App.tsx để hiển thị cảnh báo khi rời trang
@@ -46,8 +49,21 @@ export default function DocReviewStudio() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
+  // Bắt sự kiện chọn file để hiển thị tên file
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+       setSelectedFileName(file.name);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFileName('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT NHANH (OFFLINE REGEX ENGINE) - DỰA TRÊN CÁC VĂN BẢN BẠN CUNG CẤP
+  // ĐỘNG CƠ RÀ SOÁT NHANH (OFFLINE REGEX ENGINE)
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing');
@@ -56,25 +72,18 @@ export default function DocReviewStudio() {
       let foundErrors: TextError[] = [];
       let errCount = 0;
 
-      // 1. QUY TẮC CHÍNH TẢ (Theo QĐ 1989/QĐ-BGDĐT)
       const orthographyRules = [
         { regex: /kỷ niệm/g, original: "kỷ niệm", suggestion: "kỉ niệm", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu không có âm đệm viết là 'i'." },
-        { regex: /lý luận/g, original: "lý luận", suggestion: "lí luận", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu viết là 'i'." },
-        { regex: /mỹ thuật/g, original: "mỹ thuật", suggestion: "mĩ thuật", desc: "QĐ 1989/QĐ-BGDĐT: Âm 'i' sau phụ âm đầu viết là 'i'." },
         { regex: /ban nghành/gi, original: "ban nghành", suggestion: "ban ngành", desc: "Lỗi chính tả: 'ngành' không có chữ 'h'." }
       ];
 
-      // 2. QUY TẮC THỂ THỨC HÀNH CHÍNH (Nghị định 30/2020/NĐ-CP)
       const administrativeRules = [
         { regex: /CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM/g, original: "CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM", suggestion: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", desc: "NĐ 30/2020: Chữ 'Hòa' phải đặt dấu thanh ở chữ 'o'." },
-        { regex: /Độc lập \- Tự do \- Hạnh Phúc/g, original: "Độc lập - Tự do - Hạnh Phúc", suggestion: "Độc lập - Tự do - Hạnh phúc", desc: "NĐ 30/2020: Chữ 'phúc' trong tiêu ngữ phải viết thường." },
-        { regex: /số: /gi, original: "số: ", suggestion: "Số: ", desc: "NĐ 30/2020: Từ 'Số' phải viết hoa chữ cái đầu." }
+        { regex: /Độc lập \- Tự do \- Hạnh Phúc/g, original: "Độc lập - Tự do - Hạnh Phúc", suggestion: "Độc lập - Tự do - Hạnh phúc", desc: "NĐ 30/2020: Chữ 'phúc' trong tiêu ngữ phải viết thường." }
       ];
 
-      // 3. QUY TẮC VĂN BẢN QUY PHẠM PHÁP LUẬT (Dự thảo NĐ 78/2025/NĐ-CP)
       const qpplRules = [
-        { regex: /Căn cứ luật/gi, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "QPPL: Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." },
-        { regex: /Điều (\d+)\.? /g, isPattern: true, validate: (m: string) => !m.includes('. '), desc: "QPPL: Sau chữ 'Điều' và số thứ tự phải có dấu chấm và khoảng trắng." }
+        { regex: /Căn cứ luật/gi, original: "Căn cứ luật", suggestion: "Căn cứ Luật", desc: "QPPL: Tên loại văn bản làm căn cứ phải viết hoa chữ cái đầu." }
       ];
 
       const activeRules = [...orthographyRules, ...(docType === 'hanh-chinh' ? administrativeRules : qpplRules)];
@@ -86,7 +95,7 @@ export default function DocReviewStudio() {
           foundErrors.push({
             id: `off_${errCount++}`,
             original: match[0],
-            suggestion: rule.isPattern ? match[0].replace(match[1], match[1] + '.') : rule.suggestion,
+            suggestion: rule.suggestion,
             type: 'the-thuc',
             description: rule.desc,
             status: 'pending'
@@ -100,7 +109,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI - KẾT NỐI BIẾN MÔI TRƯỜNG)
+  // ĐỘNG CƠ RÀ SOÁT KỸ (AI GEMINI) - ĐÃ BỔ SUNG TRÌNH DỌN RÁC JSON (JSON CLEANER)
   // ============================================================================
   const runAIReview = async (text: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key trên máy chủ!");
@@ -108,23 +117,51 @@ export default function DocReviewStudio() {
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ 
-          model: "gemini-1.5-flash",
+          model: "gemini-2.5-flash",
           generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 } 
       });
 
       const prompt = `Bạn là chuyên gia rà soát văn bản hành chính Việt Nam. 
       Loại văn bản: ${docType === 'hanh-chinh' ? 'Hành chính (NĐ 30/2020)' : 'Quy phạm Pháp luật'}.
-      Hãy tìm TẤT CẢ các lỗi chính tả, diễn đạt, và thể thức. Trả về MẢNG JSON duy nhất:
-      { "id": "string", "original": "từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta/the-thuc/ngu-phap", "description": "giải thích" }
+      Hãy tìm TẤT CẢ các lỗi chính tả, diễn đạt, và thể thức.
       
-      Văn bản: ${text.substring(0, 15000)}`; // Giới hạn độ dài để tránh lỗi token
+      YÊU CẦU ĐẦU RA BẮT BUỘC (JSON OBJECT):
+      {
+        "errors": [
+          {
+            "original": "từ bị sai",
+            "suggestion": "từ đúng",
+            "type": "chinh-ta",
+            "description": "giải thích"
+          }
+        ]
+      }
+      TUYỆT ĐỐI không để lại dấu phẩy thừa ở cuối mảng hay cuối object.
+      
+      Văn bản: ${text.substring(0, 15000)}`;
 
       const result = await model.generateContent(prompt);
       const aiText = result.response.text();
-      setErrors(JSON.parse(aiText).map((err: any) => ({ ...err, status: 'pending' })));
+      
+      let parsedData;
+      try {
+        // Thử parse JSON chuẩn
+        parsedData = JSON.parse(aiText);
+      } catch (err) {
+        console.warn("JSON bị gãy, đang thử dọn rác (Cleaner)...", err);
+        // THUẬT TOÁN DỌN RÁC: Xóa dấu phẩy thừa ở cuối (Trailing commas) - Thủ phạm gây lỗi 90%
+        const cleanedText = aiText.replace(/,\s*([\]}])/g, '$1');
+        parsedData = JSON.parse(cleanedText);
+      }
+
+      // Trích xuất mảng errors từ object trả về
+      const errorList = parsedData.errors || parsedData || [];
+      
+      setErrors(errorList.map((err: any, idx: number) => ({ ...err, id: err.id || `ai_${idx}`, status: 'pending' })));
       setStep('review');
     } catch (error) {
-      alert("AI gặp sự cố khi phân tích. Hãy sử dụng Rà soát nhanh.");
+      console.error("Lỗi AI hoặc JSON parse:", error);
+      alert("AI gặp sự cố khi đóng gói kết quả (lỗi cấu trúc dữ liệu). Hãy thử tính năng Rà soát nhanh hoặc chia nhỏ văn bản.");
       setStep('upload');
     }
   };
@@ -133,11 +170,11 @@ export default function DocReviewStudio() {
     let content = inputType === 'paste' ? pasteText : "";
     if (inputType === 'upload') {
       const file = fileInputRef.current?.files?.[0];
-      if (!file) return alert("Vui lòng chọn file!");
+      if (!file) return alert("Vui lòng chọn hoặc tải file Word (.docx) lên trước!");
       const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
       content = result.value;
     }
-    if (!content.trim()) return alert("Nội dung trống!");
+    if (!content.trim()) return alert("Nội dung văn bản trống!");
     setDocumentText(content);
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
   };
@@ -149,7 +186,7 @@ export default function DocReviewStudio() {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy văn bản đã sửa!"));
+    navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy văn bản đã sửa vào khay nhớ tạm!"));
   };
 
   const exportToWord = () => {
@@ -157,7 +194,7 @@ export default function DocReviewStudio() {
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `VanBan_DaSua.doc`;
+    link.download = `VanBan_DaSua_${docType}.doc`;
     link.click();
   };
 
@@ -177,14 +214,26 @@ export default function DocReviewStudio() {
                     <button onClick={() => setInputType('upload')} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'upload' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Tải file Word</button>
                     <button onClick={() => setInputType('paste')} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'paste' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Dán văn bản</button>
                  </div>
+                 
                  {inputType === 'upload' ? (
-                    <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center cursor-pointer bg-[#05070a] hover:border-sky-500 transition-colors">
-                       <input type="file" accept=".docx" ref={fileInputRef} className="hidden" />
-                       <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
-                       <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
-                    </div>
+                    selectedFileName ? (
+                        <div className="border-2 border-sky-500 rounded-xl p-8 text-center bg-sky-900/20 relative">
+                            <FileText size={40} className="mx-auto text-sky-400 mb-3" />
+                            <p className="text-sm text-white font-bold mb-1 truncate px-4">{selectedFileName}</p>
+                            <p className="text-[10px] text-emerald-400 uppercase font-bold mb-4">Đã tải file thành công</p>
+                            <button onClick={removeSelectedFile} className="flex items-center justify-center gap-2 mx-auto text-xs text-rose-400 hover:text-rose-300 font-bold bg-rose-500/10 px-4 py-2 rounded-lg transition-colors">
+                               <Trash2 size={14} /> XÓA FILE NÀY
+                            </button>
+                        </div>
+                    ) : (
+                        <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center cursor-pointer bg-[#05070a] hover:border-sky-500 transition-colors">
+                           <input type="file" accept=".docx" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
+                           <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
+                           <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
+                        </div>
+                    )
                  ) : (
-                    <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder="Dán nội dung vào đây..." className="w-full h-40 bg-[#05070a] border border-slate-600 rounded-xl p-4 text-slate-200 text-sm focus:outline-none" />
+                    <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder="Dán nội dung vào đây..." className="w-full h-40 bg-[#05070a] border border-slate-600 rounded-xl p-4 text-slate-200 text-sm focus:outline-none custom-scrollbar" />
                  )}
               </div>
               <div className="space-y-4">
@@ -200,11 +249,11 @@ export default function DocReviewStudio() {
                     </label>
                  </div>
                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition flex flex-col items-center gap-1">
+                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-1">
                        <Type size={20} className="text-amber-400" />
                        <span className="text-[10px] font-black text-white">RÀ SOÁT NHANH</span>
                     </button>
-                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-3 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center gap-1">
+                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-3 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center justify-center gap-1">
                        <RefreshCw size={20} className="text-sky-400" />
                        <span className="text-[10px] font-black text-white">RÀ SOÁT KỸ (AI)</span>
                     </button>
@@ -226,9 +275,9 @@ export default function DocReviewStudio() {
            <div className="flex-[3] bg-[#0f172a] border border-[#1e293b] rounded-2xl flex flex-col overflow-hidden shadow-xl">
               <div className="bg-[#1e293b]/50 p-4 border-b border-[#1e293b] flex justify-between items-center">
                  <h4 className="font-bold text-slate-200 flex items-center gap-2 text-xs uppercase tracking-widest"><FileText size={16}/> Nội dung gốc</h4>
-                 <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu?")) return; setStep('upload'); setErrors([]); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Tải file khác</button>
+                 <button onClick={() => { if(errors.some(e=>e.status==='pending') && !window.confirm("Rời đi sẽ mất dữ liệu chưa lưu?")) return; setStep('upload'); setErrors([]); setSelectedFileName(''); }} className="text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 hover:text-white transition-colors">Tải văn bản khác</button>
               </div>
-              <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif">
+              <div className="p-8 overflow-y-auto flex-1 bg-[#0a0f18] text-slate-200 text-lg leading-loose font-serif custom-scrollbar">
                  <div dangerouslySetInnerHTML={{ __html: documentText.split('\n').join('<br/>') }} />
               </div>
            </div>
@@ -251,18 +300,21 @@ export default function DocReviewStudio() {
                        <p className="text-sm text-emerald-400 font-bold mb-2">➔ {err.suggestion}</p>
                        <p className="text-[11px] text-slate-500 italic mb-4">{err.description}</p>
                        <div className="flex gap-2">
-                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e))} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-bold text-[10px]">SỬA LỖI</button>
-                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e))} className="bg-slate-800 text-slate-400 px-4 py-2 rounded-lg font-bold text-[10px]">BỎ QUA</button>
+                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e))} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-[10px] transition-colors">SỬA LỖI</button>
+                          <button onClick={() => setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e))} className="bg-slate-800 hover:bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold text-[10px] transition-colors">BỎ QUA</button>
                        </div>
                     </motion.div>
                  ))}
                  {errors.length > 0 && errors.every(e => e.status !== 'pending') && (
                     <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">HOÀN TẤT!</p></div>
                  )}
+                 {errors.length === 0 && (
+                    <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">KHÔNG PHÁT HIỆN LỖI</p></div>
+                 )}
               </div>
-              <div className="p-4 border-t border-[#1e293b] grid grid-cols-2 gap-2">
-                 <button onClick={copyToClipboard} className="bg-slate-800 text-slate-300 py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2"><Copy size={14}/> COPY TẤT CẢ</button>
-                 <button onClick={exportToWord} className="bg-brand text-bg-dark py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2"><Download size={14}/> TẢI FILE WORD</button>
+              <div className="p-4 border-t border-[#1e293b] grid grid-cols-2 gap-2 bg-[#1e293b]/30">
+                 <button onClick={copyToClipboard} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2 transition-colors"><Copy size={14}/> COPY TẤT CẢ</button>
+                 <button onClick={exportToWord} className="bg-brand text-bg-dark py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-[0_0_15px_rgba(56,189,248,0.4)]"><Download size={14}/> TẢI FILE WORD</button>
               </div>
            </div>
         </div>
