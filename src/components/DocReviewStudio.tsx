@@ -4,21 +4,52 @@ import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// KẾT NỐI TỚI 2 FILE TỪ ĐIỂN JSON VỪA TẠO
-import hoaTuDien from '../data/hoa_tu_dien.json';
-import chinhTaTuDien from '../data/chinh_ta_tu_dien.json';
+// ============================================================================
+// BỘ TỪ ĐIỂN DỮ LIỆU (DATA DICTIONARY) - CẬP NHẬT TẠI ĐÂY
+// ============================================================================
+// Hướng dẫn: Bạn chỉ cần thêm các từ hay gõ sai vào mảng "wrong". Hệ thống sẽ tự bắt!
+
+const HOA_TU_DIEN = [
+  { right: "Quốc hội", wrong: ["quốc hội"] },
+  { right: "Chính phủ", wrong: ["chính phủ"] },
+  { right: "Thủ tướng Chính phủ", wrong: ["thủ tướng chính phủ", "thủ tướng chính phu"] },
+  { right: "Nhà nước", wrong: ["nhà nước"] },
+  { right: "Bộ Giáo dục và Đào tạo", wrong: ["bộ giáo dục và đào tạo"] },
+  { right: "Ủy ban nhân dân", wrong: ["ủy ban nhân dân", "uỷ ban nhân dân"] }
+];
+
+const CHINH_TA_TU_DIEN = [
+  // s/x
+  { right: "sản xuất", wrong: ["sản suất", "sản xuât"] },
+  { right: "xuất sắc", wrong: ["xuất xắc", "suất sắc", "suất xắc"] },
+  { right: "sắp xếp", wrong: ["xắp xếp", "sắp sếp", "xắp sếp"] },
+  { right: "xem xét", wrong: ["xem sét"] },
+  { right: "sát sao", wrong: ["xát xao", "sát xao", "xát sao"] },
+  // ch/tr
+  { right: "trung thực", wrong: ["chung thực"] },
+  { right: "trao đổi", wrong: ["chao đổi"] },
+  { right: "trân trọng", wrong: ["chân trọng"] },
+  { right: "trình độ", wrong: ["chình độ"] },
+  // l/n
+  { right: "năng lực", wrong: ["lăng lực"] },
+  { right: "lý luận", wrong: ["ný luận", "ní luận"] },
+  { right: "nỗ lực", wrong: ["lỗ lực", "nổ lực"] },
+  // Dấu thanh & Lỗi khác
+  { right: "nghìn", wrong: ["nghàn", "ngàn"] },
+  { right: "đánh giá", wrong: ["đanh giá", "đánh gia", "đanh gia"] },
+  { right: "phát triển", wrong: ["phat triển", "phát triên", "phat trien"] },
+  { right: "chính sách", wrong: ["chinh sách", "chính sach"] },
+  { right: "giáo dục", wrong: ["giá dục", "giao dục"] },
+  { right: "kinh tế", wrong: ["kinh tê", "kính tế"] },
+  { right: "nghiên cứu", wrong: ["ngiên cứu", "nghiên cưu"] }
+];
+
+// ============================================================================
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const API_MODEL_NAME = "gemini-2.5-flash"; 
 
-interface TextError {
-  id: string;
-  original: string;
-  suggestion: string;
-  type: 'chinh-ta' | 'the-thuc' | 'ngu-phap';
-  description: string;
-  status: 'pending' | 'fixed' | 'ignored';
-}
+interface TextError { id: string; original: string; suggestion: string; type: 'chinh-ta' | 'the-thuc' | 'ngu-phap'; description: string; status: 'pending' | 'fixed' | 'ignored'; }
 
 export default function DocReviewStudio() {
   const [step, setStep] = useState<'upload' | 'analyzing' | 'review'>('upload');
@@ -31,31 +62,13 @@ export default function DocReviewStudio() {
   const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-  useEffect(() => {
-    (window as any).isDocReviewing = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending'));
-    return () => { (window as any).isDocReviewing = false; };
-  }, [step, errors]);
+  useEffect(() => { (window as any).isDocReviewing = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending')); return () => { (window as any).isDocReviewing = false; }; }, [step, errors]);
+  useEffect(() => { const handleBeforeUnload = (e: BeforeUnloadEvent) => { if ((window as any).isDocReviewing) { e.preventDefault(); e.returnValue = ''; } }; window.addEventListener('beforeunload', handleBeforeUnload); return () => window.removeEventListener('beforeunload', handleBeforeUnload); }, []);
 
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if ((window as any).isDocReviewing) { e.preventDefault(); e.returnValue = ''; }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) { setSelectedFileName(file.name); setSelectedFile(file); }
-  };
-
-  const removeSelectedFile = () => {
-    setSelectedFileName(''); setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { setSelectedFileName(file.name); setSelectedFile(file); } };
+  const removeSelectedFile = () => { setSelectedFileName(''); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; };
 
   // ============================================================================
   // ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN
@@ -64,23 +77,18 @@ export default function DocReviewStudio() {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
-    const CHUNK_SIZE = 15000; 
-    const chunks: string[] = [];
-    let currentIndex = 0;
-
+    const CHUNK_SIZE = 15000; const chunks: string[] = []; let currentIndex = 0;
     while (currentIndex < fullText.length) {
         let nextIndex = currentIndex + CHUNK_SIZE;
         if (nextIndex < fullText.length) {
             let bestBreak = Math.max(fullText.lastIndexOf(' ', nextIndex), fullText.lastIndexOf('\n', nextIndex));
             if (bestBreak > currentIndex + (CHUNK_SIZE / 2)) nextIndex = bestBreak;
         }
-        chunks.push(fullText.substring(currentIndex, nextIndex));
-        currentIndex = nextIndex;
+        chunks.push(fullText.substring(currentIndex, nextIndex)); currentIndex = nextIndex;
     }
     
     setProgress({ current: 0, total: chunks.length });
-    let allErrors: TextError[] = [];
-    let isQuotaExceeded = false;
+    let allErrors: TextError[] = []; let isQuotaExceeded = false;
 
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -88,68 +96,54 @@ export default function DocReviewStudio() {
 
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
-          
           const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính.
-          TUYỆT ĐỐI BỎ QUA CÁC LỖI SAU (Không được báo lỗi):
+          TUYỆT ĐỐI BỎ QUA CÁC LỖI SAU:
           1. Lỗi thừa/thiếu khoảng trắng, dấu câu.
-          2. Từ viết hoa toàn bộ (như GDNN, TTg) hoặc tiếng Anh (Skill).
-          3. Không báo lỗi nếu từ đề xuất giống hệt từ gốc.
-          4. Không tự ý sửa "hóa", "hòa", "thủy" thành "hoá", "hoà", "thuỷ".
+          2. Từ viết hoa toàn bộ (như GDNN, TTg) hoặc tiếng Anh.
+          3. KHÔNG BÁO LỖI nếu từ đúng sẵn (Ví dụ: "tỉnh Cao Bằng" -> "tỉnh Cao Bằng").
 
           CHỈ BẮT 3 LOẠI LỖI:
           1. "chinh-ta": Sai chính tả nặng, thiếu dấu thanh làm từ vô nghĩa.
           2. "the-thuc": Viết hoa sai (Lưu ý: không viết hoa 'khoản', 'điểm' giữa câu).
           3. "ngu-phap": Lủng củng, dùng từ không chuẩn mực.
 
-          YÊU CẦU: Trả về MẢNG JSON hợp lệ.
-          [ { "original": "từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
-          
+          YÊU CẦU: Trả về MẢNG JSON hợp lệ. [ { "original": "từ sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
           ĐOẠN VĂN BẢN:
           ${chunks[i]}`;
 
           try {
               const result = await model.generateContent(prompt);
               let rawJson = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
-              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); 
-              if (!rawJson.endsWith(']')) rawJson += ']';
+              rawJson = rawJson.replace(/,\s*([\]}])/g, '$1'); if (!rawJson.endsWith(']')) rawJson += ']';
 
               const parsedData = JSON.parse(rawJson);
               let chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
               
+              // BỘ LỌC CHỐNG ẢO GIÁC TUYỆT ĐỐI
               chunkErrors = chunkErrors.filter((err: any) => {
                   const orig = (err.original || "").toString().trim();
                   const sugg = (err.suggestion || "").toString().trim();
                   if (!orig || orig.length < 2) return false;
-                  if (orig.normalize('NFC').toLowerCase() === sugg.normalize('NFC').toLowerCase()) return false;
+                  if (orig === sugg) return false; // Cấm trùng lặp hoàn toàn
+                  if (orig.normalize('NFC').toLowerCase() === sugg.normalize('NFC').toLowerCase()) return false; // Cấm trùng lặp khác mã Unicode
                   return true;
               });
 
               allErrors = [...allErrors, ...chunkErrors];
               if (i < chunks.length - 1) await new Promise(resolve => setTimeout(resolve, 4000));
           } catch (chunkErr: any) {
-              if (chunkErr?.toString().includes("429") || chunkErr?.toString().includes("Quota")) {
-                  isQuotaExceeded = true; break; 
-              }
+              if (chunkErr?.toString().includes("429") || chunkErr?.toString().includes("Quota")) { isQuotaExceeded = true; break; }
           }
       }
 
       if (isQuotaExceeded) alert("Giới hạn API (Lỗi 429). Hệ thống đã lưu các lỗi ở những phần trước.");
-
-      const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
-          .map(original => allErrors.find(e => e.original === original))
-          .filter(e => e && e.original.length > 0);
-
-      setErrors(uniqueErrors.map((err: any, idx: number) => ({ ...err, id: `ai_${idx}`, status: 'pending' })));
-      setStep('review');
-
-    } catch (error) {
-      alert(`Lỗi kết nối mạng. Hãy thử lại.`);
-      setStep('upload');
-    }
+      const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original))).map(original => allErrors.find(e => e.original === original)).filter(e => e && e.original.length > 0);
+      setErrors(uniqueErrors.map((err: any, idx: number) => ({ ...err, id: `ai_${idx}`, status: 'pending' }))); setStep('review');
+    } catch (error) { alert(`Lỗi mạng. Hãy thử lại.`); setStep('upload'); }
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ OFFLINE - TÍCH HỢP TỪ ĐIỂN JSON BÊN NGOÀI
+  // ĐỘNG CƠ RÀ SOÁT OFFLINE - KIẾN TRÚC 2 LỚP TỐI ƯU
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -157,123 +151,93 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
-      
-      const vn = "a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
-      const vnUpper = "A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
 
       // ------------------------------------------------------------------------
-      // LỚP 1: QUY TẮC CỨNG (REGEX) - Đã vá lỗi thiếu dấu kết thúc đoạn
+      // LỚP 1: QUY TẮC CỨNG (REGEX) - Bắt dấu câu, lặp từ, kẹt phím
       // ------------------------------------------------------------------------
       const regexRules = [
-        // 1. BẮT LỖI THIẾU DẤU KẾT THÚC CÂU / ĐOẠN VĂN (ĐÃ NÂNG CẤP)
+        // 1. THIẾU DẤU KẾT THÚC CÂU / ĐOẠN VĂN
         { 
-            // Dò tìm chữ cái/số cuối cùng -> có thể có khoảng trắng -> có 1 hoặc nhiều dấu xuống dòng (\n) 
-            // -> theo sau là một chữ Viết Hoa hoặc là Dấu Kết Thúc File ($)
-            regex: /([\p{L}0-9])([ \t]*)(\n+(?:\s*(?=[\p{Lu}A-ZÀ-ỸĐ]))|$)/gu, 
-            suggestion: "$1.$2$3", 
-            desc: "Lỗi dấu câu: Cuối đoạn văn hoặc câu cần có dấu kết thúc (chấm, hỏi, than)." 
+            regex: /([a-zA-ZÀ-Ỹà-ỹđĐ0-9]+[)\]"']?)([ \t]*)(\n+|$)/g, 
+            suggestion: (m: any, p1: string, p2: string, p3: string) => p1 + "." + p2 + p3, 
+            desc: "Lỗi dấu câu: Cuối đoạn hoặc câu hoàn chỉnh cần có dấu kết thúc." 
         },
-
-        // 2. LỖI VIẾT HOA SAU DẤU CHẤM PHẨY VÀ HAI CHẤM
+        // 2. LỖI VIẾT HOA SAU DẤU CÂU
         {
-            regex: /;\s+([\p{Lu}A-ZÀ-ỸĐ][\p{Ll}a-zà-ỹđ]*)/gu,
-            suggestion: (m: any) => m[0].toLowerCase(),
-            desc: "Quy tắc viết hoa: Không viết hoa sau dấu chấm phẩy (;) trừ khi là danh từ riêng."
+            regex: /;([ \t]+)([A-ZÀ-ÁÂ-ỸĐ][a-zà-ỹđ]*)/g,
+            suggestion: (m: any, p1: string, p2: string) => ";" + p1 + p2.toLowerCase(),
+            desc: "Quy tắc: Không viết hoa sau dấu chấm phẩy (;) trừ danh từ riêng."
         },
         {
-            regex: /:\s+([\p{Lu}A-ZÀ-ỸĐ][\p{Ll}a-zà-ỹđ]*)/gu,
-            suggestion: (m: any) => m[0].toLowerCase(),
-            desc: "ĐỀ NGHỊ XEM LẠI: Thường không viết hoa sau dấu hai chấm (:), trừ danh từ riêng hoặc liệt kê."
+            regex: /:([ \t]+)([A-ZÀ-ÁÂ-ỸĐ][a-zà-ỹđ]*)/g,
+            suggestion: (m: any, p1: string, p2: string) => ":" + p1 + p2.toLowerCase(),
+            desc: "ĐỀ NGHỊ XEM LẠI: Thường không viết hoa sau dấu hai chấm (:), trừ danh từ riêng hoặc liệt kê độc lập."
         },
-
-        // 3. LỖI LẶP TỪ
+        // 3. LỖI LẶP TỪ (hiệu hiệu)
         {
-            regex: /(?<=^|[^\p{L}])([\p{Ll}a-zà-ỹđ]+)\s+\1(?=[^\p{L}]|$)/gui,
-            suggestion: "$1",
+            regex: /(^|[^a-zA-ZÀ-Ỹà-ỹđĐ])([a-zà-ỹđ]+)\s+\2(?=[^a-zA-ZÀ-Ỹà-ỹđĐ]|$)/gi,
+            suggestion: (m: any, p1: string, p2: string) => p1 + p2,
             exclude: ["luôn luôn", "nhè nhẹ", "ào ào", "rào rào", "song song", "dần dần", "từ từ", "mãi mãi", "đùng đùng", "rành rành", "mặt mặt"], 
             desc: "Lỗi lặp từ: Hai từ giống hệt nhau đứng liền kề."
         },
-
-        // 4. LỖI DẤU CÂU & KHOẢNG TRẮNG CƠ BẢN
-        { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước." },
-        { regex: /([.,;:!?])(?=[\p{L}])/gu, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
-        { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
-        { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
-        { regex: /(?<=[\p{L}0-9.,;:!?\)\]"']) {2,}(?=[\p{L}0-9\(\["'])/gu, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
-
-        // 5. LỖI THỪA KÝ TỰ PHỤ ÂM
+        // 4. KHOẢNG TRẮNG CƠ BẢN
+        { regex: /[ \t]+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải sát từ phía trước." },
+        { regex: /([.,;:!?])(?=[a-zA-ZÀ-Ỹà-ỹđĐ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
+        { regex: /([(\["'])[ \t]+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
+        { regex: /[ \t]+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
+        { regex: /(?<=[a-zA-Z0-9.,;:!?\)\]"']) {2,}(?=[a-zA-Z0-9\(\["'])/g, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
+        // 5. THỪA PHỤ ÂM
         {
-          regex: /(?<=^|[^a-zA-Zà-ỹÀ-Ỹ])([a-zà-ỹ]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)(?=[^a-zA-Zà-ỹÀ-Ỹ]|$)/g,
-          suggestion: (m: any) => m[0].replace(/([bcdđghklmnpqrstvx])\1+/g, '$1'),
+          regex: /(^|[^a-zA-ZÀ-Ỹà-ỹđĐ])([a-zà-ỹ]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)(?=[^a-zA-ZÀ-Ỹà-ỹđĐ]|$)/g,
+          suggestion: (m: any, p1: string, p2: string, p3: string, p4: string) => p1 + p2 + p3[0] + p4,
           desc: "Lỗi đánh máy: Thừa ký tự phụ âm liền kề."
         },
-        
         // 6. THỂ THỨC ĐẶC BIỆT
-        { regex: / Khoản /g, original: " Khoản ", suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
-        { regex: / Điểm /g, original: " Điểm ", suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
+        { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
+        { regex: / Điểm /g, suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
       ];
 
-      // Chạy Lớp 1 (Regex Cứng)
       regexRules.forEach(rule => {
-        let match; 
-        const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
+        let match; const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
         while ((match = loopRegex.exec(text)) !== null) {
           const originalText = match[0];
           if (rule.exclude && rule.exclude.includes(originalText.toLowerCase().trim())) continue;
 
           let suggestedText = "";
-          if (typeof rule.suggestion === 'function') suggestedText = rule.suggestion(match);
+          if (typeof rule.suggestion === 'function') suggestedText = rule.suggestion(match, match[1], match[2], match[3], match[4]);
           else if (typeof rule.suggestion === 'string' && rule.suggestion.includes('$')) {
               suggestedText = originalText.replace(new RegExp(rule.regex.source, rule.regex.flags.replace('g', '')), rule.suggestion);
           } else suggestedText = rule.suggestion;
 
           if (originalText === suggestedText) continue;
-
           foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: 'the-thuc', description: rule.desc, status: 'pending' });
         }
       });
 
       // ------------------------------------------------------------------------
-      // LỚP 2: KẾT NỐI DỮ LIỆU TỪ 2 FILE JSON TỪ ĐIỂN
+      // LỚP 2: TỪ ĐIỂN CỨNG (DATA DICTIONARY) - Xử lý ch/tr, l/n, s/x
       // ------------------------------------------------------------------------
-      
-      // 2.1 Quét Từ điển Viết hoa
-      hoaTuDien.forEach((item: any) => {
-          const searchRegex = new RegExp(`(?<=^|[^\\p{L}])(${item.original})(?=[^\\p{L}]|$)`, 'gui');
-          let match;
-          while ((match = searchRegex.exec(text)) !== null) {
-              const originalText = match[0];
-              // Bỏ qua nếu người dùng đã viết đúng
-              if (originalText === item.suggestion) continue;
-              
-              foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: item.suggestion, type: 'the-thuc', description: item.desc, status: 'pending' });
-          }
-      });
+      const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      // 2.2 Quét Từ điển Lỗi chính tả
-      chinhTaTuDien.forEach((rule: any) => {
-          rule.wrong.forEach((wrongWord: string) => {
-              const searchRegex = new RegExp(`(?<=^|[^\\p{L}])${wrongWord}(?=[^\\p{L}]|$)`, 'gui');
+      [...HOA_TU_DIEN, ...CHINH_TA_TU_DIEN].forEach(item => {
+          item.wrong.forEach(wrongWord => {
+              const searchRegex = new RegExp(`(^|[^a-zA-ZÀ-Ỹà-ỹđĐ])(${escapeRegExp(wrongWord)})(?=[^a-zA-ZÀ-Ỹà-ỹđĐ]|$)`, 'gi');
               let match;
               while ((match = searchRegex.exec(text)) !== null) {
-                  const originalText = match[0];
-                  let suggestedText = rule.right;
+                  const originalText = match[2]; // Chỉ lấy đúng phần từ bị sai, bỏ qua khoảng trắng/dấu câu xung quanh
+                  if (originalText.toLowerCase() === item.right.toLowerCase()) continue;
                   
-                  // Giữ nguyên định dạng Viết hoa của người dùng
+                  let suggestedText = item.right;
                   if (originalText[0] === originalText[0].toUpperCase()) {
                       suggestedText = suggestedText.charAt(0).toUpperCase() + suggestedText.slice(1);
                   }
 
-                  foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: rule.type as any, description: rule.desc, status: 'pending' });
+                  foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: 'chinh-ta', description: "Sai quy chuẩn hoặc chính tả.", status: 'pending' });
               }
           });
       });
 
-      // Lọc bỏ lỗi trùng lặp
-      const uniqueErrors = Array.from(new Set(foundErrors.map(e => e.original)))
-          .map(original => foundErrors.find(e => e.original === original))
-          .filter(e => e && e.original.length > 0) as TextError[];
-
+      const uniqueErrors = Array.from(new Set(foundErrors.map(e => e.original))).map(original => foundErrors.find(e => e.original === original)).filter(e => e && e.original.length > 0) as TextError[];
       setErrors(uniqueErrors); setStep('review');
     }, 500); 
   };
@@ -291,7 +255,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // GIAO DIỆN HIỂN THỊ (KHÔNG DÃN CHỮ, MÀU CHUẨN)
+  // GIAO DIỆN HIỂN THỊ ĐỒNG BỘ 100%
   // ============================================================================
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -329,15 +293,13 @@ export default function DocReviewStudio() {
     let finalText = documentText;
     errors.forEach(err => { 
         if (err.status === 'fixed' && err.original) {
-            const regex = new RegExp(escapeRegExp(err.original), 'g');
-            finalText = finalText.replace(regex, err.suggestion);
+            finalText = finalText.replace(new RegExp(escapeRegExp(err.original), 'g'), err.suggestion);
         }
     });
     return finalText;
   };
 
   const copyToClipboard = () => navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy văn bản đã sửa vào bộ nhớ tạm!"));
-  
   const exportToWord = () => {
     const sourceHTML = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${getFinalText().replace(/\n/g, '<br/>')}</body></html>`;
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
@@ -377,7 +339,6 @@ export default function DocReviewStudio() {
                            <input type="file" accept=".docx" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
                            <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
                            <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
-                           <p className="text-[10px] text-slate-500 mt-2">Hỗ trợ rà soát văn bản lớn</p>
                         </div>
                     )
                  ) : (
@@ -406,15 +367,11 @@ export default function DocReviewStudio() {
         <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] space-y-4">
            <RefreshCw size={50} className="text-brand animate-spin" />
            <h3 className="text-xl font-bold text-white uppercase tracking-widest">Đang rà soát văn bản...</h3>
-           
            {progress.total > 0 && (
                <div className="w-80 text-center space-y-2 mt-4">
                   <p className="text-sm font-bold text-sky-400">Đang phân tích đoạn {progress.current} / {progress.total}</p>
                   <div className="w-full h-3 bg-[#1e293b] rounded-full overflow-hidden border border-slate-700">
-                     <div 
-                        className="h-full bg-sky-500 transition-all duration-500 ease-out" 
-                        style={{ width: `${(progress.current / progress.total) * 100}%` }}
-                     />
+                     <div className="h-full bg-sky-500 transition-all duration-500 ease-out" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
                   </div>
                </div>
            )}
@@ -443,14 +400,9 @@ export default function DocReviewStudio() {
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#05070a] custom-scrollbar">
                  {errors.map(err => err.status === 'pending' && (
                     <motion.div 
-                        key={err.id} 
-                        id={`error-card-${err.id}`}
+                        key={err.id} id={`error-card-${err.id}`}
                         className={`bg-[#0f172a] p-5 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'border-[#1e293b]'}`} 
-                        onClick={() => {
-                            setActiveErrorId(err.id);
-                            const errorElement = document.getElementById(`text-error-${err.id}`);
-                            if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }}
+                        onClick={() => { setActiveErrorId(err.id); document.getElementById(`text-error-${err.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
                     >
                        <div className="flex justify-between mb-3">
                           <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">{err.type}</span>
@@ -465,12 +417,8 @@ export default function DocReviewStudio() {
                        </div>
                     </motion.div>
                  ))}
-                 {errors.length > 0 && errors.every(e => e.status !== 'pending') && (
-                    <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">HOÀN TẤT!</p></div>
-                 )}
-                 {errors.length === 0 && (
-                    <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">KHÔNG PHÁT HIỆN LỖI</p></div>
-                 )}
+                 {errors.length > 0 && errors.every(e => e.status !== 'pending') && <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">HOÀN TẤT!</p></div>}
+                 {errors.length === 0 && <div className="text-center p-10"><Check size={40} className="mx-auto text-emerald-500 mb-2"/><p className="text-emerald-400 font-bold">KHÔNG PHÁT HIỆN LỖI</p></div>}
               </div>
               <div className="p-4 border-t border-[#1e293b] grid grid-cols-2 gap-2 bg-[#1e293b]/30">
                  <button onClick={copyToClipboard} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"><Copy size={16}/> COPY TẤT CẢ</button>
