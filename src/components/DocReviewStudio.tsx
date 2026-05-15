@@ -169,7 +169,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ VÀ KỸ THUẬT (OFFLINE REGEX ENGINE) - HOÀN THIỆN
+  // 1. ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - ĐÃ CẬP NHẬT THƯ VIỆN CHUẨN
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -177,116 +177,68 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
-      
       const vn = "a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
-      const vnUpper = "A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
 
       const rules = [
-        // I. QUY TẮC VIẾT HOA (Phép đặt câu & Tên riêng đặc biệt)
-        {
-            regex: new RegExp(`(?:^|[.?!]\\s+)([${vn}])`, 'g'),
-            suggestion: (match: any) => match[0].replace(match[1], match[1].toUpperCase()),
-            desc: "Viết hoa chữ cái đầu âm tiết thứ nhất của một câu hoàn chỉnh sau dấu chấm, hỏi, than hoặc khi xuống dòng."
-        },
-        { regex: /\b(thủ đô hà nội)\b/gi, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt tên địa lý." },
-        { regex: /\b(thành phố hồ chí minh)\b/gi, suggestion: "Thành phố Hồ Chí Minh", desc: "Viết hoa đặc biệt tên địa lý." },
-        { regex: /\b(đảng cộng sản việt nam)\b/gi, suggestion: "Đảng Cộng sản Việt Nam", desc: "Viết hoa tên cơ quan, tổ chức." },
-        { regex: /\b(tết nguyên đán)\b/gi, suggestion: "tết Nguyên đán", desc: "Viết hoa tên các ngày tết." },
+        // I. QUY TẮC VIẾT HOA ĐẶC BIỆT
+        { regex: /(?<=^|[^\p{L}])(thủ đô hà nội)(?=[^\p{L}]|$)/gui, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt tên địa danh." },
+        { regex: /(?<=^|[^\p{L}])(thành phố hồ chí minh)(?=[^\p{L}]|$)/gui, suggestion: "Thành phố Hồ Chí Minh", desc: "Viết hoa đặc biệt tên địa danh." },
+        { regex: /(?<=^|[^\p{L}])(đảng cộng sản việt nam)(?=[^\p{L}]|$)/gui, suggestion: "Đảng Cộng sản Việt Nam", desc: "Viết hoa tên cơ quan, tổ chức." },
 
-        // II. QUY TẮC CHÍNH TẢ (Âm đệm & Phụ âm đầu)
-        {
-            regex: new RegExp(`\\bn(oà|oá|oả|oã|oạ|oa|oè|oé|oẻ|oẽ|oẹ|oe|uầ|uấ|uẩ|uẫ|uậ|uâ|uỳ|uý|uỷ|uỹ|uỵ|uy)([${vn}]*)\\b`, 'gi'),
-            exclude: ["noãn", "noa"],
-            suggestion: "l$1$2",
-            desc: "Chữ 'n' không đứng đầu các tiếng có vần có âm đệm (oa, oe, uâ, uy) trừ 'noãn', 'noa'."
-        },
-        {
-            regex: new RegExp(`\\btr(oà|oá|oả|oã|oạ|oa|oằ|oắ|oẳ|oẵ|oặ|oă|oè|oé|oẻ|oẽ|oẹ|oe|uề|uế|uể|uễ|uệ|uê)([${vn}]*)\\b`, 'gi'),
-            suggestion: "ch$1$2",
-            desc: "Chữ 'tr' không đứng đầu các tiếng có vần âm đệm (oa, oă, oe, uê)."
-        },
-        {
-            regex: new RegExp(`\\bs(oà|oá|oả|oã|oạ|oa|oằ|oắ|oẳ|oẵ|oặ|oă|oè|oé|oẻ|oẽ|oẹ|oe|uề|uế|uể|uễ|uệ|uê|uầ|uấ|uẩ|uẫ|uậ|uâ)([${vn}]*)\\b`, 'gi'),
-            exclude: ["soát", "soạt", "soạng", "soạn", "suất"],
-            suggestion: "x$1$2",
-            desc: "Chữ 's' không đứng đầu tiếng có âm đệm (oa, oă, oe, uê, uâ) trừ các trường hợp đặc biệt."
-        },
-        {
-            regex: new RegExp(`\\b(r|gi)(oà|oá|oả|oã|oạ|oa|oè|oé|oẻ|oẽ|oẹ|oe|uề|uế|uể|uễ|uệ|uê|uỳ|uý|uỷ|uỹ|uỵ|uy)([${vn}]*)\\b`, 'gi'),
-            suggestion: "d$2$3",
-            desc: "Chữ 'r' và 'gi' không đứng đầu các tiếng có vần có âm đệm."
-        },
-        {
-            regex: new RegExp(`\\b(ng|g)(i|e|ê)([${vn}]*)\\b`, 'gi'),
-            exclude: ["ghi", "ghe", "ghê", "nghi", "nghe", "nghê"],
-            suggestion: (match: any) => (match[1].toLowerCase() === 'ng' ? 'ngh' : 'gh') + match[2] + match[3],
-            desc: "Ngh, gh chỉ ghép với i, e, ê."
-        },
-        {
-            regex: new RegExp(`\\bgii([${vn}]*)\\b`, 'gi'),
-            suggestion: "gi$1",
-            desc: "Chữ cái 'gi' ghép với các vần có chữ 'i' đứng đầu thì bỏ một chữ 'i'."
+        // II. QUY TẮC DẤU THANH (hóa -> hoá) - BẮT TRỌN CẢ TỪ
+        { 
+          regex: /(?<=^|[^\p{L}])\p{L}*(óa|òa|ỏa|õa|ọa|óe|òe|ỏe|õe|ọe|úy|ùy|ủy|ũy|ụy|úê|ùê|ủê|ũê|ụê)\p{L}*(?=[^\p{L}]|$)/gui, 
+          suggestion: (match: any) => match[0]
+            .replace(/óa/g, 'oá').replace(/òa/g, 'oà').replace(/ỏa/g, 'oả').replace(/õa/g, 'oã').replace(/ọa/g, 'oạ')
+            .replace(/óe/g, 'oé').replace(/òe/g, 'oè').replace(/ỏe/g, 'oẻ').replace(/õe/g, 'oẽ').replace(/ọe/g, 'oẹ')
+            .replace(/úy/g, 'uý').replace(/ùy/g, 'uỳ').replace(/ủy/g, 'uỷ').replace(/ũy/g, 'uỹ').replace(/ụy/g, 'uỵ')
+            .replace(/úê/g, 'uế').replace(/ùê/g, 'uề').replace(/ủê/g, 'uể').replace(/ũê/g, 'uễ').replace(/ụê/g, 'uệ'),
+          desc: "Quy tắc dấu thanh: Đặt dấu ở âm chính (ví dụ: hoá, thuỷ)." 
         },
 
-        // III. QUY TẮC DẤU CÂU VÀ KHOẢNG TRẮNG
+        // III. LỖI ĐÁNH MÁY (TYPO) - CÓ BỘ LỌC GDNN, SKILL
         {
-            regex: / +([.,;:!?])/g,
-            suggestion: "$1",
-            desc: "Dấu câu phải đặt sát từ phía trước, không có khoảng trắng."
+          regex: /(?<=^|[^\p{L}])\p{L}*(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})\p{L}*(?=[^\p{L}]|$)/gui,
+          suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/gi, '$1'),
+          desc: "Lỗi đánh máy: Thừa ký tự phụ âm liền kề."
         },
-        {
-            regex: new RegExp(`([.,;:!?])([${vn}${vnUpper}])`, 'g'),
-            suggestion: "$1 $2",
-            desc: "Phải có một khoảng cách (space) sau dấu câu trước khi bắt đầu từ tiếp theo."
-        },
-        {
-            regex: /([(\["']) +/g,
-            suggestion: "$1",
-            desc: "Dấu mở ngoặc, mở nháy kép phải đặt sát vào từ bên phải."
-        },
-        {
-            regex: / +([)\]"'])/g,
-            suggestion: "$1",
-            desc: "Dấu đóng ngoặc, đóng nháy kép phải đặt sát vào từ bên trái."
-        },
-        {
-            regex: new RegExp(`([${vn}${vnUpper}0-9.,;:!?)\\]"']) {2,}([${vn}${vnUpper}0-9(\\["'])`, 'g'),
-            suggestion: "$1 $2",
-            desc: "Chỉ sử dụng một khoảng trắng duy nhất giữa các từ."
-        },
+        
+        // IV. QUY TẮC DẤU CÂU VÀ KHOẢNG TRẮNG
+        { regex: / +([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải sát từ phía trước." },
+        { regex: /([(\["']) +/g, suggestion: "$1", desc: "Dấu mở ngoặc phải sát từ bên phải." },
+        { regex: / +([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc phải sát từ bên trái." },
+        { regex: /(?<=[\p{L}0-9.,;:!?\)\]"']) {2,}(?=[\p{L}0-9\(\["'])/gu, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
 
-        // IV. QUY TẮC DẤU THANH (vần oa, uê, uy)
-        { regex: /óa/g, suggestion: "oá", desc: "Vần 'oa' đánh dấu ở âm chính 'a'." },
-        { regex: /òa/g, suggestion: "oà", desc: "Vần 'oa' đánh dấu ở âm chính 'a'." },
-        { regex: /úy/g, suggestion: "uý", desc: "Vần 'uy' đánh dấu ở âm chính 'y'." },
-        { regex: /ùy/g, suggestion: "uỳ", desc: "Vần 'uy' đánh dấu ở âm chính 'y'." },
-        { regex: /úê/g, suggestion: "uế", desc: "Vần 'uê' đánh dấu ở âm chính 'ê'." },
-        { regex: /ùê/g, suggestion: "uề", desc: "Vần 'uê' đánh dấu ở âm chính 'ê'." },
+        // V. TỪ ĐIỂN CỤM TỪ (N-GRAM) - GIẢI QUYẾT LỖI "LUẬT GIÁ DỤC", "CHINH SÁCH"
+        { regex: /(?<=^|[^\p{L}])(chinh sách)(?=[^\p{L}]|$)/gui, suggestion: "chính sách", desc: "Thiếu dấu thanh trong cụm từ 'chính sách'." },
+        { regex: /(?<=^|[^\p{L}])(giá dục)(?=[^\p{L}]|$)/gui, suggestion: "giáo dục", desc: "Sai chính tả cụm từ 'giáo dục'." },
+        { regex: /(?<=^|[^\p{L}])(phat triển|phát trien|phat trien)(?=[^\p{L}]|$)/gui, suggestion: "phát triển", desc: "Sai/thiếu dấu thanh cụm từ 'phát triển'." },
 
-        // V. LỖI ĐÁNH MÁY VÀ NGHỊ ĐỊNH 30
-        {
-            regex: /\b([a-zà-ỹ]*)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)\b/gi,
-            suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/gi, '$1'),
-            desc: "Lỗi đánh máy: Thừa phụ âm liền kề."
-        },
+        // VI. NGHỊ ĐỊNH 30/2020
         { regex: / Khoản /g, original: " Khoản ", suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
         { regex: / Điểm /g, original: " Điểm ", suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
       ];
 
-      // ĐỘNG CƠ DUYỆT VÀ THAY THẾ
       rules.forEach(rule => {
         let match; 
         const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
         while ((match = loopRegex.exec(text)) !== null) {
           const originalText = match[0];
-          if (rule.exclude && rule.exclude.includes(originalText.toLowerCase().trim())) continue;
-          
+          const cleanText = originalText.trim().toLowerCase();
+
+          // MÀNG LỌC THÔNG MINH: Bỏ qua viết tắt GDNN, TTg và tiếng Anh Skill
+          if (/^[A-ZĐ]+$/.test(originalText.trim())) continue; 
+          if (/[fwjz]/i.test(cleanText) || /ll$|ss$/i.test(cleanText)) continue;
+          if (!/[a-zà-ỹ]/i.test(cleanText)) continue; 
+
           let suggestedText = "";
           if (typeof rule.suggestion === 'function') suggestedText = rule.suggestion(match);
           else if (typeof rule.suggestion === 'string' && rule.suggestion.includes('$')) {
               const replaceRegex = new RegExp(rule.regex.source, rule.regex.flags.replace('g', ''));
               suggestedText = originalText.replace(replaceRegex, rule.suggestion);
           } else suggestedText = rule.suggestion;
+
+          if (originalText.trim() === suggestedText.trim()) continue;
 
           foundErrors.push({ 
               id: `off_${errCount++}`, 
@@ -298,7 +250,6 @@ export default function DocReviewStudio() {
           });
         }
       });
-      
       setErrors(foundErrors); setStep('review');
     }, 1000);
   };
@@ -321,7 +272,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // HIỂN THỊ GIAO DIỆN VĂN BẢN
+  // 2. HIỂN THỊ GIAO DIỆN VĂN BẢN (ĐỒNG NHẤT VỚI AI, KHÔNG NHẢY CHỮ)
   // ============================================================================
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -334,13 +285,10 @@ export default function DocReviewStudio() {
       const regex = new RegExp(escapeRegExp(err.original), 'gi'); 
       
       if (err.status === 'pending') {
-        // Đã xóa 'px-1' và 'font-bold' để giữ nguyên 100% kích thước từ.
-        // Sử dụng 'ring-1' (viền ảo) để tạo khung khi click mà không làm đẩy chữ.
-        const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 text-rose-300 transition-colors rounded-sm ${activeErrorId === err.id ? 'ring-1 ring-rose-500 bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
+        const span = `<span id="text-error-${err.id}" class="bg-rose-500/30 rounded-sm transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 bg-rose-500/50' : 'hover:bg-rose-500/50 cursor-pointer'}" data-id="${err.id}">$&</span>`;
         highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
-        // Xóa 'px-1' và 'font-bold' ở từ đã sửa
-        const span = `<span class="bg-emerald-500/20 text-emerald-400 transition-colors rounded-sm">${err.suggestion}</span>`;
+        const span = `<span class="bg-emerald-500/30 rounded-sm transition-all">${err.suggestion}</span>`;
         highlightedText = highlightedText.replace(regex, span);
       }
     });
