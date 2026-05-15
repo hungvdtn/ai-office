@@ -169,7 +169,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE REGEX ENGINE) - CHUẨN HÓA TOÀN DIỆN
+  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ VÀ KỸ THUẬT (OFFLINE REGEX ENGINE) - HOÀN THIỆN
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -178,240 +178,120 @@ export default function DocReviewStudio() {
       let foundErrors: TextError[] = [];
       let errCount = 0;
       
-      // Tập hợp các kí tự tiếng Việt
       const vn = "a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
       const vnUpper = "A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
 
       const rules = [
-        // ==========================================
-        // I. QUY TẮC VIẾT HOA
-        // ==========================================
+        // I. QUY TẮC VIẾT HOA (Phép đặt câu & Tên riêng đặc biệt)
         {
-            // Viết hoa chữ cái đầu âm tiết thứ nhất của câu (Sau . ? ! và xuống dòng)
             regex: new RegExp(`(?:^|[.?!]\\s+)([${vn}])`, 'g'),
             suggestion: (match: any) => match[0].replace(match[1], match[1].toUpperCase()),
-            desc: "Quy tắc viết hoa (I.1): Viết hoa chữ cái đầu âm tiết thứ nhất của một câu hoàn chỉnh (sau dấu chấm, hỏi, chấm than, xuống dòng)."
+            desc: "Viết hoa chữ cái đầu âm tiết thứ nhất của một câu hoàn chỉnh sau dấu chấm, hỏi, than hoặc khi xuống dòng."
         },
-        { regex: /\b(thủ đô hà nội)\b/gi, suggestion: "Thủ đô Hà Nội", desc: "Quy tắc viết hoa (I.3.1.c): Trường hợp viết hoa đặc biệt." },
-        { regex: /\b(thành phố hồ chí minh)\b/gi, suggestion: "Thành phố Hồ Chí Minh", desc: "Quy tắc viết hoa (I.3.1.c): Trường hợp viết hoa đặc biệt." },
-        { regex: /\b(ban chấp hành trung ương đảng cộng sản việt nam)\b/gi, suggestion: "Ban Chấp hành Trung ương Đảng Cộng sản Việt Nam", desc: "Quy tắc viết hoa (I.4.1.b): Viết hoa tên cơ quan đặc biệt." },
-        { regex: /\b(văn phòng trung ương đảng)\b/gi, suggestion: "Văn phòng Trung ương Đảng", desc: "Quy tắc viết hoa (I.4.1.b): Viết hoa tên cơ quan đặc biệt." },
-        { regex: /\b(đảng cộng sản việt nam)\b/gi, suggestion: "Đảng Cộng sản Việt Nam", desc: "Quy tắc viết hoa (I.4.1): Tên cơ quan, tổ chức." },
-        { regex: /\b(ngày quốc khánh 2-9|ngày quốc khánh 2\/9)\b/gi, suggestion: "ngày Quốc khánh 2-9", desc: "Quy tắc viết hoa (I.5.5): Viết hoa tên các ngày lễ, kỷ niệm." },
-        { regex: /\b(ngày quốc tế lao động 1-5|ngày quốc tế lao động 1\/5)\b/gi, suggestion: "ngày Quốc tế Lao động 1-5", desc: "Quy tắc viết hoa (I.5.5): Viết hoa tên các ngày lễ, kỷ niệm." },
-        { regex: /\b(ngày phụ nữ việt nam 20-10|ngày phụ nữ việt nam 20\/10)\b/gi, suggestion: "ngày Phụ nữ Việt Nam 20-10", desc: "Quy tắc viết hoa (I.5.5): Viết hoa tên các ngày lễ, kỷ niệm." },
-        { regex: /\b(tết nguyên đán)\b/gi, suggestion: "tết Nguyên đán", desc: "Quy tắc viết hoa (I.5.8.b): Tên các ngày tết." },
-        { regex: /\b(tết đoan ngọ)\b/gi, suggestion: "tết Đoan ngọ", desc: "Quy tắc viết hoa (I.5.8.b): Tên các ngày tết." },
-        { regex: /\b(tết trung thu)\b/gi, suggestion: "tết Trung thu", desc: "Quy tắc viết hoa (I.5.8.b): Tên các ngày tết." },
-        
-        // ==========================================
-        // II. QUY TẮC CHÍNH TẢ DO MỘT ÂM NHIỀU CÁCH VIẾT
-        // ==========================================
+        { regex: /\b(thủ đô hà nội)\b/gi, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt tên địa lý." },
+        { regex: /\b(thành phố hồ chí minh)\b/gi, suggestion: "Thành phố Hồ Chí Minh", desc: "Viết hoa đặc biệt tên địa lý." },
+        { regex: /\b(đảng cộng sản việt nam)\b/gi, suggestion: "Đảng Cộng sản Việt Nam", desc: "Viết hoa tên cơ quan, tổ chức." },
+        { regex: /\b(tết nguyên đán)\b/gi, suggestion: "tết Nguyên đán", desc: "Viết hoa tên các ngày tết." },
+
+        // II. QUY TẮC CHÍNH TẢ (Âm đệm & Phụ âm đầu)
         {
-            // 2.2. l / n
             regex: new RegExp(`\\bn(oà|oá|oả|oã|oạ|oa|oè|oé|oẻ|oẽ|oẹ|oe|uầ|uấ|uẩ|uẫ|uậ|uâ|uỳ|uý|uỷ|uỹ|uỵ|uy)([${vn}]*)\\b`, 'gi'),
             exclude: ["noãn", "noa"],
             suggestion: "l$1$2",
-            desc: "Quy tắc chính tả (II.2.2): Chữ 'n' không đứng đầu các tiếng có vần có âm đệm (oa, oe, uâ, uy) trừ 'noãn', 'noa'."
+            desc: "Chữ 'n' không đứng đầu các tiếng có vần có âm đệm (oa, oe, uâ, uy) trừ 'noãn', 'noa'."
         },
         {
-            // 2.3. ch / tr
             regex: new RegExp(`\\btr(oà|oá|oả|oã|oạ|oa|oằ|oắ|oẳ|oẵ|oặ|oă|oè|oé|oẻ|oẽ|oẹ|oe|uề|uế|uể|uễ|uệ|uê)([${vn}]*)\\b`, 'gi'),
             suggestion: "ch$1$2",
-            desc: "Quy tắc chính tả (II.2.3): Chữ 'tr' không đứng đầu các tiếng có vần âm đệm (oa, oă, oe, uê)."
+            desc: "Chữ 'tr' không đứng đầu các tiếng có vần âm đệm (oa, oă, oe, uê)."
         },
         {
-            // 2.4. s / x
             regex: new RegExp(`\\bs(oà|oá|oả|oã|oạ|oa|oằ|oắ|oẳ|oẵ|oặ|oă|oè|oé|oẻ|oẽ|oẹ|oe|uề|uế|uể|uễ|uệ|uê|uầ|uấ|uẩ|uẫ|uậ|uâ)([${vn}]*)\\b`, 'gi'),
             exclude: ["soát", "soạt", "soạng", "soạn", "suất"],
             suggestion: "x$1$2",
-            desc: "Quy tắc chính tả (II.2.4): Chữ 's' không đứng đầu tiếng có âm đệm (oa, oă, oe, uê, uâ) trừ 'soát', 'soạt', 'soạng', 'soạn', 'suất'."
+            desc: "Chữ 's' không đứng đầu tiếng có âm đệm (oa, oă, oe, uê, uâ) trừ các trường hợp đặc biệt."
         },
         {
-            // 2.5. r / d / gi
             regex: new RegExp(`\\b(r|gi)(oà|oá|oả|oã|oạ|oa|oè|oé|oẻ|oẽ|oẹ|oe|uề|uế|uể|uễ|uệ|uê|uỳ|uý|uỷ|uỹ|uỵ|uy)([${vn}]*)\\b`, 'gi'),
             suggestion: "d$2$3",
-            desc: "Quy tắc chính tả (II.2.5): Chữ 'r' và 'gi' không đứng đầu các tiếng có vần có âm đệm (oa, oe, uê, uy)."
+            desc: "Chữ 'r' và 'gi' không đứng đầu các tiếng có vần có âm đệm."
         },
         {
-            // 2.6. c / k / q (k đứng trước a, o, u -> đổi thành c)
-            regex: new RegExp(`\\bk(a|á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ|o|ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ|u|ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự)([${vn}]*)\\b`, 'gi'),
-            suggestion: "c$1$2",
-            desc: "Quy tắc chính tả (II.2.6): Chữ 'k' chỉ đứng trước i, e, ê. Trước a, o, u... phải viết là 'c'."
+            regex: new RegExp(`\\b(ng|g)(i|e|ê)([${vn}]*)\\b`, 'gi'),
+            exclude: ["ghi", "ghe", "ghê", "nghi", "nghe", "nghê"],
+            suggestion: (match: any) => (match[1].toLowerCase() === 'ng' ? 'ngh' : 'gh') + match[2] + match[3],
+            desc: "Ngh, gh chỉ ghép với i, e, ê."
         },
         {
-            // 2.6. c / k / q (c đứng trước i, e, ê -> đổi thành k)
-            regex: new RegExp(`\\bc(i|í|ì|ỉ|ĩ|ị|e|é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)([${vn}]*)\\b`, 'gi'),
-            suggestion: "k$1$2",
-            desc: "Quy tắc chính tả (II.2.6): Chữ 'c' không đứng trước i, e, ê. Phải viết là 'k'."
-        },
-        {
-            // 2.6. c / k / q (q bắt buộc đi với u)
-            regex: new RegExp(`\\bq(?!u)([${vn}]*)\\b`, 'gi'),
-            suggestion: "qu$1",
-            desc: "Quy tắc chính tả (II.2.6): Chữ 'q' bao giờ cũng đi với âm đệm 'u' thành 'qu'."
-        },
-        {
-            // 2.7.1. ngh / gh (ng đứng trước i, e, ê -> đổi thành ngh)
-            regex: new RegExp(`\\bng(i|í|ì|ỉ|ĩ|ị|e|é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)([${vn}]*)\\b`, 'gi'),
-            suggestion: "ngh$1$2",
-            desc: "Quy tắc chính tả (II.2.7.1): Phải dùng 'ngh' thay vì 'ng' khi đứng trước i, e, ê."
-        },
-        {
-            // 2.7.1. ngh / gh (g đứng trước e, ê -> đổi thành gh)
-            regex: new RegExp(`\\bg(e|é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)([${vn}]*)\\b`, 'gi'),
-            suggestion: "gh$1$2",
-            desc: "Quy tắc chính tả (II.2.7.1): Phải dùng 'gh' thay vì 'g' khi đứng trước e, ê."
-        },
-        {
-            // 2.7.1. ngh / gh (ngh, gh đứng trước a, o, u -> đổi thành ng, g)
-            regex: new RegExp(`\\b(ngh|gh)(a|á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ|o|ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ|u|ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự)([${vn}]*)\\b`, 'gi'),
-            suggestion: (match: any) => {
-                const prefix = match[1].toLowerCase() === 'ngh' ? 'ng' : 'g';
-                const isUpper = match[1] === match[1].toUpperCase();
-                const isTitle = match[1][0] === match[1][0].toUpperCase();
-                let newPrefix = prefix;
-                if (isUpper) newPrefix = prefix.toUpperCase();
-                else if (isTitle) newPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-                return match[0].replace(match[1], newPrefix);
-            },
-            desc: "Quy tắc chính tả (II.2.7.1): 'ngh', 'gh' không đứng trước a, o, u... Phải viết là 'ng', 'g'."
-        },
-        {
-            // 2.7.2. gi + i
             regex: new RegExp(`\\bgii([${vn}]*)\\b`, 'gi'),
             suggestion: "gi$1",
-            desc: "Quy tắc chính tả (II.2.7.2): Chữ cái 'gi' ghép với các vần có chữ 'i' đứng đầu thì bỏ một chữ 'i'."
+            desc: "Chữ cái 'gi' ghép với các vần có chữ 'i' đứng đầu thì bỏ một chữ 'i'."
         },
 
-        // ==========================================
-        // III. QUY TẮC ĐÁNH DẤU THANH (oa, oe, uê, uy)
-        // ==========================================
-        { regex: /óa/g, suggestion: "oá", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oa' có 'o' là âm đệm, đánh dấu ở âm chính 'a'." },
-        { regex: /òa/g, suggestion: "oà", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oa' có 'o' là âm đệm, đánh dấu ở âm chính 'a'." },
-        { regex: /ỏa/g, suggestion: "oả", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oa' có 'o' là âm đệm, đánh dấu ở âm chính 'a'." },
-        { regex: /õa/g, suggestion: "oã", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oa' có 'o' là âm đệm, đánh dấu ở âm chính 'a'." },
-        { regex: /ọa/g, suggestion: "oạ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oa' có 'o' là âm đệm, đánh dấu ở âm chính 'a'." },
-        
-        { regex: /óe/g, suggestion: "oé", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oe' có 'o' là âm đệm, đánh dấu ở âm chính 'e'." },
-        { regex: /òe/g, suggestion: "oè", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oe' có 'o' là âm đệm, đánh dấu ở âm chính 'e'." },
-        { regex: /ỏe/g, suggestion: "oẻ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oe' có 'o' là âm đệm, đánh dấu ở âm chính 'e'." },
-        { regex: /õe/g, suggestion: "oẽ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oe' có 'o' là âm đệm, đánh dấu ở âm chính 'e'." },
-        { regex: /ọe/g, suggestion: "oẹ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'oe' có 'o' là âm đệm, đánh dấu ở âm chính 'e'." },
-
-        { regex: /úy/g, suggestion: "uý", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uy' có 'u' là âm đệm, đánh dấu ở âm chính 'y'." },
-        { regex: /ùy/g, suggestion: "uỳ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uy' có 'u' là âm đệm, đánh dấu ở âm chính 'y'." },
-        { regex: /ủy/g, suggestion: "uỷ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uy' có 'u' là âm đệm, đánh dấu ở âm chính 'y'." },
-        { regex: /ũy/g, suggestion: "uỹ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uy' có 'u' là âm đệm, đánh dấu ở âm chính 'y'." },
-        { regex: /ụy/g, suggestion: "uỵ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uy' có 'u' là âm đệm, đánh dấu ở âm chính 'y'." },
-        
-        { regex: /úê/g, suggestion: "uế", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uê' có 'u' là âm đệm, đánh dấu ở âm chính 'ê'." },
-        { regex: /ùê/g, suggestion: "uề", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uê' có 'u' là âm đệm, đánh dấu ở âm chính 'ê'." },
-        { regex: /ủê/g, suggestion: "uể", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uê' có 'u' là âm đệm, đánh dấu ở âm chính 'ê'." },
-        { regex: /ũê/g, suggestion: "uễ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uê' có 'u' là âm đệm, đánh dấu ở âm chính 'ê'." },
-        { regex: /ụê/g, suggestion: "uệ", desc: "Quy tắc dấu thanh (II.2.7.3): Vần 'uê' có 'u' là âm đệm, đánh dấu ở âm chính 'ê'." }
-      ];
-
-      // ==========================================
-        // IV. THUẬT TOÁN BẮT LỖI KỸ THUẬT GÕ PHÍM (TYPO)
-        // ==========================================
+        // III. QUY TẮC DẤU CÂU VÀ KHOẢNG TRẮNG
         {
-            // 1. Thuật toán bắt lỗi thừa phụ âm liền kề (Ví dụ: kinhh -> kinh, đđánh -> đánh)
-            // Tiếng Việt không có từ nào chứa 2 phụ âm giống hệt nhau đi liền nhau trong 1 chữ.
-            regex: /\b([a-zà-ỹ]*)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)\b/gi,
-            suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/gi, '$1'),
-            desc: "Lỗi đánh máy (Typo): Thừa ký tự phụ âm liền kề do kẹt phím hoặc gõ nhanh."
-        },
-        {
-            // 2. Thuật toán bắt lỗi thừa nguyên âm vô lý (Ví dụ: giáa -> giá, tiềnn -> tiền)
-            // Ngoại trừ các từ đặc biệt (xoong, boong, quần soóc, moóc), tiếng Việt không lặp nguyên âm ở cuối.
-            regex: /\b([a-zà-ỹ]+)(a{2,}|ă{2,}|â{2,}|e{2,}|ê{2,}|i{2,}|ô{2,}|ơ{2,}|u{2,}|ư{2,}|y{2,})\b/gi,
-            suggestion: (match: any) => match[0].replace(/([aăâeêioôơuưy])\1+$/gi, '$1'),
-            desc: "Lỗi đánh máy (Typo): Thừa ký tự nguyên âm ở cuối từ."
-        },
-
-        // ==========================================
-        // V. TỪ ĐIỂN CỤM TỪ HÀNH CHÍNH (N-GRAM DICTIONARY)
-        // ==========================================
-        // Bắt lỗi sai dấu thanh dựa trên cụm từ cố định (Context-based)
-        { regex: /\b(đanh giá|đánh gia|đanh gia)\b/gi, suggestion: "đánh giá", desc: "Lỗi đánh máy: Sai/thiếu dấu thanh trong cụm từ 'đánh giá'." },
-        { regex: /\b(phat triển|phát triên|phat trien)\b/gi, suggestion: "phát triển", desc: "Lỗi đánh máy: Sai/thiếu dấu thanh trong cụm từ 'phát triển'." },
-        { regex: /\b(kinh tê|kính tế)\b/gi, suggestion: "kinh tế", desc: "Lỗi đánh máy: Sai/thiếu dấu thanh trong cụm từ 'kinh tế'." },
-        { regex: /\b(ngiên cứu|nghiên cưu)\b/gi, suggestion: "nghiên cứu", desc: "Lỗi đánh máy: Sai chính tả/thiếu dấu thanh trong cụm từ 'nghiên cứu'." },
-        { regex: /\b(quyêt định|quết định|quyet định)\b/gi, suggestion: "quyết định", desc: "Lỗi đánh máy: Sai/thiếu dấu thanh trong cụm từ 'quyết định'." },
-        { regex: /\b(chuc năng|chức năngg)\b/gi, suggestion: "chức năng", desc: "Lỗi đánh máy: Sai dấu thanh hoặc thừa ký tự." },
-        { regex: /\b(nhiêm vụ|nhiệm vu)\b/gi, suggestion: "nhiệm vụ", desc: "Lỗi đánh máy: Sai/thiếu dấu thanh trong cụm từ 'nhiệm vụ'." },
-      
-        // ==========================================
-        // VI. QUY TẮC DẤU CÂU VÀ KHOẢNG TRẮNG
-        // ==========================================
-        {
-            // Bắt lỗi: Có khoảng trắng TRƯỚC dấu câu (Ví dụ: "Hôm nay , tôi đi học .")
             regex: / +([.,;:!?])/g,
             suggestion: "$1",
-            desc: "Kỹ thuật: Dấu câu phải đặt sát vào từ đứng trước nó, không được để khoảng trắng."
+            desc: "Dấu câu phải đặt sát từ phía trước, không có khoảng trắng."
         },
         {
-            // Bắt lỗi: Thiếu khoảng trắng SAU dấu câu (Chỉ áp dụng khi sau nó là chữ cái, để bảo vệ số thập phân như 3,14)
             regex: new RegExp(`([.,;:!?])([${vn}${vnUpper}])`, 'g'),
             suggestion: "$1 $2",
-            desc: "Kỹ thuật: Phải có 1 khoảng trắng (space) sau các dấu câu (.,;:!?)."
+            desc: "Phải có một khoảng cách (space) sau dấu câu trước khi bắt đầu từ tiếp theo."
         },
         {
-            // Bắt lỗi: Thiếu khoảng trắng SAU dấu ba chấm (nếu sau nó là chữ cái)
-            regex: new RegExp(`(…|\\.{3})([${vn}${vnUpper}])`, 'g'),
-            suggestion: "$1 $2",
-            desc: "Kỹ thuật: Phải có khoảng trắng sau dấu ba chấm (...)."
-        },
-        {
-            // Bắt lỗi: Có khoảng trắng NGAY SAU dấu mở ngoặc hoặc mở nháy kép (Ví dụ: "( chữ" -> "(chữ")
             regex: /([(\["']) +/g,
             suggestion: "$1",
-            desc: "Kỹ thuật: Dấu mở ngoặc/ngoặc kép phải đặt sát vào từ bên phải của nó."
+            desc: "Dấu mở ngoặc, mở nháy kép phải đặt sát vào từ bên phải."
         },
         {
-            // Bắt lỗi: Có khoảng trắng NGAY TRƯỚC dấu đóng ngoặc hoặc đóng nháy kép (Ví dụ: "chữ )" -> "chữ)")
             regex: / +([)\]"'])/g,
             suggestion: "$1",
-            desc: "Kỹ thuật: Dấu đóng ngoặc/ngoặc kép phải đặt sát vào từ bên trái của nó."
+            desc: "Dấu đóng ngoặc, đóng nháy kép phải đặt sát vào từ bên trái."
         },
         {
-            // Bắt lỗi: Thừa nhiều khoảng trắng (>=2) giữa các từ (Lọc thông minh tránh hỏng định dạng lùi lề)
             regex: new RegExp(`([${vn}${vnUpper}0-9.,;:!?)\\]"']) {2,}([${vn}${vnUpper}0-9(\\["'])`, 'g'),
             suggestion: "$1 $2",
-            desc: "Kỹ thuật: Chỉ sử dụng 1 khoảng trắng duy nhất giữa các từ."
-        }
-      
-        // ĐỘNG CƠ DUYỆT VÀ THAY THẾ ĐỘNG (NÂNG CẤP)
+            desc: "Chỉ sử dụng một khoảng trắng duy nhất giữa các từ."
+        },
+
+        // IV. QUY TẮC DẤU THANH (vần oa, uê, uy)
+        { regex: /óa/g, suggestion: "oá", desc: "Vần 'oa' đánh dấu ở âm chính 'a'." },
+        { regex: /òa/g, suggestion: "oà", desc: "Vần 'oa' đánh dấu ở âm chính 'a'." },
+        { regex: /úy/g, suggestion: "uý", desc: "Vần 'uy' đánh dấu ở âm chính 'y'." },
+        { regex: /ùy/g, suggestion: "uỳ", desc: "Vần 'uy' đánh dấu ở âm chính 'y'." },
+        { regex: /úê/g, suggestion: "uế", desc: "Vần 'uê' đánh dấu ở âm chính 'ê'." },
+        { regex: /ùê/g, suggestion: "uề", desc: "Vần 'uê' đánh dấu ở âm chính 'ê'." },
+
+        // V. LỖI ĐÁNH MÁY VÀ NGHỊ ĐỊNH 30
+        {
+            regex: /\b([a-zà-ỹ]*)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)\b/gi,
+            suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/gi, '$1'),
+            desc: "Lỗi đánh máy: Thừa phụ âm liền kề."
+        },
+        { regex: / Khoản /g, original: " Khoản ", suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
+        { regex: / Điểm /g, original: " Điểm ", suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
+      ];
+
+      // ĐỘNG CƠ DUYỆT VÀ THAY THẾ
       rules.forEach(rule => {
         let match; 
-        // Phải tạo bản sao regex để tránh lỗi lastIndex khi dùng cờ /g
         const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
-        
         while ((match = loopRegex.exec(text)) !== null) {
           const originalText = match[0];
+          if (rule.exclude && rule.exclude.includes(originalText.toLowerCase().trim())) continue;
           
-          // Kiểm tra danh sách ngoại lệ (ví dụ: noãn, soát...)
-          if (rule.exclude && rule.exclude.includes(originalText.toLowerCase().trim())) {
-              continue;
-          }
-
           let suggestedText = "";
-          if (typeof rule.suggestion === 'function') {
-              // Gọi hàm thay thế động (dành cho Viết hoa, ngh/gh)
-              suggestedText = rule.suggestion(match);
-          } else if (typeof rule.suggestion === 'string' && rule.suggestion.includes('$')) {
-              // Thay thế dùng biến nhóm $1, $2 của Regex
+          if (typeof rule.suggestion === 'function') suggestedText = rule.suggestion(match);
+          else if (typeof rule.suggestion === 'string' && rule.suggestion.includes('$')) {
               const replaceRegex = new RegExp(rule.regex.source, rule.regex.flags.replace('g', ''));
               suggestedText = originalText.replace(replaceRegex, rule.suggestion);
-          } else {
-              suggestedText = rule.suggestion;
-          }
+          } else suggestedText = rule.suggestion;
 
           foundErrors.push({ 
               id: `off_${errCount++}`, 
-              original: originalText.trim(), 
-              suggestion: suggestedText.trim(), 
+              original: originalText.replace(/\n/g, ''), 
+              suggestion: suggestedText.replace(/\n/g, ''), 
               type: 'chinh-ta', 
               description: rule.desc, 
               status: 'pending' 
