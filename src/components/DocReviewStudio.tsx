@@ -165,17 +165,32 @@ export default function DocReviewStudio() {
       // LỚP 1: RULE ENGINE CỨNG (REGEX) - Dùng cho Kỹ thuật, Dấu câu, Viết hoa
       // ------------------------------------------------------------------------
       const regexRules = [
-        // Viết hoa
-        { regex: new RegExp(`(?:^|[.?!]\\s+)([${vn}])`, 'g'), suggestion: (m: any) => m[0].replace(m[1], m[1].toUpperCase()), desc: "Viết hoa sau dấu chấm/xuống dòng." },
-        { regex: /(?<=^|[^\p{L}])(thủ đô hà nội)(?=[^\p{L}]|$)/gui, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt." },
-        { regex: /(?<=^|[^\p{L}])(đảng cộng sản việt nam)(?=[^\p{L}]|$)/gui, suggestion: "Đảng Cộng sản Việt Nam", desc: "Tên tổ chức." },
-        
-        // Dấu câu & Khoảng trắng (Giữ nguyên vì chạy rất tốt)
-        { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước." },
-        { regex: /([.,;:!?])(?=[a-zA-Zà-ỹÀ-Ỹ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
-        { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
-        { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
-        { regex: / {2,}/g, suggestion: " ", desc: "Thừa nhiều khoảng trắng liên tiếp." },
+        // --- 1. QUY TẮC VIẾT HOA ---
+    // Viết hoa đầu câu
+    { regex: new RegExp(`(?:^|[.?!]\\s+)([${vn}])`, 'g'), suggestion: (m: any) => m[0].toUpperCase(), desc: "Viết hoa sau dấu chấm/xuống dòng." },
+    
+    // Tên cơ quan/địa danh đặc biệt
+    { regex: /(?<=^|[^\p{L}])(thủ đô hà nội)(?=[^\p{L}]|$)/gui, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt." },
+    { regex: /(?<=^|[^\p{L}])(thành phố hồ chí minh)(?=[^\p{L}]|$)/gui, suggestion: "Thành phố Hồ Chí Minh", desc: "Viết hoa đặc biệt." },
+    { regex: /(?<=^|[^\p{L}])(đảng cộng sản việt nam)(?=[^\p{L}]|$)/gui, suggestion: "Đảng Cộng sản Việt Nam", desc: "Tên tổ chức đặc biệt." },
+    { regex: /(?<=^|[^\p{L}])(ban chỉ đạo trung ương về phòng chống tham nhũng)(?=[^\p{L}]|$)/gui, suggestion: "Ban Chỉ đạo trung ương về Phòng chống tham nhũng", desc: "Viết hoa tên cơ quan." },
+
+    // --- 2. QUY TẮC CHÍNH TẢ (I/Y, L/N, TR/CH) ---
+    // Luật i/y (VD: yêu, yết, yếm đứng đầu)
+    { regex: /\b(iêu|iết|iếm)\b/gi, suggestion: (m: string) => m.replace('i', 'y'), desc: "Âm tiết không có âm đầu thì dùng y thay i." },
+    
+    // Quy tắc l/n (Tránh 'n' đứng đầu vần có âm đệm, ngoại trừ noãn/noa)
+    { regex: /\b(n)(oa|oe|uâ|uy)\b(?!noãn|noa)/gi, suggestion: "l$2", desc: "Chữ n không đứng đầu tiếng có âm đệm (trừ noãn, noa)." },
+
+    // Quy tắc tr/ch (tr không đứng đầu vần có âm đệm)
+    { regex: /\b(tr)(oa|oă|oe|uê)\b/gi, suggestion: "ch$2", desc: "Chữ tr không đứng đầu vần có âm đệm (oa, oă, oe, uê)." },
+
+    // --- 3. QUY TẮC DẤU CÂU & KHOẢNG TRẮNG ---
+    { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước." },
+    { regex: /([.,;:!?])(?=[a-zA-Zà-ỹÀ-Ỹ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
+    { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
+    { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
+    { regex: / {2,}/g, suggestion: " ", desc: "Thừa nhiều khoảng trắng liên tiếp." },
 
         // Typo (Bắt từ viết thường bị kẹt phím)
         {
