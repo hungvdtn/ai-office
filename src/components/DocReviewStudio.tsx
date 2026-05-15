@@ -149,7 +149,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - KIẾN TRÚC 2 LỚP (LAYERED ARCHITECTURE)
+  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - KIẾN TRÚC 2 LỚP CHUYÊN NGHIỆP
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -157,59 +157,71 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
-      
-      const vn = "a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
-      const vnUpper = "A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
 
       // ------------------------------------------------------------------------
       // LỚP 1: RULE ENGINE CỨNG (REGEX) - Dùng cho Kỹ thuật, Dấu câu, Viết hoa
       // ------------------------------------------------------------------------
       const regexRules = [
-        // --- 1. QUY TẮC VIẾT HOA ---
-    // Viết hoa đầu câu
-    { regex: new RegExp(`(?:^|[.?!]\\s+)([${vn}])`, 'g'), suggestion: (m: any) => m[0].toUpperCase(), desc: "Viết hoa sau dấu chấm/xuống dòng." },
-    
-    // Tên cơ quan/địa danh đặc biệt
-    { regex: /(?<=^|[^\p{L}])(thủ đô hà nội)(?=[^\p{L}]|$)/gui, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt." },
-    { regex: /(?<=^|[^\p{L}])(thành phố hồ chí minh)(?=[^\p{L}]|$)/gui, suggestion: "Thành phố Hồ Chí Minh", desc: "Viết hoa đặc biệt." },
-    { regex: /(?<=^|[^\p{L}])(đảng cộng sản việt nam)(?=[^\p{L}]|$)/gui, suggestion: "Đảng Cộng sản Việt Nam", desc: "Tên tổ chức đặc biệt." },
-    { regex: /(?<=^|[^\p{L}])(ban chỉ đạo trung ương về phòng chống tham nhũng)(?=[^\p{L}]|$)/gui, suggestion: "Ban Chỉ đạo trung ương về Phòng chống tham nhũng", desc: "Viết hoa tên cơ quan." },
-
-    // --- 2. QUY TẮC CHÍNH TẢ (I/Y, L/N, TR/CH) ---
-    // Luật i/y (VD: yêu, yết, yếm đứng đầu)
-    { regex: /\b(iêu|iết|iếm)\b/gi, suggestion: (m: string) => m.replace('i', 'y'), desc: "Âm tiết không có âm đầu thì dùng y thay i." },
-    
-    // Quy tắc l/n (Tránh 'n' đứng đầu vần có âm đệm, ngoại trừ noãn/noa)
-    { regex: /\b(n)(oa|oe|uâ|uy)\b(?!noãn|noa)/gi, suggestion: "l$2", desc: "Chữ n không đứng đầu tiếng có âm đệm (trừ noãn, noa)." },
-
-    // Quy tắc tr/ch (tr không đứng đầu vần có âm đệm)
-    { regex: /\b(tr)(oa|oă|oe|uê)\b/gi, suggestion: "ch$2", desc: "Chữ tr không đứng đầu vần có âm đệm (oa, oă, oe, uê)." },
-
-    // --- 3. QUY TẮC DẤU CÂU & KHOẢNG TRẮNG ---
-    { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước." },
-    { regex: /([.,;:!?])(?=[a-zA-Zà-ỹÀ-Ỹ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
-    { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
-    { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
-    { regex: / {2,}/g, suggestion: " ", desc: "Thừa nhiều khoảng trắng liên tiếp." },
-
-        // Typo (Bắt từ viết thường bị kẹt phím)
-        {
-          regex: /(?<=^|[^a-zA-Zà-ỹÀ-Ỹ])([a-zà-ỹ]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)(?=[^a-zA-Zà-ỹÀ-Ỹ]|$)/g,
-          suggestion: (m: any) => m[0].replace(/([bcdđghklmnpqrstvx])\1+/g, '$1'),
-          desc: "Lỗi đánh máy: Thừa ký tự phụ âm liền kề."
+        // 1. LỖI THIẾU DẤU KẾT THÚC CÂU / ĐOẠN VĂN
+        { 
+            regex: /([\p{L}0-9])([ \t]*\n[ \t]*)(?=[\p{Lu}A-ZÀ-ỸĐ])/gu, 
+            suggestion: "$1.$2", 
+            desc: "Lỗi dấu câu: Cuối đoạn hoặc trước khi sang câu mới cần có dấu kết thúc câu (dấu chấm)." 
         },
 
-        // Thể thức NĐ 30
-        { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
-        { regex: / Điểm /g, suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
+        // 2. DANH TỪ RIÊNG PHỔ BIẾN
+        { regex: /(?<=^|[^\p{L}])(quốc hội)(?=[^\p{L}]|$)/gui, suggestion: "Quốc hội", desc: "Viết hoa danh từ riêng phổ biến." },
+        { regex: /(?<=^|[^\p{L}])(chính phủ)(?=[^\p{L}]|$)/gui, suggestion: "Chính phủ", desc: "Viết hoa danh từ riêng phổ biến." },
+        { regex: /(?<=^|[^\p{L}])(thủ tướng chính phủ)(?=[^\p{L}]|$)/gui, suggestion: "Thủ tướng Chính phủ", desc: "Viết hoa danh từ riêng phổ biến." },
+        { regex: /(?<=^|[^\p{L}])(nhà nước)(?=[^\p{L}]|$)/gui, suggestion: "Nhà nước", desc: "Viết hoa danh từ riêng phổ biến." },
+        { regex: /(?<=^|[^\p{L}])(bộ giáo dục và đào tạo)(?=[^\p{L}]|$)/gui, suggestion: "Bộ Giáo dục và Đào tạo", desc: "Viết hoa tên cơ quan." },
+
+        // 3. LỖI VIẾT HOA SAU DẤU CHẤM PHẨY VÀ DẤU HAI CHẤM
+        {
+            regex: /;\s+([\p{Lu}A-ZÀ-ỸĐ][\p{Ll}a-zà-ỹđ]*)/gu,
+            suggestion: (match: any) => match[0].toLowerCase(),
+            desc: "Quy tắc viết hoa: Không viết hoa sau dấu chấm phẩy (;) trừ khi là danh từ riêng."
+        },
+        {
+            regex: /:\s+([\p{Lu}A-ZÀ-ỸĐ][\p{Ll}a-zà-ỹđ]*)/gu,
+            suggestion: (match: any) => match[0].toLowerCase(),
+            desc: "ĐỀ NGHỊ XEM LẠI: Sau dấu hai chấm (:) thường không viết hoa, trừ khi là danh từ riêng, trích dẫn hoặc liệt kê độc lập."
+        },
+
+        // 4. LỖI LẶP TỪ (Ví dụ: hiệu hiệu quả)
+        {
+            regex: /(?<=^|[^\p{L}])([\p{Ll}a-zà-ỹđ]+)\s+\1(?=[^\p{L}]|$)/gui,
+            suggestion: "$1",
+            exclude: ["luôn luôn", "nhè nhẹ", "ào ào", "rào rào", "song song", "dần dần", "từ từ", "mãi mãi", "đùng đùng", "rành rành"], 
+            desc: "Lỗi lặp từ: Hai từ giống hệt nhau đứng liền kề."
+        },
+
+        // 5. LỖI DẤU CÂU & KHOẢNG TRẮNG CƠ BẢN
+        { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước." },
+        { regex: /([.,;:!?])(?=[\p{L}])/gu, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
+        { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
+        { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
+        { regex: /(?<=[\p{L}0-9.,;:!?\)\]"']) {2,}(?=[\p{L}0-9\(\["'])/gu, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
+
+        // 6. LỖI THỪA KÝ TỰ PHỤ ÂM
+        {
+          regex: /(?<=^|[^a-zA-Zà-ỹÀ-Ỹ])([a-zà-ỹ]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)(?=[^a-zA-Zà-ỹÀ-Ỹ]|$)/g,
+          suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/g, '$1'),
+          desc: "Lỗi đánh máy: Thừa ký tự phụ âm liền kề."
+        },
+        
+        // 7. THỂ THỨC ĐẶC BIỆT
+        { regex: / Khoản /g, original: " Khoản ", suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
+        { regex: / Điểm /g, original: " Điểm ", suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
       ];
 
-      // Chạy Lớp 1 (Regex)
       regexRules.forEach(rule => {
         let match; 
         const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
         while ((match = loopRegex.exec(text)) !== null) {
           const originalText = match[0];
+          if (rule.exclude && rule.exclude.includes(originalText.toLowerCase().trim())) continue;
+
           let suggestedText = "";
           if (typeof rule.suggestion === 'function') suggestedText = rule.suggestion(match);
           else if (typeof rule.suggestion === 'string' && rule.suggestion.includes('$')) {
@@ -223,34 +235,47 @@ export default function DocReviewStudio() {
       });
 
       // ------------------------------------------------------------------------
-      // LỚP 2: TỪ ĐIỂN NGỮ CẢNH (JSON DICTIONARY) - Dùng cho l/n, ch/tr, s/x, i/y
+      // LỚP 2: TỪ ĐIỂN LỖI CHÍNH TẢ PHỔ BIẾN (ch/tr, l/n, s/x, dấu thanh)
       // ------------------------------------------------------------------------
-      // Đây là nơi Bạn có thể thoải mái thêm hàng ngàn từ sai vào mảng "wrong" mà không sợ lỗi code
       const dictionaryRules = [
-        { right: "sản xuất", wrong: ["sản suất", "sản suât", "sản xuât"], type: "chinh-ta", desc: "Sai phụ âm s/x hoặc dấu thanh." },
-        { right: "trung thực", wrong: ["chung thực"], type: "chinh-ta", desc: "Sai phụ âm ch/tr." },
-        { right: "cọ xát", wrong: ["cọ sát", "cọ xát"], type: "chinh-ta", desc: "Sai từ vựng s/x." },
-        { right: "bát ngát", wrong: ["bách ngát"], type: "chinh-ta", desc: "Sai vần ch/t." },
-        { right: "chẳng lẽ", wrong: ["chẵng lẻ", "chẳng lẻ", "chẵng lẽ"], type: "chinh-ta", desc: "Sai dấu hỏi/ngã." },
-        { right: "nỗi lo", wrong: ["nổi lo"], type: "chinh-ta", desc: "Sai dấu hỏi/ngã." },
-        { right: "đánh giá", wrong: ["đanh giá", "đánh gia", "đanh gia"], type: "chinh-ta", desc: "Sai/thiếu dấu thanh." },
-        { right: "phát triển", wrong: ["phat triển", "phát triên", "phát trien", "phat trien"], type: "chinh-ta", desc: "Sai/thiếu dấu thanh." },
-        { right: "chính sách", wrong: ["chinh sách", "chính sach", "chinh sach"], type: "chinh-ta", desc: "Thiếu dấu thanh." },
-        { right: "giáo dục", wrong: ["giá dục", "giao dục", "giáo dụcc"], type: "chinh-ta", desc: "Sai từ vựng/chính tả." },
-        { right: "kinh tế", wrong: ["kinh tê", "kính tế", "kinh tề"], type: "chinh-ta", desc: "Sai dấu thanh." },
-        { right: "nghiên cứu", wrong: ["ngiên cứu", "nghiên cưu"], type: "chinh-ta", desc: "Sai chính tả ng/ngh hoặc dấu thanh." }
+        // s / x
+        { right: "sản xuất", wrong: ["sản suất", "sản xuât"], type: "chinh-ta", desc: "Sai chính tả (s/x)." },
+        { right: "xuất sắc", wrong: ["xuất xắc", "suất sắc"], type: "chinh-ta", desc: "Sai chính tả (s/x)." },
+        { right: "sắp xếp", wrong: ["xắp xếp", "sắp sếp", "xắp sếp"], type: "chinh-ta", desc: "Sai chính tả (s/x)." },
+        { right: "xem xét", wrong: ["xem sét"], type: "chinh-ta", desc: "Sai chính tả (s/x)." },
+        { right: "sát sao", wrong: ["xát xao", "sát xao", "xát sao"], type: "chinh-ta", desc: "Sai chính tả (s/x)." },
+        { right: "bổ sung", wrong: ["bổ xung"], type: "chinh-ta", desc: "Sai chính tả (s/x)." },
+        
+        // ch / tr
+        { right: "trung thực", wrong: ["chung thực"], type: "chinh-ta", desc: "Sai chính tả (ch/tr)." },
+        { right: "trao đổi", wrong: ["chao đổi"], type: "chinh-ta", desc: "Sai chính tả (ch/tr)." },
+        { right: "trân trọng", wrong: ["chân trọng"], type: "chinh-ta", desc: "Sai chính tả (ch/tr)." },
+        { right: "chi cục", wrong: ["tri cục"], type: "chinh-ta", desc: "Sai chính tả (ch/tr)." },
+        { right: "chỉ đạo", wrong: ["trỉ đạo"], type: "chinh-ta", desc: "Sai chính tả (ch/tr)." },
+        { right: "trình độ", wrong: ["chình độ"], type: "chinh-ta", desc: "Sai chính tả (ch/tr)." },
+
+        // l / n
+        { right: "năng lực", wrong: ["lăng lực"], type: "chinh-ta", desc: "Sai chính tả (l/n)." },
+        { right: "lý luận", wrong: ["ný luận"], type: "chinh-ta", desc: "Sai chính tả (l/n)." },
+        { right: "nỗ lực", wrong: ["lỗ lực"], type: "chinh-ta", desc: "Sai chính tả (l/n)." },
+        { right: "lên đường", wrong: ["nên đường"], type: "chinh-ta", desc: "Sai chính tả (l/n)." },
+
+        // Từ vựng & Dấu thanh đặc biệt
+        { right: "nghìn", wrong: ["nghàn"], type: "chinh-ta", desc: "Sai chính tả (Từ 'nghàn' không hợp lệ)." },
+        { right: "đánh giá", wrong: ["đanh giá", "đánh gia", "đanh gia"], type: "chinh-ta", desc: "Thiếu/sai dấu thanh." },
+        { right: "phát triển", wrong: ["phat triển", "phát triên", "phat trien"], type: "chinh-ta", desc: "Thiếu/sai dấu thanh." },
+        { right: "chính sách", wrong: ["chinh sách", "chính sach"], type: "chinh-ta", desc: "Thiếu dấu thanh." },
+        { right: "giáo dục", wrong: ["giá dục"], type: "chinh-ta", desc: "Sai chính tả." }
       ];
 
-      // Chạy Lớp 2 (Từ điển)
       dictionaryRules.forEach(rule => {
           rule.wrong.forEach(wrongWord => {
-              // Dùng Regex đơn giản chỉ để tìm CHÍNH XÁC cụm từ đó trong văn bản (không phân biệt hoa thường)
               const searchRegex = new RegExp(`(?<=^|[^\\p{L}])${wrongWord}(?=[^\\p{L}]|$)`, 'gui');
               let match;
               while ((match = searchRegex.exec(text)) !== null) {
-                  // Giữ nguyên cách viết hoa của từ gốc (Ví dụ: nếu gốc là "Sản suất" thì sửa thành "Sản xuất")
                   const originalText = match[0];
                   let suggestedText = rule.right;
+                  // Tự động giữ nguyên định dạng viết hoa của từ gốc
                   if (originalText[0] === originalText[0].toUpperCase()) {
                       suggestedText = suggestedText.charAt(0).toUpperCase() + suggestedText.slice(1);
                   }
@@ -260,13 +285,13 @@ export default function DocReviewStudio() {
           });
       });
 
-      // Lọc bỏ các lỗi trùng lặp (nếu Lớp 1 và Lớp 2 vô tình bắt trùng 1 chữ)
+      // Lọc bỏ lỗi trùng lặp
       const uniqueErrors = Array.from(new Set(foundErrors.map(e => e.original)))
           .map(original => foundErrors.find(e => e.original === original))
           .filter(e => e && e.original.length > 0) as TextError[];
 
       setErrors(uniqueErrors); setStep('review');
-    }, 500); // Tốc độ xử lý từ điển tĩnh cực nhanh (0.5 giây)
+    }, 500); 
   };
 
   const startReview = async (mode: 'offline' | 'ai') => {
