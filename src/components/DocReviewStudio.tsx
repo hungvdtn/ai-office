@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// GỌI 2 FILE TỪ ĐIỂN TỪ BÊN NGOÀI
+// GỌI 2 FILE TỪ ĐIỂN TỪ BÊN NGOÀI (Cấu trúc của Bạn được giữ nguyên)
 import hoaTuDien from '../data/hoa_tu_dien.json';
 import chinhTaTuDien from '../data/chinh_ta_tu_dien.json';
 
@@ -33,7 +33,7 @@ export default function DocReviewStudio() {
   const removeSelectedFile = () => { setSelectedFileName(''); setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN (ĐÃ BỔ SUNG LỆNH BẮT DẤU CHẤM CÂU)
+  // 1. ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN (ĐÃ UPDATE LUẬT TIÊU ĐỀ)
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
@@ -58,8 +58,6 @@ export default function DocReviewStudio() {
 
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
-          
-          // ĐÃ CẬP NHẬT CÂU LỆNH ĐỂ AI BẮT LỖI DẤU CHẤM CÂU
           const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính.
           TUYỆT ĐỐI BỎ QUA CÁC LỖI SAU:
           1. Lỗi thừa/thiếu khoảng trắng giữa các từ.
@@ -68,7 +66,7 @@ export default function DocReviewStudio() {
 
           CHỈ BẮT 3 LOẠI LỖI SAU:
           1. "chinh-ta": Sai chính tả nặng, thiếu dấu thanh làm từ vô nghĩa.
-          2. "the-thuc": Viết hoa sai (Lưu ý: không viết hoa 'khoản', 'điểm' giữa câu) VÀ LỖI THIẾU DẤU CHẤM KẾT THÚC CÂU HOẶC ĐOẠN VĂN.
+          2. "the-thuc": Viết hoa sai (Lưu ý: không viết hoa 'khoản', 'điểm' giữa câu) VÀ LỖI THIẾU DẤU CHẤM KẾT THÚC CÂU HOẶC ĐOẠN VĂN. (Lưu ý quan trọng: KHÔNG bắt lỗi thiếu dấu chấm đối với các tiêu đề mục lục như I, II, 1, 2, a, b, -, + hoặc các tiêu đề ngắn).
           3. "ngu-phap": Lủng củng, dùng từ không chuẩn mực.
 
           YÊU CẦU: Trả về MẢNG JSON hợp lệ. [ { "original": "từ/đoạn sai", "suggestion": "từ/đoạn đúng", "type": "the-thuc", "description": "Lý do" } ]
@@ -83,18 +81,16 @@ export default function DocReviewStudio() {
               const parsedData = JSON.parse(rawJson);
               let chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
               
-              // BỘ LỌC CHỐNG ẢO GIÁC
               chunkErrors = chunkErrors.filter((err: any) => {
                   const orig = (err.original || "").toString().trim();
                   const sugg = (err.suggestion || "").toString().trim();
                   if (!orig || orig.length < 2) return false;
                   if (orig === sugg) return false; 
                   
-                  // Cho phép báo lỗi nếu sự khác biệt chỉ là dấu chấm câu ở cuối
                   const origNorm = orig.normalize('NFC').toLowerCase();
                   const suggNorm = sugg.normalize('NFC').toLowerCase();
                   if (origNorm === suggNorm) return false; 
-                  if (origNorm + "." === suggNorm) return true; // Hợp lệ nếu AI đề xuất thêm dấu chấm
+                  if (origNorm + "." === suggNorm) return true; // Hợp lệ nếu AI thêm dấu chấm
 
                   return true;
               });
@@ -113,10 +109,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT OFFLINE - ĐÃ TÍCH HỢP CHUẨN UNICODE MỚI NHẤT
-  // ============================================================================
-  // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT OFFLINE - ĐÃ FIX LỖI SẬP VÒNG LẶP TỪ ĐIỂN
+  // 2. ĐỘNG CƠ RÀ SOÁT OFFLINE - ĐÃ FIX LỖI TIÊU ĐỀ VÀ TỪ ĐIỂN
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -125,15 +118,13 @@ export default function DocReviewStudio() {
       let foundErrors: TextError[] = [];
       let errCount = 0;
 
-      // ------------------------------------------------------------------------
-      // LỚP 1: QUY TẮC CỨNG (REGEX) - Bắt dấu câu, lặp từ, kẹt phím
-      // ------------------------------------------------------------------------
       const regexRules = [
-        // 1. THIẾU DẤU KẾT THÚC CÂU / ĐOẠN VĂN
+        // 1. THIẾU DẤU KẾT THÚC CÂU / ĐOẠN VĂN (Đã loại trừ tiêu đề)
         { 
-            regex: /([\p{L}\p{M}0-9]+[)\]"']?)([ \t]*)(\n+|$)/gu, 
-            suggestion: (m: any, p1: string, p2: string, p3: string) => p1 + "." + p2 + p3, 
-            desc: "Lỗi dấu câu: Cuối đoạn hoặc câu hoàn chỉnh cần có dấu kết thúc." 
+            // Giải thích regex: Bỏ qua dòng bắt đầu bằng I, II, 1, a, -, +. Dòng phải dài hơn 15 ký tự để tránh các Tiêu đề ngắn (như "BÁO CÁO")
+            regex: /^([ \t]*)(?!(?:[IVXLCDM]+|[0-9]+|[a-zđA-ZĐ])\s*[.)]|[-+])(.{15,}?[\p{L}\p{M}0-9])([ \t]*)$/gmu, 
+            suggestion: "$1$2.$3", 
+            desc: "Lỗi dấu câu: Cuối đoạn hoặc câu hoàn chỉnh cần có dấu kết thúc (đã loại trừ tiêu đề)." 
         },
         // 2. LỖI VIẾT HOA SAU DẤU CÂU
         {
@@ -146,7 +137,7 @@ export default function DocReviewStudio() {
             suggestion: (m: any, p1: string, p2: string) => ":" + p1 + p2.toLowerCase(),
             desc: "ĐỀ NGHỊ XEM LẠI: Thường không viết hoa sau dấu hai chấm (:), trừ danh từ riêng hoặc liệt kê độc lập."
         },
-        // 3. LỖI LẶP TỪ (hiệu hiệu)
+        // 3. LỖI LẶP TỪ
         {
             regex: /(^|[^\p{L}\p{M}])([\p{Ll}\p{M}]+)\s+\2(?=[^\p{L}\p{M}]|$)/gui,
             suggestion: (m: any, p1: string, p2: string) => p1 + p2,
@@ -187,45 +178,38 @@ export default function DocReviewStudio() {
         }
       });
 
-      // ------------------------------------------------------------------------
-      // LỚP 2: TỪ ĐIỂN CỨNG (ĐÃ TÁCH RỜI HAI FILE JSON ĐỂ TRÁNH LỖI)
-      // ------------------------------------------------------------------------
+      // KẾT NỐI TỪ ĐIỂN JSON (Đã khóa chặt ranh giới từ để bảo vệ chữ "ngành")
       const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      // 2.1 Xử lý Từ điển Viết Hoa
       hoaTuDien.forEach((item: any) => {
-          const searchRegex = new RegExp(`(^|[^\\p{L}\\p{M}])(${escapeRegExp(item.original)})(?=[^\\p{L}\\p{M}]|$)`, 'gui');
+          const searchRegex = new RegExp(`(^|[^\\p{L}\\p{M}])(${escapeRegExp(item.original)})(?![\\p{L}\\p{M}])`, 'gui');
           let match;
           while ((match = searchRegex.exec(text)) !== null) {
               const originalText = match[2]; 
-              if (originalText === item.suggestion) continue; // Bỏ qua nếu người dùng đã viết đúng chính xác hoa/thường
-              
+              if (originalText === item.suggestion) continue; 
               foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: item.suggestion, type: 'the-thuc', description: item.desc || "Lỗi viết hoa danh từ riêng.", status: 'pending' });
           }
       });
 
-      // 2.2 Xử lý Từ điển Chính tả (ch/tr, l/n, dấu thanh...)
       chinhTaTuDien.forEach((rule: any) => {
-          if (!rule.wrong || !Array.isArray(rule.wrong)) return; // Bảo vệ an toàn chống lỗi sập web
+          if (!rule.wrong || !Array.isArray(rule.wrong)) return; 
           rule.wrong.forEach((wrongWord: string) => {
-              const searchRegex = new RegExp(`(^|[^\\p{L}\\p{M}])(${escapeRegExp(wrongWord)})(?=[^\\p{L}\\p{M}]|$)`, 'gui');
+              // (?![\\p{L}\\p{M}]) đảm bảo phía sau từ bị sai KHÔNG được có thêm chữ cái nào nữa (Bảo vệ chữ ngành)
+              const searchRegex = new RegExp(`(^|[^\\p{L}\\p{M}])(${escapeRegExp(wrongWord)})(?![\\p{L}\\p{M}])`, 'gui');
               let match;
               while ((match = searchRegex.exec(text)) !== null) {
                   const originalText = match[2]; 
                   if (originalText.toLowerCase() === rule.right.toLowerCase()) continue;
                   
                   let suggestedText = rule.right;
-                  // Tự động điều chỉnh chữ hoa chữ thường theo từ gốc
                   if (originalText[0] === originalText[0].toUpperCase()) {
                       suggestedText = suggestedText.charAt(0).toUpperCase() + suggestedText.slice(1);
                   }
-
                   foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: rule.type || 'chinh-ta', description: rule.desc || "Sai chính tả.", status: 'pending' });
               }
           });
       });
 
-      // Lọc bỏ các lỗi bị bắt trùng lặp
       const uniqueErrors = Array.from(new Set(foundErrors.map(e => e.original))).map(original => foundErrors.find(e => e.original === original)).filter(e => e && e.original.length > 0) as TextError[];
       setErrors(uniqueErrors); setStep('review');
     }, 500); 
@@ -244,7 +228,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // GIAO DIỆN HIỂN THỊ ĐỒNG BỘ 100%
+  // 3. GIAO DIỆN HIỂN THỊ (ĐÃ FIX LỖI MÃ HTML BỊ LẪN VÀO VĂN BẢN)
   // ============================================================================
   const escapeRegExpUI = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -254,7 +238,9 @@ export default function DocReviewStudio() {
 
     sortedErrors.forEach(err => {
       if (!err.original) return;
-      const regex = new RegExp(escapeRegExpUI(err.original), 'g'); 
+      
+      // (?![^<]*>) BỘ LỌC CHÂN KHÔNG: Chỉ thay thế chữ nằm ngoài các thẻ HTML để tránh làm nát giao diện
+      const regex = new RegExp(escapeRegExpUI(err.original) + '(?![^<]*>)', 'g'); 
       
       if (err.status === 'pending') {
         const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 rounded-sm transition-all ${activeErrorId === err.id ? 'ring-1 ring-rose-500 bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
