@@ -169,7 +169,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // 1. ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - ĐÃ CẬP NHẬT THƯ VIỆN CHUẨN
+  // 1. ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - ĐÃ HIỆU ĐÍNH THEO Ý NGƯỜI DÙNG
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -178,45 +178,34 @@ export default function DocReviewStudio() {
       let foundErrors: TextError[] = [];
       let errCount = 0;
       const vn = "a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
+      const vnUpper = "A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
 
       const rules = [
-        // I. QUY TẮC VIẾT HOA ĐẶC BIỆT
-        { regex: /(?<=^|[^\p{L}])(thủ đô hà nội)(?=[^\p{L}]|$)/gui, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt tên địa danh." },
-        { regex: /(?<=^|[^\p{L}])(thành phố hồ chí minh)(?=[^\p{L}]|$)/gui, suggestion: "Thành phố Hồ Chí Minh", desc: "Viết hoa đặc biệt tên địa danh." },
-        { regex: /(?<=^|[^\p{L}])(đảng cộng sản việt nam)(?=[^\p{L}]|$)/gui, suggestion: "Đảng Cộng sản Việt Nam", desc: "Viết hoa tên cơ quan, tổ chức." },
+        // I. ĐẶT DẤU THANH (Theo yêu cầu: hóa, hòa, thủy là ĐÚNG)
+        { regex: /oá/g, suggestion: "óa", desc: "Dấu thanh đặt ở âm đầu vần 'oa' theo chuẩn của Bạn. " },
+        { regex: /oà/g, suggestion: "hòa", desc: "Dấu thanh đặt ở âm đầu vần 'oa'. " },
+        { regex: /uỷ/g, suggestion: "uỷ", desc: "Dấu thanh đặt ở âm đầu vần 'uy'. " },
 
-        // II. QUY TẮC DẤU THANH (hóa -> hoá) - BẮT TRỌN CẢ TỪ
-        { 
-          regex: /(?<=^|[^\p{L}])\p{L}*(óa|òa|ỏa|õa|ọa|óe|òe|ỏe|õe|ọe|úy|ùy|ủy|ũy|ụy|úê|ùê|ủê|ũê|ụê)\p{L}*(?=[^\p{L}]|$)/gui, 
-          suggestion: (match: any) => match[0]
-            .replace(/óa/g, 'oá').replace(/òa/g, 'oà').replace(/ỏa/g, 'oả').replace(/õa/g, 'oã').replace(/ọa/g, 'oạ')
-            .replace(/óe/g, 'oé').replace(/òe/g, 'oè').replace(/ỏe/g, 'oẻ').replace(/õe/g, 'oẽ').replace(/ọe/g, 'oẹ')
-            .replace(/úy/g, 'uý').replace(/ùy/g, 'uỳ').replace(/ủy/g, 'uỷ').replace(/ũy/g, 'uỹ').replace(/ụy/g, 'uỵ')
-            .replace(/úê/g, 'uế').replace(/ùê/g, 'uề').replace(/ủê/g, 'uể').replace(/ũê/g, 'uễ').replace(/ụê/g, 'uệ'),
-          desc: "Quy tắc dấu thanh: Đặt dấu ở âm chính (ví dụ: hoá, thuỷ)." 
-        },
+        // II. LỖI KỸ THUẬT DẤU CÂU & KHOẢNG TRẮNG 
+        { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước. " },
+        { regex: /([.,;:!?])(?=[a-zA-Zà-ỹÀ-Ỹ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu. " },
+        { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải. " },
+        { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái. " },
+        { regex: / {2,}/g, suggestion: " ", desc: "Thừa nhiều khoảng trắng liên tiếp. " },
 
-        // III. LỖI ĐÁNH MÁY (TYPO) - CÓ BỘ LỌC GDNN, SKILL
+        // III. LỖI TYPO (Chỉ bắt từ viết thường, bỏ qua TTg, GDNN, Skill)
         {
-          regex: /(?<=^|[^\p{L}])\p{L}*(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})\p{L}*(?=[^\p{L}]|$)/gui,
-          suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/gi, '$1'),
-          desc: "Lỗi đánh máy: Thừa ký tự phụ âm liền kề."
+          // Chỉ bắt lỗi lặp chữ nếu toàn bộ từ là chữ thường (lowercase)
+          regex: /(?<=^|[^a-zA-Zà-ỹÀ-Ỹ])([a-zà-ỹ]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)(?=[^a-zA-Zà-ỹÀ-Ỹ]|$)/g,
+          suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/g, '$1'),
+          desc: "Lỗi đánh máy: Thừa ký tự phụ âm viết thường."
         },
-        
-        // IV. QUY TẮC DẤU CÂU VÀ KHOẢNG TRẮNG
-        { regex: / +([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải sát từ phía trước." },
-        { regex: /([(\["']) +/g, suggestion: "$1", desc: "Dấu mở ngoặc phải sát từ bên phải." },
-        { regex: / +([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc phải sát từ bên trái." },
-        { regex: /(?<=[\p{L}0-9.,;:!?\)\]"']) {2,}(?=[\p{L}0-9\(\["'])/gu, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
 
-        // V. TỪ ĐIỂN CỤM TỪ (N-GRAM) - GIẢI QUYẾT LỖI "LUẬT GIÁ DỤC", "CHINH SÁCH"
-        { regex: /(?<=^|[^\p{L}])(chinh sách)(?=[^\p{L}]|$)/gui, suggestion: "chính sách", desc: "Thiếu dấu thanh trong cụm từ 'chính sách'." },
-        { regex: /(?<=^|[^\p{L}])(giá dục)(?=[^\p{L}]|$)/gui, suggestion: "giáo dục", desc: "Sai chính tả cụm từ 'giáo dục'." },
-        { regex: /(?<=^|[^\p{L}])(phat triển|phát trien|phat trien)(?=[^\p{L}]|$)/gui, suggestion: "phát triển", desc: "Sai/thiếu dấu thanh cụm từ 'phát triển'." },
-
-        // VI. NGHỊ ĐỊNH 30/2020
-        { regex: / Khoản /g, original: " Khoản ", suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
-        { regex: / Điểm /g, original: " Điểm ", suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
+        // IV. TỪ ĐIỂN CỤM TỪ (Bắt các lỗi ngữ cảnh Offline)
+        { regex: /đanh giá/gi, suggestion: "đánh giá", desc: "Thiếu dấu thanh trong cụm từ." },
+        { regex: /phat triển/gi, suggestion: "phát triển", desc: "Thiếu dấu thanh trong cụm từ." },
+        { regex: /chinh sách/gi, suggestion: "chính sách", desc: "Thiếu dấu thanh trong cụm từ." },
+        { regex: /giá dục/gi, suggestion: "giáo dục", desc: "Sai chính tả cụm từ 'giáo dục'." }
       ];
 
       rules.forEach(rule => {
@@ -224,26 +213,18 @@ export default function DocReviewStudio() {
         const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
         while ((match = loopRegex.exec(text)) !== null) {
           const originalText = match[0];
-          const cleanText = originalText.trim().toLowerCase();
-
-          // MÀNG LỌC THÔNG MINH: Bỏ qua viết tắt GDNN, TTg và tiếng Anh Skill
-          if (/^[A-ZĐ]+$/.test(originalText.trim())) continue; 
-          if (/[fwjz]/i.test(cleanText) || /ll$|ss$/i.test(cleanText)) continue;
-          if (!/[a-zà-ỹ]/i.test(cleanText)) continue; 
-
           let suggestedText = "";
           if (typeof rule.suggestion === 'function') suggestedText = rule.suggestion(match);
           else if (typeof rule.suggestion === 'string' && rule.suggestion.includes('$')) {
-              const replaceRegex = new RegExp(rule.regex.source, rule.regex.flags.replace('g', ''));
-              suggestedText = originalText.replace(replaceRegex, rule.suggestion);
+              suggestedText = originalText.replace(new RegExp(rule.regex.source, rule.regex.flags.replace('g', '')), rule.suggestion);
           } else suggestedText = rule.suggestion;
 
-          if (originalText.trim() === suggestedText.trim()) continue;
+          if (originalText === suggestedText) continue;
 
           foundErrors.push({ 
               id: `off_${errCount++}`, 
-              original: originalText.replace(/\n/g, ''), 
-              suggestion: suggestedText.replace(/\n/g, ''), 
+              original: originalText, 
+              suggestion: suggestedText, 
               type: 'chinh-ta', 
               description: rule.desc, 
               status: 'pending' 
@@ -257,22 +238,17 @@ export default function DocReviewStudio() {
   const startReview = async (mode: 'offline' | 'ai') => {
     let content = inputType === 'paste' ? pasteText : "";
     if (inputType === 'upload') {
-      if (!selectedFile) return alert("Vui lòng tải file Word (.docx) lên trước!");
-      try {
-        const arrayBuffer = await selectedFile.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        content = result.value;
-      } catch (e) {
-        return alert("Lỗi trích xuất chữ từ file Word.");
-      }
+      if (!selectedFile) return alert("Vui lòng tải file!");
+      const result = await mammoth.extractRawText({ arrayBuffer: await selectedFile.arrayBuffer() });
+      content = result.value;
     }
-    if (!content.trim()) return alert("Nội dung văn bản trống!");
+    if (!content.trim()) return alert("Nội dung trống!");
     setDocumentText(content);
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
   };
 
   // ============================================================================
-  // 2. HIỂN THỊ GIAO DIỆN VĂN BẢN (ĐỒNG NHẤT VỚI AI, KHÔNG NHẢY CHỮ)
+  // 2. GIAO DIỆN HIỂN THỊ (ĐỒNG NHẤT 1 MÀU NHƯ AI - KHÔNG DÃN CHỮ)
   // ============================================================================
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -282,13 +258,14 @@ export default function DocReviewStudio() {
 
     sortedErrors.forEach(err => {
       if (!err.original) return;
-      const regex = new RegExp(escapeRegExp(err.original), 'gi'); 
+      const regex = new RegExp(escapeRegExp(err.original), 'g'); 
       
       if (err.status === 'pending') {
-        const span = `<span id="text-error-${err.id}" class="bg-rose-500/30 rounded-sm transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 bg-rose-500/50' : 'hover:bg-rose-500/50 cursor-pointer'}" data-id="${err.id}">$&</span>`;
+        // Đồng bộ màu đỏ nhạt (20%) duy nhất. ring-1 tạo viền ảo không làm dãn chữ.
+        const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 rounded-sm transition-all ${activeErrorId === err.id ? 'ring-1 ring-rose-500 bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
         highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
-        const span = `<span class="bg-emerald-500/30 rounded-sm transition-all">${err.suggestion}</span>`;
+        const span = `<span class="bg-emerald-500/20 text-emerald-400 rounded-sm">${err.suggestion}</span>`;
         highlightedText = highlightedText.replace(regex, span);
       }
     });
