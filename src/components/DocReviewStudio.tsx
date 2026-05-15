@@ -322,7 +322,11 @@ export default function DocReviewStudio() {
 
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  // HIỂN THỊ GIAO DIỆN VĂN BẢN TRỰC QUAN
+  // ============================================================================
+  // HIỂN THỊ GIAO DIỆN VĂN BẢN
+  // ============================================================================
+  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   const renderDocumentText = () => {
     let highlightedText = documentText;
     const sortedErrors = [...errors].sort((a, b) => (b.original || "").length - (a.original || "").length);
@@ -332,11 +336,13 @@ export default function DocReviewStudio() {
       const regex = new RegExp(escapeRegExp(err.original), 'gi'); 
       
       if (err.status === 'pending') {
-        // Đã sửa giao diện: Màu nền nhẹ, bỏ gạch chân. Thêm ring sáng khi được click.
-        const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 text-rose-300 px-1 rounded transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)] bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
+        // Đã xóa 'px-1' và 'font-bold' để giữ nguyên 100% kích thước từ.
+        // Sử dụng 'ring-1' (viền ảo) để tạo khung khi click mà không làm đẩy chữ.
+        const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 text-rose-300 transition-colors rounded-sm ${activeErrorId === err.id ? 'ring-1 ring-rose-500 bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
         highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
-        const span = `<span class="bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded transition-all">${err.suggestion}</span>`;
+        // Xóa 'px-1' và 'font-bold' ở từ đã sửa
+        const span = `<span class="bg-emerald-500/20 text-emerald-400 transition-colors rounded-sm">${err.suggestion}</span>`;
         highlightedText = highlightedText.replace(regex, span);
       }
     });
