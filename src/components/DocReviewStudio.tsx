@@ -55,13 +55,12 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN - THUẬT TOÁN CẮT TỪ THÔNG MINH & BỘ LỌC UNICODE
+  // ĐỘNG CƠ RÀ SOÁT AI
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
-    // THUẬT TOÁN CẮT ĐOẠN THÔNG MINH (Không chém đứt ngang từ)
     const CHUNK_SIZE = 15000; 
     const chunks: string[] = [];
     let currentIndex = 0;
@@ -69,12 +68,8 @@ export default function DocReviewStudio() {
     while (currentIndex < fullText.length) {
         let nextIndex = currentIndex + CHUNK_SIZE;
         if (nextIndex < fullText.length) {
-            let lastSpace = fullText.lastIndexOf(' ', nextIndex);
-            let lastNewline = fullText.lastIndexOf('\n', nextIndex);
-            let bestBreak = Math.max(lastSpace, lastNewline);
-            if (bestBreak > currentIndex + (CHUNK_SIZE / 2)) {
-                nextIndex = bestBreak;
-            }
+            let bestBreak = Math.max(fullText.lastIndexOf(' ', nextIndex), fullText.lastIndexOf('\n', nextIndex));
+            if (bestBreak > currentIndex + (CHUNK_SIZE / 2)) nextIndex = bestBreak;
         }
         chunks.push(fullText.substring(currentIndex, nextIndex));
         currentIndex = nextIndex;
@@ -94,18 +89,19 @@ export default function DocReviewStudio() {
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
           
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam.
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính.
+          TUYỆT ĐỐI BỎ QUA CÁC LỖI SAU (Không được báo lỗi):
+          1. Lỗi thừa/thiếu khoảng trắng, dấu câu.
+          2. Từ viết hoa toàn bộ (như GDNN, TTg) hoặc tiếng Anh (Skill).
+          3. Không báo lỗi nếu từ đề xuất giống hệt từ gốc.
+          4. Không tự ý sửa "hóa", "hòa", "thủy" thành "hoá", "hoà", "thuỷ" (đây là cách viết hợp lệ).
 
-          QUY TẮC BẮT LỖI NGHIÊM NGẶT (KHÔNG ĐƯỢC VI PHẠM):
-          1. DẤU THANH (QUAN TRỌNG NHẤT): Tiếng Việt có nhiều bảng mã gõ chữ. TUYỆT ĐỐI BỎ QUA nếu từ gốc đọc lên vẫn đúng nghĩa và không sai dấu rành rành. Không tự ý báo thiếu dấu khi từ đã có dấu.
-          2. CỤM TỪ ĐÚNG: Các cụm từ như "chức năng", "nhiệm vụ", "tập trung", "hệ thống", "tổ chức", "theo quy định", "theo chỉ đạo", "theo đề nghị",v.v... tuyệt đối không được báo lỗi thiếu từ hay tự ý đề xuất cụm từ khác nếu nó đang hợp lý.
-          3. KHOẢNG TRẮNG: KHÔNG BỎ QUA các lỗi về khoảng trắng giữa các từ.
-          4. BỎ QUA: Lỗi gạch đầu dòng
-          5. TUÂN THỦ NGHIÊM NGẶT NGHỊ ĐỊNH 30/2020, ví dụ như: 
-             - KHÔNG viết hoa các chữ "khoản", "điểm" giữa câu.
-             - VIẾT HOA các chữ: "Luật", "Nghị định", "Nghị quyết", "Điều".
+          CHỈ BẮT 3 LOẠI LỖI:
+          1. "chinh-ta": Sai chính tả nặng (sai ch/tr, s/x, l/n), thiếu dấu thanh làm từ vô nghĩa.
+          2. "the-thuc": Viết hoa sai (Lưu ý NĐ 30: không viết hoa 'khoản', 'điểm' giữa câu).
+          3. "ngu-phap": Lủng củng, dùng từ không chuẩn mực.
 
-          YÊU CẦU ĐẦU RA: Trả về MẢNG JSON hợp lệ. Chỉ báo lỗi khi CHẮC CHẮN sai chính tả (sai ch/tr, s/x, l/n, thiếu/thừa ký tự làm vô nghĩa).
+          YÊU CẦU: Trả về MẢNG JSON hợp lệ.
           [ { "original": "từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
           
           ĐOẠN VĂN BẢN:
@@ -120,40 +116,24 @@ export default function DocReviewStudio() {
               const parsedData = JSON.parse(rawJson);
               let chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
               
-              // BỘ LỌC CỨNG: ÉP CHUẨN UNICODE NFC ĐỂ LOẠI BỎ LỖI DẤU THANH ẢO GIÁC
               chunkErrors = chunkErrors.filter((err: any) => {
                   const orig = (err.original || "").toString().trim();
                   const sugg = (err.suggestion || "").toString().trim();
-                  
-                  if (!orig || orig.length < 2) return false; // Bỏ qua nếu lỗi chỉ là 1 dấu câu/chữ cái
-                  
-                  // Chuyển về cùng 1 hệ mã Unicode NFC để so sánh
-                  const origNorm = orig.normalize('NFC').toLowerCase();
-                  const suggNorm = sugg.normalize('NFC').toLowerCase();
-                  
-                  // Bỏ qua nếu sau khi chuẩn hóa, từ gốc và từ đề xuất giống hệt nhau
-                  if (origNorm === suggNorm) return false;
-                  
+                  if (!orig || orig.length < 2) return false;
+                  if (orig.normalize('NFC').toLowerCase() === sugg.normalize('NFC').toLowerCase()) return false;
                   return true;
               });
 
               allErrors = [...allErrors, ...chunkErrors];
-              
-              if (i < chunks.length - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 4000)); // Nghỉ 4s tránh quá tải API
-              }
+              if (i < chunks.length - 1) await new Promise(resolve => setTimeout(resolve, 4000));
           } catch (chunkErr: any) {
-              const errMsg = chunkErr?.message || chunkErr?.toString() || "";
-              if (errMsg.includes("429") || errMsg.includes("Quota")) {
-                  isQuotaExceeded = true;
-                  break; 
+              if (chunkErr?.toString().includes("429") || chunkErr?.toString().includes("Quota")) {
+                  isQuotaExceeded = true; break; 
               }
           }
       }
 
-      if (isQuotaExceeded) {
-          alert("CẢNH BÁO: Giới hạn API (Lỗi 429). Hệ thống đã lưu lại các lỗi ở những phần đầu tiên. Vui lòng rà soát phần còn lại sau.");
-      }
+      if (isQuotaExceeded) alert("Giới hạn API (Lỗi 429). Hệ thống đã lưu các lỗi ở những phần trước.");
 
       const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
           .map(original => allErrors.find(e => e.original === original))
@@ -163,13 +143,13 @@ export default function DocReviewStudio() {
       setStep('review');
 
     } catch (error) {
-      alert(`Lỗi kết nối mạng hoặc phân tích. Hãy thử lại.`);
+      alert(`Lỗi kết nối mạng. Hãy thử lại.`);
       setStep('upload');
     }
   };
 
   // ============================================================================
-  // 1. ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - ĐÃ HIỆU ĐÍNH THEO Ý NGƯỜI DÙNG
+  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE) - KIẾN TRÚC 2 LỚP (LAYERED ARCHITECTURE)
   // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
@@ -177,38 +157,40 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = [];
       let errCount = 0;
+      
       const vn = "a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
       const vnUpper = "A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ";
 
-      const rules = [
-        // I. ĐẶT DẤU THANH (Theo yêu cầu: hóa, hòa, thủy là ĐÚNG)
-        { regex: /oá/g, suggestion: "óa", desc: "Dấu thanh đặt ở âm đầu vần 'oa' theo chuẩn của Bạn. " },
-        { regex: /oà/g, suggestion: "hòa", desc: "Dấu thanh đặt ở âm đầu vần 'oa'. " },
-        { regex: /uỷ/g, suggestion: "uỷ", desc: "Dấu thanh đặt ở âm đầu vần 'uy'. " },
+      // ------------------------------------------------------------------------
+      // LỚP 1: RULE ENGINE CỨNG (REGEX) - Dùng cho Kỹ thuật, Dấu câu, Viết hoa
+      // ------------------------------------------------------------------------
+      const regexRules = [
+        // Viết hoa
+        { regex: new RegExp(`(?:^|[.?!]\\s+)([${vn}])`, 'g'), suggestion: (m: any) => m[0].replace(m[1], m[1].toUpperCase()), desc: "Viết hoa sau dấu chấm/xuống dòng." },
+        { regex: /(?<=^|[^\p{L}])(thủ đô hà nội)(?=[^\p{L}]|$)/gui, suggestion: "Thủ đô Hà Nội", desc: "Viết hoa đặc biệt." },
+        { regex: /(?<=^|[^\p{L}])(đảng cộng sản việt nam)(?=[^\p{L}]|$)/gui, suggestion: "Đảng Cộng sản Việt Nam", desc: "Tên tổ chức." },
+        
+        // Dấu câu & Khoảng trắng (Giữ nguyên vì chạy rất tốt)
+        { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước." },
+        { regex: /([.,;:!?])(?=[a-zA-Zà-ỹÀ-Ỹ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
+        { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
+        { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
+        { regex: / {2,}/g, suggestion: " ", desc: "Thừa nhiều khoảng trắng liên tiếp." },
 
-        // II. LỖI KỸ THUẬT DẤU CÂU & KHOẢNG TRẮNG 
-        { regex: /\s+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu phải đặt sát vào từ đứng trước. " },
-        { regex: /([.,;:!?])(?=[a-zA-Zà-ỹÀ-Ỹ])/g, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu. " },
-        { regex: /([(\["'])\s+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải. " },
-        { regex: /\s+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái. " },
-        { regex: / {2,}/g, suggestion: " ", desc: "Thừa nhiều khoảng trắng liên tiếp. " },
-
-        // III. LỖI TYPO (Chỉ bắt từ viết thường, bỏ qua TTg, GDNN, Skill)
+        // Typo (Bắt từ viết thường bị kẹt phím)
         {
-          // Chỉ bắt lỗi lặp chữ nếu toàn bộ từ là chữ thường (lowercase)
           regex: /(?<=^|[^a-zA-Zà-ỹÀ-Ỹ])([a-zà-ỹ]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([a-zà-ỹ]*)(?=[^a-zA-Zà-ỹÀ-Ỹ]|$)/g,
-          suggestion: (match: any) => match[0].replace(/([bcdđghklmnpqrstvx])\1+/g, '$1'),
-          desc: "Lỗi đánh máy: Thừa ký tự phụ âm viết thường."
+          suggestion: (m: any) => m[0].replace(/([bcdđghklmnpqrstvx])\1+/g, '$1'),
+          desc: "Lỗi đánh máy: Thừa ký tự phụ âm liền kề."
         },
 
-        // IV. TỪ ĐIỂN CỤM TỪ (Bắt các lỗi ngữ cảnh Offline)
-        { regex: /đanh giá/gi, suggestion: "đánh giá", desc: "Thiếu dấu thanh trong cụm từ." },
-        { regex: /phat triển/gi, suggestion: "phát triển", desc: "Thiếu dấu thanh trong cụm từ." },
-        { regex: /chinh sách/gi, suggestion: "chính sách", desc: "Thiếu dấu thanh trong cụm từ." },
-        { regex: /giá dục/gi, suggestion: "giáo dục", desc: "Sai chính tả cụm từ 'giáo dục'." }
+        // Thể thức NĐ 30
+        { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản' giữa câu." },
+        { regex: / Điểm /g, suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm' giữa câu." }
       ];
 
-      rules.forEach(rule => {
+      // Chạy Lớp 1 (Regex)
+      regexRules.forEach(rule => {
         let match; 
         const loopRegex = new RegExp(rule.regex.source, rule.regex.flags);
         while ((match = loopRegex.exec(text)) !== null) {
@@ -221,18 +203,55 @@ export default function DocReviewStudio() {
 
           if (originalText === suggestedText) continue;
 
-          foundErrors.push({ 
-              id: `off_${errCount++}`, 
-              original: originalText, 
-              suggestion: suggestedText, 
-              type: 'chinh-ta', 
-              description: rule.desc, 
-              status: 'pending' 
-          });
+          foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: 'the-thuc', description: rule.desc, status: 'pending' });
         }
       });
-      setErrors(foundErrors); setStep('review');
-    }, 1000);
+
+      // ------------------------------------------------------------------------
+      // LỚP 2: TỪ ĐIỂN NGỮ CẢNH (JSON DICTIONARY) - Dùng cho l/n, ch/tr, s/x, i/y
+      // ------------------------------------------------------------------------
+      // Đây là nơi Bạn có thể thoải mái thêm hàng ngàn từ sai vào mảng "wrong" mà không sợ lỗi code
+      const dictionaryRules = [
+        { right: "sản xuất", wrong: ["sản suất", "sản suât", "sản xuât"], type: "chinh-ta", desc: "Sai phụ âm s/x hoặc dấu thanh." },
+        { right: "trung thực", wrong: ["chung thực"], type: "chinh-ta", desc: "Sai phụ âm ch/tr." },
+        { right: "cọ xát", wrong: ["cọ sát", "cọ xát"], type: "chinh-ta", desc: "Sai từ vựng s/x." },
+        { right: "bát ngát", wrong: ["bách ngát"], type: "chinh-ta", desc: "Sai vần ch/t." },
+        { right: "chẳng lẽ", wrong: ["chẵng lẻ", "chẳng lẻ", "chẵng lẽ"], type: "chinh-ta", desc: "Sai dấu hỏi/ngã." },
+        { right: "nỗi lo", wrong: ["nổi lo"], type: "chinh-ta", desc: "Sai dấu hỏi/ngã." },
+        { right: "đánh giá", wrong: ["đanh giá", "đánh gia", "đanh gia"], type: "chinh-ta", desc: "Sai/thiếu dấu thanh." },
+        { right: "phát triển", wrong: ["phat triển", "phát triên", "phát trien", "phat trien"], type: "chinh-ta", desc: "Sai/thiếu dấu thanh." },
+        { right: "chính sách", wrong: ["chinh sách", "chính sach", "chinh sach"], type: "chinh-ta", desc: "Thiếu dấu thanh." },
+        { right: "giáo dục", wrong: ["giá dục", "giao dục", "giáo dụcc"], type: "chinh-ta", desc: "Sai từ vựng/chính tả." },
+        { right: "kinh tế", wrong: ["kinh tê", "kính tế", "kinh tề"], type: "chinh-ta", desc: "Sai dấu thanh." },
+        { right: "nghiên cứu", wrong: ["ngiên cứu", "nghiên cưu"], type: "chinh-ta", desc: "Sai chính tả ng/ngh hoặc dấu thanh." }
+      ];
+
+      // Chạy Lớp 2 (Từ điển)
+      dictionaryRules.forEach(rule => {
+          rule.wrong.forEach(wrongWord => {
+              // Dùng Regex đơn giản chỉ để tìm CHÍNH XÁC cụm từ đó trong văn bản (không phân biệt hoa thường)
+              const searchRegex = new RegExp(`(?<=^|[^\\p{L}])${wrongWord}(?=[^\\p{L}]|$)`, 'gui');
+              let match;
+              while ((match = searchRegex.exec(text)) !== null) {
+                  // Giữ nguyên cách viết hoa của từ gốc (Ví dụ: nếu gốc là "Sản suất" thì sửa thành "Sản xuất")
+                  const originalText = match[0];
+                  let suggestedText = rule.right;
+                  if (originalText[0] === originalText[0].toUpperCase()) {
+                      suggestedText = suggestedText.charAt(0).toUpperCase() + suggestedText.slice(1);
+                  }
+
+                  foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: rule.type as any, description: rule.desc, status: 'pending' });
+              }
+          });
+      });
+
+      // Lọc bỏ các lỗi trùng lặp (nếu Lớp 1 và Lớp 2 vô tình bắt trùng 1 chữ)
+      const uniqueErrors = Array.from(new Set(foundErrors.map(e => e.original)))
+          .map(original => foundErrors.find(e => e.original === original))
+          .filter(e => e && e.original.length > 0) as TextError[];
+
+      setErrors(uniqueErrors); setStep('review');
+    }, 500); // Tốc độ xử lý từ điển tĩnh cực nhanh (0.5 giây)
   };
 
   const startReview = async (mode: 'offline' | 'ai') => {
@@ -248,7 +267,7 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // 2. GIAO DIỆN HIỂN THỊ (ĐỒNG NHẤT 1 MÀU NHƯ AI - KHÔNG DÃN CHỮ)
+  // GIAO DIỆN HIỂN THỊ (GIỮ NGUYÊN BẢN TỐT NHẤT: 1 MÀU, KHÔNG DÃN CHỮ, CUỘN CHUẨN)
   // ============================================================================
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -261,7 +280,6 @@ export default function DocReviewStudio() {
       const regex = new RegExp(escapeRegExp(err.original), 'g'); 
       
       if (err.status === 'pending') {
-        // Đồng bộ màu đỏ nhạt (20%) duy nhất. ring-1 tạo viền ảo không làm dãn chữ.
         const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 rounded-sm transition-all ${activeErrorId === err.id ? 'ring-1 ring-rose-500 bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
         highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
@@ -287,7 +305,7 @@ export default function DocReviewStudio() {
     let finalText = documentText;
     errors.forEach(err => { 
         if (err.status === 'fixed' && err.original) {
-            const regex = new RegExp(escapeRegExp(err.original), 'gi');
+            const regex = new RegExp(escapeRegExp(err.original), 'g');
             finalText = finalText.replace(regex, err.suggestion);
         }
     });
@@ -344,7 +362,7 @@ export default function DocReviewStudio() {
               </div>
               <div className="space-y-4">
                  <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Bắt đầu</h3>
-                 <p className="text-xs text-slate-400 mb-4">Hệ thống áp dụng chuẩn NĐ 30/2020 và kiểm tra chính tả nâng cao.</p>
+                 <p className="text-xs text-slate-400 mb-4">Hệ thống áp dụng chuẩn NĐ 30/2020 và kiểm tra chính tả bằng Từ điển.</p>
                  <div className="grid grid-cols-2 gap-3 pt-2">
                     <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2 border border-[#1e293b]">
                        <Type size={24} className="text-amber-400" />
@@ -414,7 +432,6 @@ export default function DocReviewStudio() {
                           <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">{err.type}</span>
                           <AlertCircle size={16} className="text-rose-400" />
                        </div>
-                       {/* Đã sửa font chữ: text-base (to hơn), font-normal (không in đậm) */}
                        <p className="text-base text-rose-300 line-through mb-1 font-normal">{err.original}</p>
                        <p className="text-base text-emerald-400 mb-3 font-normal">➔ {err.suggestion}</p>
                        <p className="text-sm text-slate-400 italic mb-5 font-normal border-l-2 border-[#1e293b] pl-3 py-1">{err.description}</p>
