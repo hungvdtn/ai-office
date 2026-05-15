@@ -115,6 +115,9 @@ export default function DocReviewStudio() {
   // ============================================================================
   // ĐỘNG CƠ RÀ SOÁT OFFLINE - ĐÃ TÍCH HỢP CHUẨN UNICODE MỚI NHẤT
   // ============================================================================
+  // ============================================================================
+  // ĐỘNG CƠ RÀ SOÁT OFFLINE - ĐÃ FIX LỖI SẬP VÒNG LẶP TỪ ĐIỂN
+  // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
     
@@ -155,7 +158,7 @@ export default function DocReviewStudio() {
         { regex: /([.,;:!?])(?=[\p{L}\p{M}])/gu, suggestion: "$1 ", desc: "Phải có khoảng trắng sau dấu câu." },
         { regex: /([(\["'])[ \t]+/g, suggestion: "$1", desc: "Dấu mở ngoặc/nháy phải sát vào từ bên phải." },
         { regex: /[ \t]+([)\]"'])/g, suggestion: "$1", desc: "Dấu đóng ngoặc/nháy phải sát vào từ bên trái." },
-        { regex: /(?<=[\p{L}\p{M}0-9.,;:!?\)\]"']) {2,}(?=[\p{L}\p{M}0-9\(\["'])/gu, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
+        { regex: /(?<=[a-zA-Z0-9.,;:!?\)\]"']) {2,}(?=[a-zA-Z0-9\(\["'])/g, suggestion: " ", desc: "Chỉ dùng một khoảng trắng giữa các từ." },
         // 5. THỪA PHỤ ÂM
         {
           regex: /(^|[^\p{L}\p{M}])([\p{Ll}\p{M}]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([\p{Ll}\p{M}]*)(?=[^\p{L}\p{M}]|$)/gu,
@@ -185,29 +188,44 @@ export default function DocReviewStudio() {
       });
 
       // ------------------------------------------------------------------------
-      // LỚP 2: TỪ ĐIỂN CỨNG (DATA DICTIONARY) - Xử lý ch/tr, l/n, s/x
+      // LỚP 2: TỪ ĐIỂN CỨNG (ĐÃ TÁCH RỜI HAI FILE JSON ĐỂ TRÁNH LỖI)
       // ------------------------------------------------------------------------
       const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      [...hoaTuDien, ...chinhTaTuDien].forEach(item => {
-          item.wrong.forEach((wrongWord: string) => {
-              // Sử dụng \p{L}\p{M} để bảo vệ tuyệt đối các từ tiếng Việt không bị chẻ (Vd: ngành không bị bắt thành ngàn)
+      // 2.1 Xử lý Từ điển Viết Hoa
+      hoaTuDien.forEach((item: any) => {
+          const searchRegex = new RegExp(`(^|[^\\p{L}\\p{M}])(${escapeRegExp(item.original)})(?=[^\\p{L}\\p{M}]|$)`, 'gui');
+          let match;
+          while ((match = searchRegex.exec(text)) !== null) {
+              const originalText = match[2]; 
+              if (originalText === item.suggestion) continue; // Bỏ qua nếu người dùng đã viết đúng chính xác hoa/thường
+              
+              foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: item.suggestion, type: 'the-thuc', description: item.desc || "Lỗi viết hoa danh từ riêng.", status: 'pending' });
+          }
+      });
+
+      // 2.2 Xử lý Từ điển Chính tả (ch/tr, l/n, dấu thanh...)
+      chinhTaTuDien.forEach((rule: any) => {
+          if (!rule.wrong || !Array.isArray(rule.wrong)) return; // Bảo vệ an toàn chống lỗi sập web
+          rule.wrong.forEach((wrongWord: string) => {
               const searchRegex = new RegExp(`(^|[^\\p{L}\\p{M}])(${escapeRegExp(wrongWord)})(?=[^\\p{L}\\p{M}]|$)`, 'gui');
               let match;
               while ((match = searchRegex.exec(text)) !== null) {
                   const originalText = match[2]; 
-                  if (originalText.toLowerCase() === item.right.toLowerCase()) continue;
+                  if (originalText.toLowerCase() === rule.right.toLowerCase()) continue;
                   
-                  let suggestedText = item.right;
+                  let suggestedText = rule.right;
+                  // Tự động điều chỉnh chữ hoa chữ thường theo từ gốc
                   if (originalText[0] === originalText[0].toUpperCase()) {
                       suggestedText = suggestedText.charAt(0).toUpperCase() + suggestedText.slice(1);
                   }
 
-                  foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: 'chinh-ta', description: "Sai quy chuẩn hoặc chính tả.", status: 'pending' });
+                  foundErrors.push({ id: `off_${errCount++}`, original: originalText, suggestion: suggestedText, type: rule.type || 'chinh-ta', description: rule.desc || "Sai chính tả.", status: 'pending' });
               }
           });
       });
 
+      // Lọc bỏ các lỗi bị bắt trùng lặp
       const uniqueErrors = Array.from(new Set(foundErrors.map(e => e.original))).map(original => foundErrors.find(e => e.original === original)).filter(e => e && e.original.length > 0) as TextError[];
       setErrors(uniqueErrors); setStep('review');
     }, 500); 
