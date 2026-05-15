@@ -320,8 +320,6 @@ export default function DocReviewStudio() {
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
   };
 
-  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
   // ============================================================================
   // HIỂN THỊ GIAO DIỆN VĂN BẢN
   // ============================================================================
