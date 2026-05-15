@@ -55,16 +55,29 @@ export default function DocReviewStudio() {
   };
 
   // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN - PROMPT ĐƯỢC TỐI ƯU HÓA LUẬT LỆ
+  // ĐỘNG CƠ RÀ SOÁT AI TOÀN DIỆN - THUẬT TOÁN CẮT TỪ THÔNG MINH & BỘ LỌC UNICODE
   // ============================================================================
   const runAIReview = async (fullText: string) => {
     if (!GEMINI_API_KEY) return alert("Lỗi: Không tìm thấy API Key!");
     setStep('analyzing');
     
+    // THUẬT TOÁN CẮT ĐOẠN THÔNG MINH (Không chém đứt ngang từ)
     const CHUNK_SIZE = 15000; 
     const chunks: string[] = [];
-    for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
-        chunks.push(fullText.substring(i, i + CHUNK_SIZE));
+    let currentIndex = 0;
+
+    while (currentIndex < fullText.length) {
+        let nextIndex = currentIndex + CHUNK_SIZE;
+        if (nextIndex < fullText.length) {
+            let lastSpace = fullText.lastIndexOf(' ', nextIndex);
+            let lastNewline = fullText.lastIndexOf('\n', nextIndex);
+            let bestBreak = Math.max(lastSpace, lastNewline);
+            if (bestBreak > currentIndex + (CHUNK_SIZE / 2)) {
+                nextIndex = bestBreak;
+            }
+        }
+        chunks.push(fullText.substring(currentIndex, nextIndex));
+        currentIndex = nextIndex;
     }
     
     setProgress({ current: 0, total: chunks.length });
@@ -81,23 +94,18 @@ export default function DocReviewStudio() {
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
           
-          // PROMPT ĐÃ ĐƯỢC CẤY LUẬT NĐ 30 VÀ BỘ LỌC CHỐNG ẢO GIÁC
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam. Nhiệm vụ của bạn là bắt lỗi khắt khe, nhưng tuyệt đối không được báo lỗi sai sự thật.
+          const prompt = `Bạn là Chuyên gia Rà soát Văn bản Hành chính Việt Nam.
 
-          QUY TẮC BẮT LỖI BẮT BUỘC (PHẢI TUÂN THỦ NGHIÊM NGẶT):
-          1. LỖI VÔ NGHĨA (CẤM BÁO): TUYỆT ĐỐI KHÔNG đưa vào kết quả nếu từ đề xuất (suggestion) giống hệt từ gốc (original).
-          2. LỖI ĐỊNH DẠNG (BỎ QUA): BỎ QUA các lỗi về thừa/thiếu khoảng trắng (dấu cách), gạch đầu dòng (-), số thứ tự bị đứt quãng.
-          3. DẤU THANH (CẨN THẬN): Đọc kỹ xem từ đã có dấu thanh chưa trước khi báo lỗi thiếu dấu. Không báo lỗi nếu do bảng mã Unicode tách chữ.
-          4. QUY TẮC NGHỊ ĐỊNH 30/2020: 
-             - KHÔNG viết hoa các chữ "khoản", "điểm" (trừ khi đứng đầu câu). Nếu văn bản viết hoa "Khoản 1", hãy sửa thành "khoản 1".
-             - CÓ viết hoa các chữ: "Luật", "Nghị định", "Nghị quyết", chữ "Số" (Ví dụ: Số: 12/NĐ-CP).
+          QUY TẮC BẮT LỖI NGHIÊM NGẶT (KHÔNG ĐƯỢC VI PHẠM):
+          1. DẤU THANH (QUAN TRỌNG NHẤT): Tiếng Việt có nhiều bảng mã gõ chữ. TUYỆT ĐỐI BỎ QUA nếu từ gốc đọc lên vẫn đúng nghĩa và không sai dấu rành rành. Không tự ý báo thiếu dấu khi từ đã có dấu.
+          2. CỤM TỪ ĐÚNG: Các cụm từ như "chức năng", "nhiệm vụ", "tập trung", "hệ thống", "tổ chức", v.v... tuyệt đối không được báo lỗi thiếu từ hay tự ý đề xuất cụm từ khác nếu nó đang hợp lý.
+          3. KHOẢNG TRẮNG: KHÔNG BỎ QUA các lỗi về khoảng trắng giữa các từ.
+          4. BỎ QUA: Lỗi gạch đầu dòng
+          5. TUÂN THỦ NGHIÊM NGẶT NGHỊ ĐỊNH 30/2020, ví dụ như: 
+             - KHÔNG viết hoa các chữ "khoản", "điểm" giữa câu.
+             - VIẾT HOA các chữ: "Luật", "Nghị định", "Nghị quyết", "Điều".
 
-          PHÂN LOẠI LỖI (CHỈ BẮT 3 LOẠI NÀY):
-          1. "chinh-ta": Sai phụ âm (ch/tr, s/x), sai vần, thiếu chữ, dính chữ (vd: Xác địnhh).
-          2. "the-thuc": Sai quy tắc viết hoa NĐ 30 như mục 4 ở trên.
-          3. "ngu-phap": Dùng từ lóng, câu tối nghĩa.
-
-          YÊU CẦU: Trả về MẢNG JSON hợp lệ.
+          YÊU CẦU ĐẦU RA: Trả về MẢNG JSON hợp lệ. Chỉ báo lỗi khi CHẮC CHẮN sai chính tả (sai ch/tr, s/x, l/n, thiếu/thừa ký tự làm vô nghĩa).
           [ { "original": "từ bị sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Lý do" } ]
           
           ĐOẠN VĂN BẢN:
@@ -112,17 +120,27 @@ export default function DocReviewStudio() {
               const parsedData = JSON.parse(rawJson);
               let chunkErrors = Array.isArray(parsedData) ? parsedData : (parsedData.errors || []);
               
-              // BỘ LỌC CỨNG Ở CODE: Xóa bỏ các lỗi mà AI vẫn cố tình trả về giống hệt từ gốc
+              // BỘ LỌC CỨNG: ÉP CHUẨN UNICODE NFC ĐỂ LOẠI BỎ LỖI DẤU THANH ẢO GIÁC
               chunkErrors = chunkErrors.filter((err: any) => {
-                  const orig = (err.original || "").toString().trim().toLowerCase();
-                  const sugg = (err.suggestion || "").toString().trim().toLowerCase();
-                  return orig !== sugg && orig.length > 0;
+                  const orig = (err.original || "").toString().trim();
+                  const sugg = (err.suggestion || "").toString().trim();
+                  
+                  if (!orig || orig.length < 2) return false; // Bỏ qua nếu lỗi chỉ là 1 dấu câu/chữ cái
+                  
+                  // Chuyển về cùng 1 hệ mã Unicode NFC để so sánh
+                  const origNorm = orig.normalize('NFC').toLowerCase();
+                  const suggNorm = sugg.normalize('NFC').toLowerCase();
+                  
+                  // Bỏ qua nếu sau khi chuẩn hóa, từ gốc và từ đề xuất giống hệt nhau
+                  if (origNorm === suggNorm) return false;
+                  
+                  return true;
               });
 
               allErrors = [...allErrors, ...chunkErrors];
               
               if (i < chunks.length - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 4000));
+                  await new Promise(resolve => setTimeout(resolve, 4000)); // Nghỉ 4s tránh quá tải API
               }
           } catch (chunkErr: any) {
               const errMsg = chunkErr?.message || chunkErr?.toString() || "";
@@ -134,7 +152,7 @@ export default function DocReviewStudio() {
       }
 
       if (isQuotaExceeded) {
-          alert("CẢNH BÁO: Giới hạn API (Lỗi 429). Hệ thống đã lưu lại các lỗi ở những phần đầu tiên.");
+          alert("CẢNH BÁO: Giới hạn API (Lỗi 429). Hệ thống đã lưu lại các lỗi ở những phần đầu tiên. Vui lòng rà soát phần còn lại sau.");
       }
 
       const uniqueErrors = Array.from(new Set(allErrors.map(e => e.original)))
@@ -145,14 +163,11 @@ export default function DocReviewStudio() {
       setStep('review');
 
     } catch (error) {
-      alert(`Lỗi kết nối mạng. Hãy thử lại.`);
+      alert(`Lỗi kết nối mạng hoặc phân tích. Hãy thử lại.`);
       setStep('upload');
     }
   };
 
-  // ============================================================================
-  // ĐỘNG CƠ RÀ SOÁT CHÍNH TẢ (OFFLINE REGEX) - NHANH, CƠ BẢN
-  // ============================================================================
   const runOfflineReview = (text: string) => {
     setStep('analyzing'); setProgress({ current: 1, total: 1 });
     setTimeout(() => {
@@ -193,11 +208,9 @@ export default function DocReviewStudio() {
     mode === 'offline' ? runOfflineReview(content) : runAIReview(content);
   };
 
-  // ============================================================================
-  // GIAO DIỆN VĂN BẢN (XỬ LÝ BÔI MÀU, CUỘN ĐỒNG BỘ)
-  // ============================================================================
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+  // HIỂN THỊ GIAO DIỆN VĂN BẢN TRỰC QUAN
   const renderDocumentText = () => {
     let highlightedText = documentText;
     const sortedErrors = [...errors].sort((a, b) => (b.original || "").length - (a.original || "").length);
@@ -207,8 +220,8 @@ export default function DocReviewStudio() {
       const regex = new RegExp(escapeRegExp(err.original), 'gi'); 
       
       if (err.status === 'pending') {
-        // Đã xóa border-b-2 (gạch chân), chỉ giữ màu nền. Thêm id để cuộn đồng bộ.
-        const span = `<span id="text-error-${err.id}" class="bg-rose-500/30 text-rose-300 px-1 rounded cursor-pointer transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)]' : 'hover:bg-rose-500/50'}" data-id="${err.id}">$&</span>`;
+        // Đã sửa giao diện: Màu nền nhẹ, bỏ gạch chân. Thêm ring sáng khi được click.
+        const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 text-rose-300 px-1 rounded transition-all ${activeErrorId === err.id ? 'ring-2 ring-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.6)] bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
         highlightedText = highlightedText.replace(regex, span);
       } else if (err.status === 'fixed') {
         const span = `<span class="bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded transition-all">${err.suggestion}</span>`;
@@ -222,7 +235,6 @@ export default function DocReviewStudio() {
                   if (target.tagName === 'SPAN' && target.dataset.id) {
                     const errId = target.dataset.id;
                     setActiveErrorId(errId);
-                    // CUỘN ĐỒNG BỘ: Bấm bên trái -> Cuộn bên phải
                     const errorCard = document.getElementById(`error-card-${errId}`);
                     if (errorCard) errorCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }
@@ -290,16 +302,16 @@ export default function DocReviewStudio() {
                  )}
               </div>
               <div className="space-y-4">
-                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Bắt đầu rà soát</h3>
-                 <p className="text-xs text-slate-400 mb-4">Hệ thống áp dụng chuẩn NĐ 30/2020/NĐ-CP cho văn bản hành chính.</p>
+                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Bắt đầu</h3>
+                 <p className="text-xs text-slate-400 mb-4">Hệ thống áp dụng chuẩn NĐ 30/2020 và kiểm tra chính tả nâng cao.</p>
                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2">
+                    <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2 border border-[#1e293b]">
                        <Type size={24} className="text-amber-400" />
                        <span className="text-xs font-black text-white">RÀ SOÁT CHÍNH TẢ</span>
                     </button>
-                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-4 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center justify-center gap-2">
+                    <button onClick={() => startReview('ai')} className="bg-sky-900/30 border border-sky-500/30 p-4 rounded-xl hover:bg-sky-900/50 transition flex flex-col items-center justify-center gap-2 shadow-[0_0_15px_rgba(2,132,199,0.2)]">
                        <RefreshCw size={24} className="text-sky-400" />
-                       <span className="text-xs font-black text-white">RÀ SOÁT TOÀN DIỆN (AI)</span>
+                       <span className="text-xs font-black text-white text-center">RÀ SOÁT TOÀN DIỆN<br/>(Dùng AI)</span>
                     </button>
                  </div>
               </div>
@@ -349,25 +361,25 @@ export default function DocReviewStudio() {
                  {errors.map(err => err.status === 'pending' && (
                     <motion.div 
                         key={err.id} 
-                        id={`error-card-${err.id}`} // Bổ sung ID để cuộn đồng bộ từ văn bản
-                        className={`bg-[#0f172a] p-4 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'border-[#1e293b]'}`} 
+                        id={`error-card-${err.id}`}
+                        className={`bg-[#0f172a] p-5 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'border-[#1e293b]'}`} 
                         onClick={() => {
                             setActiveErrorId(err.id);
-                            // CUỘN ĐỒNG BỘ: Bấm bên phải -> Cuộn bên trái
                             const errorElement = document.getElementById(`text-error-${err.id}`);
                             if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }}
                     >
-                       <div className="flex justify-between mb-2">
-                          <span className="text-[10px] font-bold text-rose-400 uppercase">{err.type}</span>
-                          <AlertCircle size={14} className="text-rose-400" />
+                       <div className="flex justify-between mb-3">
+                          <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">{err.type}</span>
+                          <AlertCircle size={16} className="text-rose-400" />
                        </div>
-                       <p className="text-sm text-rose-300 line-through mb-1">{err.original}</p>
-                       <p className="text-sm text-emerald-400 font-bold mb-2">➔ {err.suggestion}</p>
-                       <p className="text-[11px] text-slate-500 italic mb-4">{err.description}</p>
+                       {/* Đã sửa font chữ: text-base (to hơn), font-normal (không in đậm) */}
+                       <p className="text-base text-rose-300 line-through mb-1 font-normal">{err.original}</p>
+                       <p className="text-base text-emerald-400 mb-3 font-normal">➔ {err.suggestion}</p>
+                       <p className="text-sm text-slate-400 italic mb-5 font-normal border-l-2 border-[#1e293b] pl-3 py-1">{err.description}</p>
                        <div className="flex gap-2">
-                          <button onClick={(e) => { e.stopPropagation(); setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e)); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-[10px] transition-colors">SỬA LỖI</button>
-                          <button onClick={(e) => { e.stopPropagation(); setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e)); }} className="bg-slate-800 hover:bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-bold text-[10px] transition-colors">BỎ QUA</button>
+                          <button onClick={(e) => { e.stopPropagation(); setErrors(errors.map(e => e.id === err.id ? {...e, status: 'fixed'} : e)); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-xs transition-colors">SỬA LỖI</button>
+                          <button onClick={(e) => { e.stopPropagation(); setErrors(errors.map(e => e.id === err.id ? {...e, status: 'ignored'} : e)); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg font-bold text-xs transition-colors">BỎ QUA</button>
                        </div>
                     </motion.div>
                  ))}
@@ -379,8 +391,8 @@ export default function DocReviewStudio() {
                  )}
               </div>
               <div className="p-4 border-t border-[#1e293b] grid grid-cols-2 gap-2 bg-[#1e293b]/30">
-                 <button onClick={copyToClipboard} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2 transition-colors"><Copy size={14}/> COPY TẤT CẢ</button>
-                 <button onClick={exportToWord} className="bg-brand text-bg-dark py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-[0_0_15px_rgba(56,189,248,0.4)]"><Download size={14}/> TẢI FILE WORD</button>
+                 <button onClick={copyToClipboard} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"><Copy size={16}/> COPY TẤT CẢ</button>
+                 <button onClick={exportToWord} className="bg-brand text-bg-dark py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-[0_0_15px_rgba(56,189,248,0.4)]"><Download size={16}/> TẢI FILE WORD</button>
               </div>
            </div>
         </div>
