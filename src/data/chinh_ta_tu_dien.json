@@ -1,0 +1,21 @@
+[
+  { "right": "sản xuất", "wrong": ["sản suất", "sản xuât"], "type": "chinh-ta", "desc": "Sai chính tả (s/x)." },
+  { "right": "xuất sắc", "wrong": ["xuất xắc", "suất sắc", "suất xắc"], "type": "chinh-ta", "desc": "Sai chính tả (s/x)." },
+  { "right": "sắp xếp", "wrong": ["xắp xếp", "sắp sếp", "xắp sếp"], "type": "chinh-ta", "desc": "Sai chính tả (s/x)." },
+  { "right": "xem xét", "wrong": ["xem sét"], "type": "chinh-ta", "desc": "Sai chính tả (s/x)." },
+  { "right": "sát sao", "wrong": ["xát xao", "sát xao", "xát sao"], "type": "chinh-ta", "desc": "Sai chính tả (s/x)." },
+  
+  { "right": "trung thực", "wrong": ["chung thực"], "type": "chinh-ta", "desc": "Sai chính tả (ch/tr)." },
+  { "right": "trao đổi", "wrong": ["chao đổi"], "type": "chinh-ta", "desc": "Sai chính tả (ch/tr)." },
+  { "right": "trân trọng", "wrong": ["chân trọng"], "type": "chinh-ta", "desc": "Sai chính tả (ch/tr)." },
+  
+  { "right": "năng lực", "wrong": ["lăng lực"], "type": "chinh-ta", "desc": "Sai chính tả (l/n)." },
+  { "right": "lý luận", "wrong": ["ný luận"], "type": "chinh-ta", "desc": "Sai chính tả (l/n)." },
+  { "right": "nỗ lực", "wrong": ["lỗ lực", "nổ lực"], "type": "chinh-ta", "desc": "Sai chính tả (l/n) hoặc sai dấu." },
+  
+  { "right": "nghìn", "wrong": ["nghàn", "ngàn"], "type": "chinh-ta", "desc": "Từ không hợp chuẩn hành chính." },
+  { "right": "đánh giá", "wrong": ["đanh giá", "đánh gia", "đanh gia"], "type": "chinh-ta", "desc": "Thiếu/sai dấu thanh." },
+  { "right": "phát triển", "wrong": ["phat triển", "phát triên", "phat trien"], "type": "chinh-ta", "desc": "Thiếu/sai dấu thanh." },
+  { "right": "chính sách", "wrong": ["chinh sách", "chính sach"], "type": "chinh-ta", "desc": "Thiếu dấu thanh." },
+  { "right": "giáo dục", "wrong": ["giá dục", "giao dục"], "type": "chinh-ta", "desc": "Sai chính tả / gõ nhầm phím." }
+]
