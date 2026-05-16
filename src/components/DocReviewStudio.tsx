@@ -394,7 +394,7 @@ export default function DocReviewStudio() {
               </div>
               <div className="space-y-4">
                  <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Rà soát</h3>
-                 <p className="text-xs text-slate-400 mb-4">Đã nâng cấp thuật toán Highlight chống xô lệch cụm từ.</p>
+                 <p className="text-xs text-slate-400 mb-4">Lựa chọn một trong hai tính năng dưới đây.</p>
                  <div className="grid grid-cols-2 gap-3 pt-2">
                     <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2 border border-[#1e293b]">
                        <Type size={24} className="text-amber-400" />
