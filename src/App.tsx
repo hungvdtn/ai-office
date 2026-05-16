@@ -22,7 +22,7 @@ import { collection, getDocs } from 'firebase/firestore';
 
 type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin' | 'docreview'; 
 
-// --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN ---
+// --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN (CẤU TRÚC VÀ GIAO DIỆN NÂNG CẤP) ---
 const AdminPanel = () => {
   const [stats, setStats] = useState({ users: 0, events: 0, loading: true });
   const [userList, setUserList] = useState<any[]>([]);
@@ -30,66 +30,162 @@ const AdminPanel = () => {
   useEffect(() => {
      const fetchStats = async () => {
         try {
-           const snap = await getDocs(collection(db, 'events'));
-           const uniqueUsers = new Map();
+           const { collection, getDocs } = await import('firebase/firestore');
+           const usersSnap = await getDocs(collection(db, 'users'));
+           const eventsSnap = await getDocs(collection(db, 'events'));
            
-           snap.forEach(doc => {
+           let usersMap = new Map();
+           
+           // 1. Quét dữ liệu từ bộ lưu trữ phân lớp người dùng hệ thống
+           usersSnap.forEach(doc => {
               const data = doc.data();
-              if (data.userId && !uniqueUsers.has(data.userId)) {
-                 uniqueUsers.set(data.userId, data.email || 'Tài khoản cũ (Chưa lưu Email)');
+              usersMap.set(doc.id, {
+                 id: doc.id,
+                 displayName: data.displayName || 'Thành viên hệ thống',
+                 email: data.email || 'Ẩn danh',
+                 joinedDate: data.joinedDate || 'Chưa rõ',
+                 lastLogin: data.lastLogin || 'Chưa rõ',
+                 tools: data.tools || []
+              });
+           });
+
+           // 2. Đồng bộ quét cơ sở dữ liệu cũ để không bỏ sót người dùng Lịch trước đó
+           eventsSnap.forEach(doc => {
+              const data = doc.data();
+              if (data.userId && !usersMap.has(data.userId)) {
+                 usersMap.set(data.userId, {
+                    id: data.userId,
+                    displayName: 'Tài khoản cũ',
+                    email: data.email || 'Không có email',
+                    joinedDate: 'Trước hệ thống',
+                    lastLogin: 'Chưa rõ',
+                    tools: ['Lịch']
+                 });
+              } else if (data.userId && usersMap.has(data.userId)) {
+                 const u = usersMap.get(data.userId);
+                 if (!u.tools.includes('Lịch')) {
+                    u.tools.push('Lịch');
+                 }
               }
            });
-           
-           setStats({ users: uniqueUsers.size, events: snap.size, loading: false });
-           setUserList(Array.from(uniqueUsers.entries()).map(([id, email]) => ({ id, email })));
-        } catch(e) { console.error(e); setStats(s => ({...s, loading: false})); }
+
+           const list = Array.from(usersMap.values());
+           setStats({ users: list.length, events: eventsSnap.size, loading: false });
+           setUserList(list);
+        } catch(e) { 
+           console.error("Lỗi tải dữ liệu quản trị:", e); 
+           setStats(s => ({...s, loading: false})); 
+        }
      }
      fetchStats();
   }, []);
 
+  // Hàm xuất tệp dữ liệu báo cáo chuẩn mã hóa Unicode hiển thị tiếng Việt trên Excel
+  const exportToCSV = () => {
+    const headers = ["Họ và tên", "Email", "Ngày tham gia", "Công cụ sử dụng", "Cấp bậc", "Lần đăng nhập cuối"];
+    const rows = userList.map(u => [
+      u.displayName,
+      u.email,
+      u.joinedDate,
+      u.tools ? u.tools.join(' - ') : 'Chưa rõ',
+      ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'].includes(u.email?.toLowerCase()) ? "Quản trị viên" : "Người dùng",
+      u.lastLogin
+    ]);
+
+    const csvContent = "\ufeff" + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Bao_cao_nguoi_dung_Van_phong_so_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
      <div className="p-4 md:p-8 text-slate-200 animate-in fade-in duration-500 font-sans">
-        <h2 className="text-xl md:text-2xl font-bold text-brand mb-8 flex items-center gap-3">
-           <Users size={28} /> Bảng điều khiển Quản trị viên (Admin)
-        </h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-brand flex items-center gap-3">
+             <Users size={28} /> Hệ thống kiểm soát thành viên Quản trị
+          </h2>
+          {!stats.loading && userList.length > 0 && (
+            <button 
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-lg transition-transform hover:scale-105 shadow-lg shadow-emerald-900/30 uppercase tracking-wider cursor-pointer"
+            >
+              <Download size={16}/> Xuất dữ liệu báo cáo (CSV)
+            </button>
+          )}
+        </div>
+
         {stats.loading ? (
-           <p className="text-slate-400 flex items-center gap-2">Đang tải dữ liệu từ máy chủ đám mây...</p>
+           <p className="text-slate-400 flex items-center gap-2">Đang thiết lập kết nối và trích xuất dữ liệu đám mây...</p>
         ) : (
            <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-sky-900/50 shadow-[0_0_30px_rgba(56,189,248,0.1)] relative overflow-hidden group hover:border-sky-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
-                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Số người dùng Lịch</h3>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số tài khoản định danh</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dựa trên số lượng tài khoản đã lưu sự kiện</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Tổng số cá nhân đã kích hoạt các tính năng bảo mật hệ thống</p>
                  </div>
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
-                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số Sự kiện đã lưu</h3>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số Sự kiện trên hệ thống</h3>
                     <p className="text-5xl font-black text-emerald-400 relative z-10">{stats.events}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dữ liệu công việc trên toàn hệ thống</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dữ liệu hồ sơ công việc được đồng bộ hóa</p>
                  </div>
               </div>
 
               <div className="bg-[#0f172a] p-6 rounded-2xl border border-[#1e293b]">
-                 <h3 className="text-brand font-bold uppercase tracking-widest mb-4">Danh sách tài khoản sử dụng</h3>
+                 <h3 className="text-brand font-bold uppercase tracking-widest mb-6 text-sm">Hồ sơ chi tiết phân tích người dùng</h3>
                  <div className="overflow-x-auto custom-scrollbar">
-                   <table className="w-full text-sm text-left text-slate-300 whitespace-nowrap">
-                     <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50">
+                   <table className="w-full text-sm text-left text-slate-300">
+                     <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50 tracking-wider">
                        <tr>
-                         <th className="px-6 py-3 rounded-tl-lg">ID Người dùng (Firebase Auth)</th>
-                         <th className="px-6 py-3 rounded-tr-lg">Email / Định danh</th>
+                         <th className="px-6 py-4 rounded-tl-lg">Thông tin người dùng</th>
+                         <th className="px-6 py-4">Sự kiện (Công cụ)</th>
+                         <th className="px-6 py-4">Cấp bậc</th>
+                         <th className="px-6 py-4 rounded-tr-lg">Lần đăng nhập cuối</th>
                        </tr>
                      </thead>
-                     <tbody>
-                       {userList.map((u, i) => (
-                         <tr key={i} className="border-b border-[#1e293b] hover:bg-[#1e293b]/30 transition-colors">
-                           <td className="px-6 py-4 font-mono text-xs text-sky-400">{u.id}</td>
-                           <td className="px-6 py-4 text-emerald-400 font-medium">{u.email}</td>
-                         </tr>
-                       ))}
+                     <tbody className="divide-y divide-[#1e293b]">
+                       {userList.map((u, i) => {
+                         const isCurrentAdmin = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'].includes(u.email?.toLowerCase());
+                         return (
+                           <tr key={i} className="hover:bg-[#1e293b]/30 transition-colors">
+                             <td className="px-6 py-4 space-y-1">
+                               <div className="font-bold text-white text-base">{u.displayName}</div>
+                               <div className="text-xs text-sky-400 font-mono font-medium">{u.email}</div>
+                               <div className="text-[11px] text-slate-500 font-medium pt-1">Tham gia: {u.joinedDate}</div>
+                             </td>
+                             <td className="px-6 py-4">
+                               <div className="flex flex-wrap gap-1.5">
+                                 {u.tools && u.tools.length > 0 ? (
+                                   u.tools.map((toolName: string, tIdx: number) => (
+                                     <span key={tIdx} className={`px-2.5 py-1 text-[10px] font-black uppercase rounded-md tracking-wider border ${toolName === 'Lịch' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'}`}>
+                                       {toolName === 'Lịch' ? 'Lịch Vạn Niên' : 'Rà soát văn bản'}
+                                     </span>
+                                   ))
+                                 ) : (
+                                   <span className="text-slate-600 text-xs italic">Không có dữ liệu</span>
+                                 )}
+                               </div>
+                             </td>
+                             <td className="px-6 py-4">
+                               <span className={`px-2.5 py-1 text-[10px] font-black uppercase rounded-md tracking-wider border ${isCurrentAdmin ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                 {isCurrentAdmin ? "Quản trị viên" : "Người dùng"}
+                               </span>
+                             </td>
+                             <td className="px-6 py-4 font-bold text-slate-300 text-sm">
+                               {u.lastLogin}
+                             </td>
+                           </tr>
+                         );
+                       })}
                        {userList.length === 0 && (
-                         <tr><td colSpan={2} className="px-6 py-4 text-center text-slate-500">Chưa có người dùng nào tạo sự kiện.</td></tr>
+                         <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-500 italic">Hệ thống chưa ghi nhận tài khoản tương tác.</td></tr>
                        )}
                      </tbody>
                    </table>
@@ -180,29 +276,29 @@ const HelpContent = ({ module }: { module: string }) => {
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
           <h3 className="font-bold text-brand text-lg">Hướng dẫn Rà soát tài liệu</h3>
-          <p>Công cụ “Rà soát văn bản” được thiết kế để rà soát lỗi chính tả, lỗi kỹ thuật, ngữ pháp, lỗi sử dụng từ của văn bản theo chuẩn quy tắc tiếng Việt và các quy định tại Nghị định 30/2020/NĐ-CP, giúp người dùng nâng cao chất lượng soạn thảo các văn bản, tối ưu hóa công việc[cite: 280].</p>
-          <p className="font-bold text-rose-400">Bạn phải đăng nhập với tài khoản Google để sử dụng chức năng này, vì công cụ này có sử dụng AI trong rà soát[cite: 281].</p>
-          <p>Bạn tải văn bản cần rà soát (chỉ file .docx mới được chấp nhận)[cite: 282]. Nếu là tài liệu của file .doc bạn có thể Save as …chuyển thành .docx hoặc bôi đen toàn bộ văn bản, chọn copy, chọn nút “Dán văn bản” và dán văn bản vào khung cần rà soát[cite: 283].</p>
+          <p>Công cụ “Rà soát văn bản” được thiết kế để rà soát lỗi chính tả, lỗi kỹ thuật, ngữ pháp, lỗi sử dụng từ của văn bản theo chuẩn quy tắc tiếng Việt và các quy định tại Nghị định 30/2020/NĐ-CP, giúp người dùng nâng cao chất lượng soạn thảo các văn bản, tối ưu hóa công việc.</p>
+          <p className="font-bold text-rose-400">Bạn phải đăng nhập với tài khoản Google để sử dụng chức năng này, vì công cụ này có sử dụng AI trong rà soát.</p>
+          <p>Bạn tải văn bản cần rà soát (chỉ file .docx mới được chấp nhận). Nếu là tài liệu của file .doc bạn có thể Save as …chuyển thành .docx hoặc bôi đen toàn bộ văn bản, chọn copy, chọn nút “Dán văn bản” và dán văn bản vào khung cần rà soát.</p>
           
-          <p className="font-bold text-sky-400 mt-2">Để rà soát văn bản có 2 lựa chọn[cite: 284]:</p>
+          <p className="font-bold text-sky-400 mt-2">Để rà soát văn bản có 2 lựa chọn:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>(1) Rà soát chính tả:</strong> Dùng trong trường hợp văn bản ngắn, đơn giản, cần xử lý nhanh[cite: 285]. Kết quả rà soát là các lỗi chính tả, lỗi viết hoa, lỗi kỹ thuật (đánh máy, thừa ký tự, thừa chữ; khoảng trắng, dấu câu…)[cite: 286]. Kết quả chỉ trong 1, 2 giây cho hàng trăm trang, gần như không độ trễ[cite: 287].</li>
-            <li><strong>(2) Rà soát kỹ:</strong> Dùng trong trường hợp muốn rà soát kỹ lưỡng văn bản đòi hỏi độ chính xác cao cả về chính tả, ngữ pháp mà còn cả ngữ, nghĩa của từ, câu trong văn bản[cite: 288]. Vì độ phức tạp cao, nên thời gian rà soát lâu, khoảng 15s/trang[cite: 289]. Kết quả rà soát là các lỗi chính tả, kỹ thuật văn bản, ngữ pháp, sử dụng từ v.v… [cite: 290]</li>
+            <li><strong>(1) Rà soát chính tả:</strong> Dùng trong trường hợp văn bản ngắn, đơn giản, cần xử lý nhanh. Kết quả rà soát là các lỗi chính tả, lỗi viết hoa, lỗi kỹ thuật (đánh máy, thừa ký tự, thừa chữ; khoảng trắng, dấu câu…). Kết quả chỉ trong 1, 2 giây cho hàng trăm trang, gần như không độ trễ.</li>
+            <li><strong>(2) Rà soát kỹ:</strong> Dùng trong trường hợp muốn rà soát kỹ lưỡng văn bản đòi hỏi độ chính xác cao cả về chính tả, ngữ pháp mà còn cả ngữ, nghĩa của từ, câu trong văn bản. Vì độ phức tạp cao, nên thời gian rà soát lâu, khoảng 15s/trang. Kết quả rà soát là các lỗi chính tả, kỹ thuật văn bản, ngữ pháp, sử dụng từ v.v… </li>
           </ul>
           
-          <p>Giao diện kết quả rà soát của cả 2 tính năng đều cực kỳ thân thiện, thông minh, dễ sử dụng[cite: 291]. Bạn có thể xem lại từng từ, từng chỗ bị cho là lỗi (có nêu lý do từng lỗi), nếu thấy đúng, thì ấn chấp nhận hệ thống sẽ sửa hoặc lỗi không đúng thì chọn Bỏ qua, không sửa[cite: 292].</p>
+          <p>Giao diện kết quả rà soát của cả 2 tính năng đều cực kỳ thân thiện, thông minh, dễ sử dụng. Bạn có thể xem lại từng từ, từng chỗ bị cho là lỗi (có nêu lý do từng lỗi), nếu thấy đúng, thì ấn chấp nhận hệ thống sẽ sửa hoặc lỗi không đúng thì chọn Bỏ qua, không sửa.</p>
           
-          <p className="font-bold text-sky-400 mt-2">Sau khi sửa xong, bạn có 2 lựa chọn[cite: 293]:</p>
+          <p className="font-bold text-sky-400 mt-2">Sau khi sửa xong, bạn có 2 lựa chọn:</p>
           <ul className="list-none space-y-1 pl-2">
-            <li>(1) Tải word: Kết quả sửa được tải xuống dưới dạng file .docx; [cite: 294]</li>
-            <li>(2) Chọn nút “Copy” để copy và dán vào file word của bạn đang làm. [cite: 295]</li>
+            <li>(1) Tải word: Kết quả sửa được tải xuống dưới dạng file .docx; </li>
+            <li>(2) Chọn nút “Copy” để copy và dán vào file word của bạn đang làm. </li>
           </ul>
 
-          <p className="font-bold text-amber-400 mt-2">Lưu ý[cite: 296]:</p>
+          <p className="font-bold text-amber-400 mt-2">Lưu ý:</p>
           <ol className="list-decimal pl-5 space-y-1">
-            <li>Nếu bạn quan tâm đến định dạng của văn bản, khi bạn tải file word lên, sửa xong, download xuống, định dạng sẽ không còn được như ban đầu[cite: 297]. Bạn phải định dạng lại theo ý bạn[cite: 298].</li>
-            <li>Bạn có thể chỉ dùng công cụ này tìm lỗi, sau đó tự sửa ngay trong file word đang soạn thảo, để giữ nguyên định dạng[cite: 299].</li>
-            <li>Xử lý chính tả tiếng Việt là một việc vô cùng khó, nên AI có thể có sai sót[cite: 300]. Nếu kết quả trả về quá nhiều lỗi không đúng, bạn hãy thực hiện lại thao tác rà soát[cite: 301].</li>
+            <li>Nếu bạn quan tâm đến định dạng của văn bản, khi bạn tải file word lên, sửa xong, download xuống, định dạng sẽ không còn được như ban đầu. Bạn phải định dạng lại theo ý bạn.</li>
+            <li>Bạn có thể chỉ dùng công cụ này tìm lỗi, sau đó tự sửa ngay trong file word đang soạn thảo, để giữ nguyên định dạng.</li>
+            <li>Xử lý chính tả tiếng Việt là một việc vô cùng khó, nên AI có thể có sai sót. Nếu kết quả trả về quá nhiều lỗi không đúng, bạn hãy thực hiện lại thao tác rà soát.</li>
           </ol>
         </div>
       );
@@ -274,12 +370,55 @@ export default function App() {
   const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
+  // Thuật toán tự động cập nhật vết đăng nhập và phân loại công cụ sử dụng lên Cloud Firestore
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => { 
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => { 
         setUser(currentUser); 
+        if (currentUser) {
+           try {
+              const { doc, setDoc, getDoc } = await import('firebase/firestore');
+              const userRef = doc(db, 'users', currentUser.uid);
+              const userSnap = await getDoc(userRef);
+              
+              const now = new Date();
+              const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+              
+              let currentModuleTag = '';
+              if (activeModule === 'calendar') currentModuleTag = 'Lịch';
+              if (activeModule === 'docreview') currentModuleTag = 'Rà soát';
+
+              if (!userSnap.exists()) {
+                 // Trường hợp tài khoản mới đăng nhập hệ sinh thái lần đầu
+                 await setDoc(userRef, {
+                    uid: currentUser.uid,
+                    displayName: currentUser.displayName || 'Thành viên Văn phòng số',
+                    email: currentUser.email || '',
+                    joinedDate: dateStr,
+                    lastLogin: dateStr,
+                    lastLoginTimestamp: Date.now(),
+                    tools: currentModuleTag ? [currentModuleTag] : []
+                 });
+              } else {
+                 // Trường hợp thành viên cũ quay lại tương tác hệ thống
+                 const existingData = userSnap.data();
+                 const currentTools = existingData.tools || [];
+                 
+                 if (currentModuleTag && !currentTools.includes(currentModuleTag)) {
+                    currentTools.push(currentModuleTag);
+                 }
+                 
+                 await setDoc(userRef, {
+                    lastLogin: dateStr,
+                    lastLoginTimestamp: Date.now(),
+                    displayName: currentUser.displayName || existingData.displayName || 'Thành viên Văn phòng số',
+                    tools: currentTools
+                 }, { merge: true });
+              }
+           } catch(e) { console.error("Lỗi đồng bộ thông tin tài khoản:", e); }
+        }
     });
     return () => unsubscribe();
-  }, []);
+  }, [activeModule]);
 
   // --- THUẬT TOÁN BÁO SỰ KIỆN KÈM VƯỢT RÀO CẢN DI ĐỘNG ---
   useEffect(() => {
