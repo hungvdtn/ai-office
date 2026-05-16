@@ -87,39 +87,56 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = []; let errCount = 0;
 
-      // A. KIỂM TRA THIẾU DẤU KẾT THÚC CÂU (CHỈ LẤY 3 TỪ CUỐI CÙNG ĐỂ BÔI ĐỎ)
+      // A. KIỂM TRA THIẾU DẤU KẾT THÚC CÂU (Đã nâng cấp thuật toán loại trừ tiêu đề)
       const lines = text.split(/\r?\n/);
       lines.forEach((line) => {
           const trimmed = line.trim();
-          // Bỏ qua dòng ngắn hoặc viết hoa toàn bộ (thường là tiêu đề lớn như BÁO CÁO)
-          if (trimmed.length < 15 || trimmed === trimmed.toUpperCase()) return;
-          // Bỏ qua dòng bắt đầu bằng số/chữ cái mục lục, gạch đầu dòng (I, 1, a, -)
-          if (/^([IVXLCDM]+|[0-9]+|[a-zđA-ZĐ])\s*[.)]|[-+]/.test(trimmed)) return;
-          // Bỏ qua các tiêu đề văn bản quy phạm (Điều 1, Khoản 2, Chương 3)
-          if (/^(Điều|Khoản|Điểm|Phần|Chương|Mục)\s+[0-9IVX]+/.test(trimmed)) return;
+          // Bỏ qua dòng quá ngắn (dưới 5 ký tự)
+          if (trimmed.length < 5) return;
+
+          // THUẬT TOÁN LOẠI TRỪ TIÊU ĐỀ THÔNG MINH:
+          // 1. Dòng viết hoa toàn bộ (VD: BÁO CÁO, QUYẾT ĐỊNH...)
+          const isUpperCase = trimmed === trimmed.toUpperCase();
+          // 2. Định dạng số thứ tự, điểm, khoản (VD: 1, 1.1, I, a, a), -, +)
+          const isListMarker = /^([IVXLCDM]+|[0-9]+(\.[0-9]+)*|[a-zđA-ZĐ])\s*[.)]|[-+]/.test(trimmed);
+          // 3. Tiêu đề quy phạm pháp luật
+          const isLegalHeading = /^(Điều|Khoản|Điểm|Phần|Chương|Mục)\s+[0-9IVX]+/.test(trimmed);
+
+          // Nếu là định dạng tiêu đề VÀ độ dài ngắn (dưới 150 ký tự ~ khoảng 2 dòng) -> Bỏ qua, KHÔNG bắt lỗi
+          if ((isUpperCase || isListMarker || isLegalHeading) && trimmed.length < 150) {
+              return;
+          }
 
           const lastChar = trimmed.slice(-1);
           if (!/[.?!:;]/.test(lastChar)) {
-              // Chỉ lấy 3 từ cuối cùng làm mỏ neo bôi đỏ (tránh bôi cả đoạn văn)
+              // Lấy 1 từ cuối cùng để làm mỏ neo, kết hợp Regex thông minh khi render để tránh bôi đỏ toàn bài
               const words = trimmed.split(/\s+/);
-              const anchor = words.slice(Math.max(words.length - 3, 0)).join(' ');
+              const anchor = words[words.length - 1];
               if (anchor) {
-                  foundErrors.push({ id: `off_p_${errCount++}`, original: anchor, suggestion: anchor + ".", type: 'the-thuc', description: "Thiếu dấu chấm kết thúc đoạn/câu.", status: 'pending' });
+                  foundErrors.push({ 
+                      id: `off_p_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // Đảm bảo ID độc nhất 100% để sửa dứt điểm lỗi cuộn màn hình
+                      original: anchor, 
+                      suggestion: anchor + ".", 
+                      type: 'the-thuc', 
+                      description: "Thiếu dấu chấm kết thúc đoạn/câu.", 
+                      status: 'pending' 
+                  });
               }
           }
       });
 
-      // B. CÁC QUY TẮC KỸ THUẬT CỨNG
+      // B. CÁC QUY TẮC KỸ THUẬT CỨNG (Khôi phục và nâng cấp bộ bắt lỗi kẹt phím)
       const regexRules = [
         { regex: /;([ \t]+)([\p{Lu}][\p{Ll}\p{M}]*)/gu, suggestion: (m: any, p1: string, p2: string) => ";" + p1 + p2.toLowerCase(), desc: "Không viết hoa sau dấu chấm phẩy." },
         { regex: /:([ \t]+)([\p{Lu}][\p{Ll}\p{M}]*)/gu, suggestion: (m: any, p1: string, p2: string) => ":" + p1 + p2.toLowerCase(), desc: "Đề nghị xem lại viết hoa sau dấu hai chấm." },
-        { regex: /(^|[^\p{L}\p{M}])([\p{Ll}\p{M}]+)\s+\2(?=[^\p{L}\p{M}]|$)/gui, suggestion: (m: any, p1: string, p2: string) => p1 + p2, exclude: ["luôn luôn", "nhè nhẹ", "ào ào", "rào rào", "song song", "dần dần", "từ từ", "mãi mãi", "đùng đùng", "rành rành", "mặt mặt"], desc: "Lỗi lặp từ." },
+        { regex: /(^|[^\p{L}\p{M}])([\p{L}\p{M}]+)\s+\2(?=[^\p{L}\p{M}]|$)/gui, suggestion: (m: any, p1: string, p2: string) => p1 + p2, exclude: ["luôn luôn", "nhè nhẹ", "ào ào", "rào rào", "song song", "dần dần", "từ từ", "mãi mãi", "đùng đùng", "rành rành", "mặt mặt", "ngành ngành"], desc: "Lỗi lặp từ." },
         { regex: /[ \t]+([.,;:!?])/g, suggestion: "$1", desc: "Dấu câu sát chữ trước." },
         { regex: /([.,;:!?])(?=[\p{L}\p{M}])/gu, suggestion: "$1 ", desc: "Khoảng trắng sau dấu câu." },
         { regex: /([(\["'])[ \t]+/g, suggestion: "$1", desc: "Mở ngoặc sát chữ sau." },
         { regex: /[ \t]+([)\]"'])/g, suggestion: "$1", desc: "Đóng ngoặc sát chữ trước." },
         { regex: /(?<=[a-zA-Z0-9.,;:!?\)\]"']) {2,}(?=[a-zA-Z0-9\(\["'])/g, suggestion: " ", desc: "Thừa khoảng trắng." },
-        { regex: /(^|[^\p{L}\p{M}])([\p{Ll}\p{M}]+)(b{2,}|c{2,}|đ{2,}|d{2,}|g{2,}|h{2,}|k{2,}|l{2,}|m{2,}|n{2,}|p{2,}|q{2,}|r{2,}|s{2,}|t{2,}|v{2,}|x{2,})([\p{Ll}\p{M}]*)(?=[^\p{L}\p{M}]|$)/gu, suggestion: (m: any, p1: string, p2: string, p3: string, p4: string) => p1 + p2 + p3[0] + p4, desc: "Thừa ký tự phụ âm." },
+        // Regex siêu việt mới: Bắt lỗi thừa phụ âm (kẹt phím) cho CẢ chữ hoa và chữ thường (Giải quyết chữ "Xác địnhh", "gầnn")
+        { regex: /(?<![\p{L}\p{M}])([\p{L}\p{M}]*?)([bcdđghklmnpqrstvx])\2+([\p{L}\p{M}]*)(?![\p{L}\p{M}])/gui, suggestion: (m: any, p1: string, p2: string, p3: string) => p1 + p2 + p3, desc: "Thừa ký tự phụ âm (kẹt phím)." },
         { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản'." },
         { regex: / Điểm /g, suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm'." }
       ];
@@ -169,8 +186,17 @@ export default function DocReviewStudio() {
     const sorted = [...errors].sort((a, b) => (b.original || "").length - (a.original || "").length);
     sorted.forEach(err => {
       if (!err.original) return;
-      // (?<!\p{L}|\p{M}) và (?!\p{L}|\p{M}) : ĐÂY LÀ CHÌA KHÓA BẢO VỆ CHỮ "NGÀNH", "THÀNH"
-      const r = new RegExp(`(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?!\\p{L}|\\p{M})(?![^<]*>)`, 'gu');
+      
+      // THUẬT TOÁN BẢO VỆ: Ngăn chặn bôi đỏ toàn văn bản khi lỗi chỉ nằm ở cuối câu
+      let regexStr = `(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?!\\p{L}|\\p{M})(?![^<]*>)`;
+      
+      if (err.description === "Thiếu dấu chấm kết thúc đoạn/câu.") {
+         // Nếu là lỗi thiếu dấu chấm, CHỈ tìm bắt từ đó khi nó nằm sát ngay trước dấu xuống dòng (Enter) hoặc ở tận cùng văn bản
+         regexStr = `(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?=\\s*(?:\\r?\\n|$))`;
+      }
+
+      const r = new RegExp(regexStr, 'gu');
+      
       if (err.status === 'pending') {
         const span = `<span id="text-error-${err.id}" class="bg-rose-500/20 rounded-sm transition-all ${activeErrorId === err.id ? 'ring-1 ring-rose-500 bg-rose-500/40' : 'hover:bg-rose-500/40 cursor-pointer'}" data-id="${err.id}">$&</span>`;
         html = html.replace(r, span);
@@ -178,7 +204,9 @@ export default function DocReviewStudio() {
         html = html.replace(r, `<span class="bg-emerald-500/20 text-emerald-400 rounded-sm">${err.suggestion}</span>`);
       }
     });
-    return <div dangerouslySetInnerHTML={{ __html: html.split('\n').join('<br/>') }} onClick={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'SPAN' && t.dataset.id) { setActiveErrorId(t.dataset.id); document.getElementById(`error-card-${t.dataset.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }} />;
+
+    // Thêm setTimeout(..., 100) để tạo độ trễ 0.1s, giúp trình duyệt kịp dựng hình trước khi cuộn, khắc phục lỗi cuộn chập chờn
+    return <div dangerouslySetInnerHTML={{ __html: html.split('\n').join('<br/>') }} onClick={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'SPAN' && t.dataset.id) { setActiveErrorId(t.dataset.id); setTimeout(() => { document.getElementById(`error-card-${t.dataset.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); } }} />;
   };
 
   const getFinalText = () => { let f = documentText; errors.forEach(err => { if (err.status === 'fixed' && err.original) f = f.replace(new RegExp(`(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?!\\p{L}|\\p{M})`, 'gu'), err.suggestion); }); return f; };
@@ -272,7 +300,7 @@ export default function DocReviewStudio() {
                     <motion.div 
                         key={err.id} id={`error-card-${err.id}`}
                         className={`bg-[#0f172a] p-5 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'border-[#1e293b]'}`} 
-                        onClick={() => { setActiveErrorId(err.id); document.getElementById(`text-error-${err.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
+                        onClick={() => { setActiveErrorId(err.id); setTimeout(() => { document.getElementById(`text-error-${err.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }}
                     >
                        <div className="flex justify-between mb-3"><span className="text-xs font-bold text-rose-400 uppercase tracking-wider">{err.type}</span><AlertCircle size={16} className="text-rose-400" /></div>
                        <p className="text-base text-rose-300 line-through mb-1 font-normal">{err.original}</p>
