@@ -352,7 +352,7 @@ export default function DocReviewStudio() {
     Packer.toBlob(doc).then((blob) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `DaSua.docx`; // Định dạng xuất ra chuẩn đuôi mở rộng .docx
+      link.download = `Vanban_da_sua.docx`; // Định dạng xuất ra chuẩn đuôi mở rộng .docx
       link.click();
     }).catch(err => {
       console.error("Lỗi xuất file docx:", err);
