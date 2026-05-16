@@ -3,6 +3,7 @@ import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, File
 import { motion, AnimatePresence } from 'motion/react';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 // GỌI 2 FILE TỪ ĐIỂN TỪ BÊN NGOÀI (Bạn cứ thêm 5000+ từ thoải mái vào 2 file này)
 import hoaTuDien from '../data/hoa_tu_dien.json';
@@ -216,8 +217,43 @@ export default function DocReviewStudio() {
   const getFinalText = () => { let f = documentText; errors.forEach(err => { if (err.status === 'fixed' && err.original) f = f.replace(new RegExp(`(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?!\\p{L}|\\p{M})`, 'gu'), err.suggestion); }); return f; };
   const copyToClipboard = () => navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy!"));
   const exportToWord = () => {
-    const blob = new Blob(['\ufeff', `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${getFinalText().replace(/\n/g, '<br/>')}</body></html>`], { type: 'application/msword' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `DaSua.doc`; link.click();
+    const text = getFinalText();
+    // Tách văn bản thành mảng các dòng dựa trên dấu xuống dòng để bảo toàn cấu trúc đoạn
+    const lines = text.split(/\r?\n/);
+    
+    // Chuyển đổi từng dòng văn bản thành một thực thể Paragraph trong cấu trúc Word
+    const paragraphs = lines.map(line => {
+      return new Paragraph({
+        children: [
+          new TextRun({
+            text: line,
+            font: "Times New Roman", // Thiết lập font chữ chuẩn hành chính công vụ
+            size: 28, // Đơn vị tính của thư viện tương đương cỡ chữ 14pt tiêu chuẩn trong Microsoft Word
+          }),
+        ],
+      });
+    });
+
+    // Khởi tạo cấu trúc tài liệu Word nén chuẩn OpenXML
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: paragraphs,
+        },
+      ],
+    });
+
+    // Đóng gói cấu trúc dữ liệu thành file định dạng mã nhị phân Blob và thực hiện tải xuống
+    Packer.toBlob(doc).then((blob) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `DaSua.docx`; // Định dạng xuất ra chuẩn đuôi mở rộng .docx
+      link.click();
+    }).catch(err => {
+      console.error("Lỗi xuất file docx:", err);
+      alert("Có lỗi xảy ra trong quá trình đóng gói cấu trúc tệp .docx");
+    });
   };
 
   return (
