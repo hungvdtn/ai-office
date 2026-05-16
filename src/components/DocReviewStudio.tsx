@@ -148,21 +148,36 @@ export default function DocReviewStudio() {
         }
       });
 
-      // C. QUÉT TỪ ĐIỂN JSON (Đã tích hợp chuẩn hóa Unicode NFC chống lỗi gõ phím)
+      // C. QUÉT TỪ ĐIỂN JSON (Đã tích hợp hỗ trợ đa cấu trúc JSON và chuẩn hóa Unicode)
       const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       [...hoaTuDien, ...chinhTaTuDien].forEach(item => {
-        if (!item.wrong || !item.right) return;
-        item.wrong.forEach((w: string) => {
+        // Hỗ trợ tự động nhận diện cả 2 định dạng file JSON:
+        // Dạng 1 (hoa_tu_dien.json): { original: "...", suggestion: "..." }
+        // Dạng 2 (chinh_ta_tu_dien.json): { wrong: ["...", "..."], right: "..." }
+        let wrongWords: string[] = [];
+        let rightWord = "";
+
+        if (item.original && item.suggestion) {
+            wrongWords = [item.original];
+            rightWord = item.suggestion;
+        } else if (item.wrong && Array.isArray(item.wrong) && item.right) {
+            wrongWords = item.wrong;
+            rightWord = item.right;
+        } else {
+            return; // Bỏ qua nếu item không khớp định dạng nào
+        }
+
+        wrongWords.forEach((w: string) => {
           const r = new RegExp(`(?<![\\p{L}\\p{M}])(${escape(w)})(?![\\p{L}\\p{M}])`, 'gui');
           let m;
           while ((m = r.exec(text)) !== null) {
-            // Chuẩn hóa bộ gõ Unicode về cùng chuẩn NFC để đối chiếu chính xác tuyệt đối sự khác biệt Hoa/Thường
             const textWord = m[0].normalize('NFC');
-            const dictWord = item.right.normalize('NFC');
+            const dictWord = rightWord.normalize('NFC');
 
+            // Nếu từ trong văn bản đã khớp hoàn toàn (cả chữ hoa/thường) với từ đúng thì bỏ qua
             if (textWord === dictWord) continue; 
             
-            foundErrors.push({ id: `off_d_${errCount++}`, original: m[0], suggestion: item.right, type: 'chinh-ta', description: item.desc || "Sai quy chuẩn/chính tả.", status: 'pending' });
+            foundErrors.push({ id: `off_d_${errCount++}`, original: m[0], suggestion: rightWord, type: 'chinh-ta', description: item.desc || "Sai quy chuẩn/chính tả.", status: 'pending' });
           }
         });
       });
