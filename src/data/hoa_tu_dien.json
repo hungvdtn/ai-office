@@ -1,5 +1,40 @@
 [
   {
+    "original": "chủ tịch nước",
+    "suggestion": "Chủ tịch nước",
+    "desc": "Viết hoa chức danh nhà nước."
+  },
+  {
+    "original": "thủ tướng chính phủ",
+    "suggestion": "Thủ tướng Chính phủ",
+    "desc": "Viết hoa chức danh nhà nước."
+  },
+  {
+    "original": "phó chủ tịch nước",
+    "suggestion": "Phó Chủ tịch nước",
+    "desc": "Viết hoa chức danh nhà nước."
+  },
+  {
+    "original": "phó thủ tướng chính phủ",
+    "suggestion": "Phó Thủ tướng Chính phủ",
+    "desc": "Viết hoa chức danh nhà nước."
+  },
+  {
+    "original": "chủ tịch quốc hội",
+    "suggestion": "Chủ tịch Quốc hội",
+    "desc": "Viết hoa chức danh nhà nước."
+  },
+  {
+    "original": "phó chủ tịch quốc hội",
+    "suggestion": "Phó Chủ tịch Quốc hội",
+    "desc": "Viết hoa chức danh nhà nước."
+  }, 
+  {
+    "original": "chính phủ",
+    "suggestion": "Chính phủ",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
     "original": "bộ quốc phòng",
     "suggestion": "Bộ Quốc phòng",
     "desc": "Viết hoa tên cơ quan nhà nước."
