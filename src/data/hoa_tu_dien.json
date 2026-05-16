@@ -35,6 +35,21 @@
     "desc": "Viết hoa tên cơ quan nhà nước."
   },
   {
+    "original": "quốc hội",
+    "suggestion": "Quốc hội",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "văn phòng chính phủ",
+    "suggestion": "Văn phòng Chính phủ",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "văn phòng quốc hội",
+    "suggestion": "Văn phòng Quốc hội",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
     "original": "bộ quốc phòng",
     "suggestion": "Bộ Quốc phòng",
     "desc": "Viết hoa tên cơ quan nhà nước."
@@ -918,5 +933,335 @@
     "original": "bác hồ",
     "suggestion": "Bác Hồ",
     "desc": "Viết hoa tên nhân vật lịch sử."
+  }
+  {
+    "original": "vụ tổ chức - biên chế",
+    "suggestion": "Vụ Tổ chức - Biên chế",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ chính quyền địa phương",
+    "suggestion": "Vụ Chính quyền địa phương",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ công chức - viên chức",
+    "suggestion": "Vụ Công chức - Viên chức",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ tổ chức phi chính phủ",
+    "suggestion": "Vụ Tổ chức phi chính phủ",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ cải cách hành chính",
+    "suggestion": "Vụ Cải cách hành chính",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ công tác thanh niên và bình đẳng giới",
+    "suggestion": "Vụ Công tác thanh niên và Bình đẳng giới",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ hợp tác quốc tế",
+    "suggestion": "Vụ Hợp tác quốc tế",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ tổ chức cán bộ",
+    "suggestion": "Vụ Tổ chức cán bộ",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ pháp chế",
+    "suggestion": "Vụ Pháp chế",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ kế hoạch - tài chính",
+    "suggestion": "Vụ Kế hoạch - Tài chính",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "thanh tra bộ",
+    "suggestion": "Thanh tra Bộ",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "văn phòng bộ",
+    "suggestion": "Văn phòng Bộ",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục văn thư và lưu trữ nhà nước",
+    "suggestion": "Cục Văn thư và Lưu trữ nhà nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục tiền lương và bảo hiểm xã hội",
+    "suggestion": "Cục Tiền lương và Bảo hiểm xã hội",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục việc làm",
+    "suggestion": "Cục Việc làm",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý lao động ngoài nước",
+    "suggestion": "Cục Quản lý lao động ngoài nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục người có công",
+    "suggestion": "Cục Người có công",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "ban thi đua - khen thưởng trung ương",
+    "suggestion": "Ban Thi đua - Khen thưởng Trung ương",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "trung tâm công nghệ thông tin",
+    "suggestion": "Trung tâm Công nghệ thông tin",
+    "desc": "Viết hoa tên cơ quan nghiên cứu, đào tạo."
+  },
+  {
+    "original": "viện khoa học tổ chức nhà nước và lao động",
+    "suggestion": "Viện Khoa học Tổ chức nhà nước và Lao động",
+    "desc": "Viết hoa tên cơ quan nghiên cứu, đào tạo."
+  },
+  {
+    "original": "tạp chí tổ chức nhà nước và lao động",
+    "suggestion": "Tạp chí Tổ chức nhà nước và Lao động",
+    "desc": "Viết hoa tên cơ quan báo chí, tạp chí."
+  },
+  {
+    "original": "vụ giáo dục mầm non",
+    "suggestion": "Vụ Giáo dục Mầm non",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ giáo dục phổ thông",
+    "suggestion": "Vụ Giáo dục Phổ thông",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ giáo dục đại học",
+    "suggestion": "Vụ Giáo dục Đại học",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ giáo dục quốc phòng và an ninh",
+    "suggestion": "Vụ Giáo dục Quốc phòng và An ninh",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ học sinh, sinh viên",
+    "suggestion": "Vụ Học sinh, sinh viên",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "văn phòng",
+    "suggestion": "Văn phòng",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "thanh tra",
+    "suggestion": "Thanh tra",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục nhà giáo và cán bộ quản lý giáo dục",
+    "suggestion": "Cục Nhà giáo và Cán bộ quản lý giáo dục",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý chất lượng",
+    "suggestion": "Cục Quản lý chất lượng",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục khoa học, công nghệ và thông tin",
+    "suggestion": "Cục Khoa học, Công nghệ và Thông tin",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục giáo dục nghề nghiệp và giáo dục thường xuyên",
+    "suggestion": "Cục Giáo dục nghề nghiệp và Giáo dục thường xuyên",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "báo giáo dục và thời đại",
+    "suggestion": "Báo Giáo dục và Thời đại",
+    "desc": "Viết hoa tên cơ quan báo chí, tạp chí."
+  },
+  {
+    "original": "viện khoa học giáo dục việt nam",
+    "suggestion": "Viện Khoa học Giáo dục Việt Nam",
+    "desc": "Viết hoa tên cơ quan nghiên cứu, đào tạo."
+  },
+  {
+    "original": "viện chiến lược và chính sách giáo dục",
+    "suggestion": "Viện Chiến lược và Chính sách giáo dục",
+    "desc": "Viết hoa tên cơ quan nghiên cứu, đào tạo."
+  },
+  {
+    "original": "vụ tổng hợp kinh tế quốc dân",
+    "suggestion": "Vụ Tổng hợp kinh tế quốc dân",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ ngân sách nhà nước",
+    "suggestion": "Vụ Ngân sách nhà nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ đầu tư",
+    "suggestion": "Vụ Đầu tư",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ tài chính - kinh tế ngành",
+    "suggestion": "Vụ Tài chính - Kinh tế ngành",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ quốc phòng, an ninh, đặc biệt (vụ i)",
+    "suggestion": "Vụ Quốc phòng, an ninh, đặc biệt (Vụ I)",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ kinh tế địa phương và lãnh thổ",
+    "suggestion": "Vụ Kinh tế địa phương và lãnh thổ",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ quản lý quy hoạch",
+    "suggestion": "Vụ Quản lý quy hoạch",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "vụ các định chế tài chính",
+    "suggestion": "Vụ Các định chế tài chính",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý nợ và kinh tế đối ngoại",
+    "suggestion": "Cục Quản lý nợ và Kinh tế đối ngoại",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý công sản",
+    "suggestion": "Cục Quản lý công sản",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý đấu thầu",
+    "suggestion": "Cục Quản lý đấu thầu",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý, giám sát chính sách thuế, phí và lệ phí",
+    "suggestion": "Cục Quản lý, giám sát chính sách thuế, phí và lệ phí",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý, giám sát bảo hiểm",
+    "suggestion": "Cục Quản lý, giám sát bảo hiểm",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý, giám sát kế toán, kiểm toán",
+    "suggestion": "Cục Quản lý, giám sát kế toán, kiểm toán",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục quản lý giá",
+    "suggestion": "Cục Quản lý giá",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục phát triển doanh nghiệp nhà nước",
+    "suggestion": "Cục Phát triển doanh nghiệp nhà nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục phát triển doanh nghiệp tư nhân và kinh tế tập thể",
+    "suggestion": "Cục Phát triển doanh nghiệp tư nhân và kinh tế tập thể",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục đầu tư nước ngoài",
+    "suggestion": "Cục Đầu tư nước ngoài",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục kế hoạch - tài chính",
+    "suggestion": "Cục Kế hoạch - Tài chính",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục công nghệ thông tin và chuyển đổi số",
+    "suggestion": "Cục Công nghệ thông tin và chuyển đổi số",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục thuế",
+    "suggestion": "Cục Thuế",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục hải quan",
+    "suggestion": "Cục Hải quan",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục dự trữ nhà nước",
+    "suggestion": "Cục Dự trữ Nhà nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục thống kê",
+    "suggestion": "Cục Thống kê",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "kho bạc nhà nước",
+    "suggestion": "Kho bạc Nhà nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "ủy ban chứng khoán nhà nước",
+    "suggestion": "Ủy ban Chứng khoán Nhà nước",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "viện chiến lược và chính sách kinh tế - tài chính",
+    "suggestion": "Viện Chiến lược và Chính sách kinh tế - tài chính",
+    "desc": "Viết hoa tên cơ quan nghiên cứu, đào tạo."
+  },
+  {
+    "original": "báo tài chính - đầu tư",
+    "suggestion": "Báo Tài chính - Đầu tư",
+    "desc": "Viết hoa tên cơ quan báo chí, tạp chí."
+  },
+  {
+    "original": "tạp chí kinh tế - tài chính",
+    "suggestion": "Tạp chí Kinh tế - Tài chính",
+    "desc": "Viết hoa tên cơ quan báo chí, tạp chí."
+  },
+  {
+    "original": "học viện chính sách và phát triển",
+    "suggestion": "Học viện Chính sách và Phát triển",
+    "desc": "Viết hoa tên cơ quan nghiên cứu, đào tạo."
+  },
+  {
+    "original": "bảo hiểm xã hội việt nam",
+    "suggestion": "Bảo hiểm xã hội Việt Nam",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
   }
 ]
