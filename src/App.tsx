@@ -107,7 +107,7 @@ const AdminPanel = () => {
      <div className="p-4 md:p-8 text-slate-200 animate-in fade-in duration-500 font-sans">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h2 className="text-xl md:text-2xl font-bold text-brand flex items-center gap-3">
-             <Users size={28} /> Hệ thống kiểm soát thành viên Quản trị
+             <Users size={28} /> Quản trị hệ thống
           </h2>
           {!stats.loading && userList.length > 0 && (
             <button 
