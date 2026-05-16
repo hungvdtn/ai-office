@@ -116,7 +116,7 @@ export default function DocReviewStudio() {
           }
       });
 
-      // B. CÁC QUY TẮC KỸ THUẬT CỨNG
+      // B. CÁC QUY TẮC KỸ THUẬT VÀ CHÍNH TẢ CỨNG (Tổng hợp đầy đủ)
       const regexRules = [
         // 1. QUY TẮC ĐẶT CÂU: Bắt lỗi không viết hoa chữ cái đầu tiên sau dấu chấm, chấm hỏi, chấm than hoặc đầu dòng
         { 
@@ -125,15 +125,17 @@ export default function DocReviewStudio() {
           desc: "Chưa viết hoa chữ cái đầu câu." 
         },
 
-        // 2. QUY TẮC CHÍNH TẢ CỨNG: Sửa tự động các cấu trúc âm tiết không tồn tại trong tiếng Việt
-        { regex: /(?<![\p{L}\p{M}])([kK])([aăâoôơuư][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'C' : 'c') + p2, desc: "Sai luật chính tả: 'k' không ghép với a, ă, â, o, ô, ơ, u, ư." },
-        { regex: /(?<![\p{L}\p{M}])([cC])([ieêy][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'K' : 'k') + p2, desc: "Sai luật chính tả: 'c' không ghép với i, e, ê, y." },
-        { regex: /(?<![\p{L}\p{M}])(Ngh|ngh|NGH)([aăâoôơuư][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'NG' : (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'Ng' : 'ng')) + p2, desc: "Sai luật chính tả: 'ngh' không ghép với a, ă, â, o, ô, ơ, u, ư." },
-        { regex: /(?<![\p{L}\p{M}])(Gh|gh|GH)([aăâoôơuư][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'G' : 'g') + p2, desc: "Sai luật chính tả: 'gh' không ghép với a, ă, â, o, ô, ơ, u, ư." },
-        { regex: /(?<![\p{L}\p{M}])(Tr|tr|TR)(o[aăe][\p{L}\p{M}]*|uê[\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'CH' : (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'Ch' : 'ch')) + p2, desc: "Sai luật chính tả: 'tr' không ghép với oa, oă, oe, uê." },
-        { regex: /(?<![\p{L}\p{M}])([sS])(o[aăe][\p{L}\p{M}]*|u[êâ][\p{L}\p{M}]*)/gui, exclude: ["soát", "soạt", "soạng", "soạn", "suất"], suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'X' : 'x') + p2, desc: "Sai luật chính tả: 's' không ghép với oa, oă, oe, uê, uâ." },
-        { regex: /(?<![\p{L}\p{M}])([nN])(o[ae][\p{L}\p{M}]*|u[â][\p{L}\p{M}]*|uy[\p{L}\p{M}]*)/gui, exclude: ["noãn", "noa"], suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'L' : 'l') + p2, desc: "Sai luật chính tả: 'n' không ghép với oa, oe, uâ, uy." },
-        { regex: /(?<![\p{L}\p{M}])(Gi|gi|GI|R|r)(o[ae][\p{L}\p{M}]*|u[êy][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'D' : 'd') + p2, desc: "Sai luật chính tả: 'r' hoặc 'gi' không ghép với oa, oe, uê, uy." },
+        // 2. QUY TẮC CHÍNH TẢ CỨNG (Lưới lọc siêu cường cho 100% nguyên âm tiếng Việt)
+        { regex: /(?<![\p{L}\p{M}])([kK])([aáàảãạăắằẳẵặâấầẩẫậoóòỏõọôốồổỗộơớờởỡợuúùủũụưứừửữự][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'C' : 'c') + p2, desc: "Sai luật: 'k' không ghép với a, o, u..." },
+        { regex: /(?<![\p{L}\p{M}])([cC])([iíìỉĩịeéèẻẽẹêếềểễệyýỳỷỹỵ][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'K' : 'k') + p2, desc: "Sai luật: 'c' không ghép với i, e, ê, y." },
+        { regex: /(?<![\p{L}\p{M}])(Ngh|ngh|NGH)([aáàảãạăắằẳẵặâấầẩẫậoóòỏõọôốồổỗộơớờởỡợuúùủũụưứừửữự][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'NG' : (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'Ng' : 'ng')) + p2, desc: "Sai luật: 'ngh' không ghép với a, o, u..." },
+        { regex: /(?<![\p{L}\p{M}])(Gh|gh|GH)([aáàảãạăắằẳẵặâấầẩẫậoóòỏõọôốồổỗộơớờởỡợuúùủũụưứừửữự][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'G' : 'g') + p2, desc: "Sai luật: 'gh' không ghép với a, o, u..." },
+        { regex: /(?<![\p{L}\p{M}])(Tr|tr|TR)(o[aáàảãạăắằẳẵặeéèẻẽẹ][\p{L}\p{M}]*|u[êếềểễệ][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'CH' : (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'Ch' : 'ch')) + p2, desc: "Sai luật: 'tr' không ghép với oa, oă, oe, uê." },
+        { regex: /(?<![\p{L}\p{M}])([sS])(o[aáàảãạăắằẳẵặeéèẻẽẹ][\p{L}\p{M}]*|u[êếềểễệâấầẩẫậ][\p{L}\p{M}]*)/gui, exclude: ["soát", "soạt", "soạng", "soạn", "suất"], suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'X' : 'x') + p2, desc: "Sai luật: 's' không ghép với oa, oă, oe, uê, uâ." },
+        { regex: /(?<![\p{L}\p{M}])([nN])(o[aáàảãạeéèẻẽẹ][\p{L}\p{M}]*|u[âấầẩẫậyýỳỷỹỵ][\p{L}\p{M}]*)/gui, exclude: ["noãn", "noa"], suggestion: (m: any, p1: string, p2: string) => (p1 === p1.toUpperCase() ? 'L' : 'l') + p2, desc: "Sai luật: 'n' không ghép với oa, oe, uâ, uy." },
+        { regex: /(?<![\p{L}\p{M}])(Gi|gi|GI|R|r)(o[aáàảãạeéèẻẽẹ][\p{L}\p{M}]*|u[êếềểễệyýỳỷỹỵ][\p{L}\p{M}]*)/gui, suggestion: (m: any, p1: string, p2: string) => (p1.charAt(0) === p1.charAt(0).toUpperCase() ? 'D' : 'd') + p2, desc: "Sai luật: 'r' hoặc 'gi' không ghép với oa, oe, uê, uy." },
+
+        // 3. CÁC QUY TẮC KỸ THUẬT VÀ THỂ THỨC (Giữ nguyên các tính năng cũ đã chuẩn hóa)
         { regex: /;([ \t]+)([\p{Lu}][\p{Ll}\p{M}]*)/gu, suggestion: (m: any, p1: string, p2: string) => ";" + p1 + p2.toLowerCase(), desc: "Không viết hoa sau dấu chấm phẩy." },
         { regex: /:([ \t]+)([\p{Lu}][\p{Ll}\p{M}]*)/gu, suggestion: (m: any, p1: string, p2: string) => ":" + p1 + p2.toLowerCase(), desc: "Đề nghị xem lại viết hoa sau dấu hai chấm." },
         { regex: /(^|[^\p{L}\p{M}])([\p{L}\p{M}]+)\s+\2(?=[^\p{L}\p{M}]|$)/gui, suggestion: (m: any, p1: string, p2: string) => p1 + p2, exclude: ["luôn luôn", "nhè nhẹ", "ào ào", "rào rào", "song song", "dần dần", "từ từ", "mãi mãi", "đùng đùng", "rành rành", "mặt mặt", "ngành ngành"], desc: "Lỗi lặp từ." },
@@ -141,7 +143,6 @@ export default function DocReviewStudio() {
         { regex: /([.,;:!?])(?=[\p{L}\p{M}])/gu, suggestion: "$1 ", desc: "Khoảng trắng sau dấu câu." },
         { regex: /([(\["'])[ \t]+/g, suggestion: "$1", desc: "Mở ngoặc sát chữ sau." },
         { regex: /[ \t]+([)\]"'])/g, suggestion: "$1", desc: "Đóng ngoặc sát chữ trước." },
-        // Bắt khoảng trắng kèm theo 2 từ ở hai đầu để tạo tính độc nhất cho lỗi, chống bị gộp lỗi
         { regex: /([^\s]+)[ \t]{2,}([^\s]+)/g, suggestion: "$1 $2", desc: "Thừa khoảng trắng giữa các từ." },
         { regex: /(?<![\p{L}\p{M}])([\p{L}\p{M}]*?)([bcdđghklmnpqrstvx])\2+([\p{L}\p{M}]*)(?![\p{L}\p{M}])/gui, suggestion: (m: any, p1: string, p2: string, p3: string) => p1 + p2 + p3, desc: "Thừa ký tự phụ âm (kẹt phím)." },
         { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản'." },
