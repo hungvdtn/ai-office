@@ -241,7 +241,7 @@ export default function App() {
   const alarmedIds = useRef<Set<string>>(new Set());
 
   // THIẾT LẬP QUYỀN ADMIN
-  const ADMIN_EMAILS = ['hungvdtn@gmail.com', 'vuxuanhung@gmail.com'];
+  const ADMIN_EMAILS = ['hungvdtnai@gmail.com', 'hungvdtn@gmail.com'];
   const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
 
   useEffect(() => {
