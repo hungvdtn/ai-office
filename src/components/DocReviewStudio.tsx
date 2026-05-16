@@ -393,7 +393,7 @@ export default function DocReviewStudio() {
                  ) : ( <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder="Dán nội dung..." className="w-full h-40 bg-[#05070a] border border-slate-600 rounded-xl p-4 text-slate-200 text-sm focus:outline-none custom-scrollbar" /> )}
               </div>
               <div className="space-y-4">
-                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Bắt đầu</h3>
+                 <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Rà soát</h3>
                  <p className="text-xs text-slate-400 mb-4">Đã nâng cấp thuật toán Highlight chống xô lệch cụm từ.</p>
                  <div className="grid grid-cols-2 gap-3 pt-2">
                     <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2 border border-[#1e293b]">
