@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, FileWarning, Copy, Type, Settings2, ShieldCheck, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { auth } from '../firebase';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
@@ -26,6 +27,14 @@ export default function DocReviewStudio() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  // Hàm bảo vệ: Yêu cầu đăng nhập trước khi thực thi hành động
+  const requireLogin = (action: () => void) => {
+    if (!auth.currentUser) {
+        alert("Bạn hãy đăng nhập để sử dụng chức năng này!");
+        return;
+    }
+    action();
+  };
 
   useEffect(() => { (window as any).isDocReviewing = step === 'analyzing' || (step === 'review' && errors.some(e => e.status === 'pending')); return () => { (window as any).isDocReviewing = false; }; }, [step, errors]);
   useEffect(() => { const handleBeforeUnload = (e: BeforeUnloadEvent) => { if ((window as any).isDocReviewing) { e.preventDefault(); e.returnValue = ''; } }; window.addEventListener('beforeunload', handleBeforeUnload); return () => window.removeEventListener('beforeunload', handleBeforeUnload); }, []);
@@ -338,7 +347,7 @@ export default function DocReviewStudio() {
                  <h3 className="text-lg font-bold text-sky-400 flex items-center gap-2 uppercase"><Settings2 size={18}/> 1. Đầu vào</h3>
                  <div className="flex bg-[#1e293b]/50 p-1 rounded-lg">
                     <button onClick={() => setInputType('upload')} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'upload' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Tải file Word</button>
-                    <button onClick={() => setInputType('paste')} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'paste' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Dán văn bản</button>
+                    <button onClick={() => requireLogin(() => setInputType('paste'))} className={`flex-1 py-2 text-xs font-bold rounded ${inputType === 'paste' ? 'bg-sky-600 text-white' : 'text-slate-400'}`}>Dán văn bản</button>
                  </div>
                  {inputType === 'upload' ? (
                     selectedFile ? (
@@ -349,7 +358,7 @@ export default function DocReviewStudio() {
                             <button onClick={removeSelectedFile} className="flex items-center justify-center gap-2 mx-auto text-xs text-rose-400 font-bold bg-rose-500/10 px-4 py-2 rounded-lg"><Trash2 size={14} /> ĐỔI FILE</button>
                         </div>
                     ) : (
-                        <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center cursor-pointer bg-[#05070a] hover:border-sky-500 transition-colors">
+                        <div onClick={() => requireLogin(() => fileInputRef.current?.click())} className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center cursor-pointer bg-[#05070a] hover:border-sky-500 transition-colors">
                            <input type="file" accept=".docx" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
                            <UploadCloud size={40} className="mx-auto text-slate-500 mb-2" />
                            <p className="text-xs text-slate-400 font-bold uppercase">Click chọn file .docx</p>
