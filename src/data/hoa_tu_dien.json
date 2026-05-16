@@ -1,9 +1,887 @@
 [
-  { "original": "quốc hội", "suggestion": "Quốc hội", "desc": "Viết hoa danh từ riêng phổ biến." },
-  { "original": "chính phủ", "suggestion": "Chính phủ", "desc": "Viết hoa danh từ riêng phổ biến." },
-  { "original": "thủ tướng chính phủ", "suggestion": "Thủ tướng Chính phủ", "desc": "Viết hoa danh từ riêng phổ biến." },
-  { "original": "nhà nước", "suggestion": "Nhà nước", "desc": "Viết hoa danh từ riêng phổ biến." },
-  { "original": "bộ giáo dục và đào tạo", "suggestion": "Bộ Giáo dục và Đào tạo", "desc": "Viết hoa tên cơ quan." },
-  { "original": "bộ lao động - thương binh và xã hội", "suggestion": "Bộ Lao động - Thương binh và Xã hội", "desc": "Viết hoa tên cơ quan." },
-  { "original": "ủy ban nhân dân", "suggestion": "Ủy ban nhân dân", "desc": "Viết hoa tên cơ quan hành chính." }
+  {
+    "original": "bộ quốc phòng",
+    "suggestion": "Bộ Quốc phòng",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ công an",
+    "suggestion": "Bộ Công an",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ ngoại giao",
+    "suggestion": "Bộ Ngoại giao",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ nội vụ",
+    "suggestion": "Bộ Nội vụ",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ tư pháp",
+    "suggestion": "Bộ Tư pháp",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ tài chính",
+    "suggestion": "Bộ Tài chính",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ công thương",
+    "suggestion": "Bộ Công Thương",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ nông nghiệp và môi trường",
+    "suggestion": "Bộ Nông nghiệp và Môi trường",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ xây dựng",
+    "suggestion": "Bộ Xây dựng",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ văn hóa, thể thao và du lịch",
+    "suggestion": "Bộ Văn hóa, Thể thao và Du lịch",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ khoa học và công nghệ",
+    "suggestion": "Bộ Khoa học và Công nghệ",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ giáo dục và đào tạo",
+    "suggestion": "Bộ Giáo dục và Đào tạo",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ y tế",
+    "suggestion": "Bộ Y tế",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "bộ dân tộc và tôn giáo",
+    "suggestion": "Bộ Dân tộc và Tôn giáo",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "ngân hàng nhà nước việt nam",
+    "suggestion": "Ngân hàng Nhà nước Việt Nam",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "thanh tra chính phủ",
+    "suggestion": "Thanh tra Chính phủ",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "văn phòng chính phủ",
+    "suggestion": "Văn phòng Chính phủ",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "văn phòng chủ tịch nước",
+    "suggestion": "Văn phòng Chủ tịch nước",
+    "desc": "Viết hoa tên cơ quan nhà nước."
+  },
+  {
+    "original": "ban chấp hành trung ương đảng",
+    "suggestion": "Ban Chấp hành Trung ương Đảng",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "bộ chính trị",
+    "suggestion": "Bộ Chính trị",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ban bí thư",
+    "suggestion": "Ban Bí thư",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "văn phòng trung ương đảng",
+    "suggestion": "Văn phòng Trung ương Đảng",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ban tổ chức trung ương",
+    "suggestion": "Ban Tổ chức Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ủy ban kiểm tra trung ương",
+    "suggestion": "Ủy ban Kiểm tra Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ban tuyên giáo và dân vận trung ương",
+    "suggestion": "Ban Tuyên giáo và Dân vận Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ban nội chính trung ương",
+    "suggestion": "Ban Nội chính Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ban kinh tế trung ương",
+    "suggestion": "Ban Kinh tế Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "ban đối ngoại trung ương",
+    "suggestion": "Ban Đối ngoại Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "báo nhân dân",
+    "suggestion": "Báo Nhân Dân",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "tạp chí cộng sản",
+    "suggestion": "Tạp chí Cộng sản",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "nhà xuất bản chính trị quốc gia sự thật",
+    "suggestion": "Nhà xuất bản Chính trị quốc gia Sự thật",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "học viện chính trị quốc gia hồ chí minh",
+    "suggestion": "Học viện Chính trị quốc gia Hồ Chí Minh",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "đảng bộ khối các cơ quan trung ương",
+    "suggestion": "Đảng bộ Khối các cơ quan Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "đảng bộ khối doanh nghiệp trung ương",
+    "suggestion": "Đảng bộ Khối Doanh nghiệp Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "đảng ủy quân sự trung ương",
+    "suggestion": "Đảng ủy Quân sự Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "đảng ủy công an trung ương",
+    "suggestion": "Đảng ủy Công an Trung ương",
+    "desc": "Viết hoa tên cơ quan của Đảng."
+  },
+  {
+    "original": "mặt trận tổ quốc việt nam",
+    "suggestion": "Mặt trận Tổ quốc Việt Nam",
+    "desc": "Viết hoa tên tổ chức đoàn thể."
+  },
+  {
+    "original": "công đoàn việt nam",
+    "suggestion": "Công đoàn Việt Nam",
+    "desc": "Viết hoa tên tổ chức đoàn thể."
+  },
+  {
+    "original": "hội nông dân việt nam",
+    "suggestion": "Hội Nông dân Việt Nam",
+    "desc": "Viết hoa tên tổ chức đoàn thể."
+  },
+  {
+    "original": "đoàn thanh niên cộng sản hồ chí minh",
+    "suggestion": "Đoàn Thanh niên Cộng sản Hồ Chí Minh",
+    "desc": "Viết hoa tên tổ chức đoàn thể."
+  },
+  {
+    "original": "hội liên hiệp phụ nữ việt nam",
+    "suggestion": "Hội Liên hiệp Phụ nữ Việt Nam",
+    "desc": "Viết hoa tên tổ chức đoàn thể."
+  },
+  {
+    "original": "hội cựu chiến binh việt nam",
+    "suggestion": "Hội Cựu chiến binh Việt Nam",
+    "desc": "Viết hoa tên tổ chức đoàn thể."
+  },
+  {
+    "original": "tây bắc",
+    "suggestion": "Tây Bắc",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "đông bắc",
+    "suggestion": "Đông Bắc",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "bắc bộ",
+    "suggestion": "Bắc Bộ",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "nam bộ",
+    "suggestion": "Nam Bộ",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "vùng trung du và miền núi phía bắc",
+    "suggestion": "Vùng trung du và miền núi phía Bắc",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "vùng đồng bằng sông hồng",
+    "suggestion": "Vùng đồng bằng sông Hồng",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "vùng bắc trung bộ",
+    "suggestion": "Vùng Bắc Trung Bộ",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "vùng duyên hải nam trung bộ và tây nguyên",
+    "suggestion": "Vùng duyên hải Nam Trung Bộ và Tây Nguyên",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "vùng đông nam bộ",
+    "suggestion": "Vùng Đông Nam Bộ",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "vùng đồng bằng sông cửu long",
+    "suggestion": "Vùng đồng bằng sông Cửu Long",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "đắk lắk",
+    "suggestion": "Đắk Lắk",
+    "desc": "Viết hoa tên địa lý."
+  },
+  {
+    "original": "sở nội vụ",
+    "suggestion": "Sở Nội vụ",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở tư pháp",
+    "suggestion": "Sở Tư pháp",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở tài chính",
+    "suggestion": "Sở Tài chính",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở công thương",
+    "suggestion": "Sở Công Thương",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở nông nghiệp và môi trường",
+    "suggestion": "Sở Nông nghiệp và Môi trường",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở xây dựng",
+    "suggestion": "Sở Xây dựng",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở khoa học và công nghệ",
+    "suggestion": "Sở Khoa học và Công nghệ",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở văn hóa, thể thao và du lịch",
+    "suggestion": "Sở Văn hóa, Thể thao và Du lịch",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở giáo dục và đào tạo",
+    "suggestion": "Sở Giáo dục và Đào tạo",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở y tế",
+    "suggestion": "Sở Y tế",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "thanh tra tỉnh",
+    "suggestion": "Thanh tra tỉnh",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "văn phòng ủy ban nhân dân",
+    "suggestion": "Văn phòng Ủy ban nhân dân",
+    "desc": "Viết hoa danh từ riêng."
+  },
+  {
+    "original": "sở ngoại vụ",
+    "suggestion": "Sở Ngoại vụ",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở dân tộc và tôn giáo",
+    "suggestion": "Sở Dân tộc và Tôn giáo",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở du lịch",
+    "suggestion": "Sở Du lịch",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "sở quy hoạch - kiến trúc",
+    "suggestion": "Sở Quy hoạch - Kiến trúc",
+    "desc": "Viết hoa tên cơ quan hành chính cấp tỉnh."
+  },
+  {
+    "original": "bộ luật hình sự",
+    "suggestion": "Bộ luật Hình sự",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "bộ luật dân sự",
+    "suggestion": "Bộ luật Dân sự",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "bộ luật tố tụng hình sự",
+    "suggestion": "Bộ luật Tố tụng hình sự",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "bộ luật tố tụng dân sự",
+    "suggestion": "Bộ luật Tố tụng dân sự",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "bộ luật lao động",
+    "suggestion": "Bộ luật Lao động",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật tổ chức quốc hội",
+    "suggestion": "Luật Tổ chức Quốc hội",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật tổ chức chính phủ",
+    "suggestion": "Luật Tổ chức Chính phủ",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật ban hành văn bản quy phạm pháp luật",
+    "suggestion": "Luật Ban hành văn bản quy phạm pháp luật",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật thủ đô",
+    "suggestion": "Luật Thủ đô",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật tổ chức chính quyền địa phương",
+    "suggestion": "Luật Tổ chức chính quyền địa phương",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật cán bộ, công chức",
+    "suggestion": "Luật Cán bộ, công chức",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật viên chức",
+    "suggestion": "Luật Viên chức",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật trách nhiệm bồi thường của nhà nước",
+    "suggestion": "Luật Trách nhiệm bồi thường của Nhà nước",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật căn cước",
+    "suggestion": "Luật Căn cước",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật doanh nghiệp",
+    "suggestion": "Luật Doanh nghiệp",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật đầu tư",
+    "suggestion": "Luật Đầu tư",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật đấu thầu",
+    "suggestion": "Luật Đấu thầu",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật phục hồi, phá sản",
+    "suggestion": "Luật Phục hồi, phá sản",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật giá",
+    "suggestion": "Luật Giá",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật các tổ chức tín dụng",
+    "suggestion": "Luật Các tổ chức tín dụng",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật thuế thu nhập cá nhân",
+    "suggestion": "Luật Thuế thu nhập cá nhân",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật thuế thu nhập doanh nghiệp",
+    "suggestion": "Luật Thuế thu nhập doanh nghiệp",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật thuế giá trị gia tăng",
+    "suggestion": "Luật Thuế giá trị gia tăng",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật thuế tiêu thụ đặc biệt",
+    "suggestion": "Luật Thuế tiêu thụ đặc biệt",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật đất đai",
+    "suggestion": "Luật Đất đai",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật kinh doanh bất động sản",
+    "suggestion": "Luật Kinh doanh bất động sản",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật nhà ở",
+    "suggestion": "Luật Nhà ở",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật bảo vệ môi trường",
+    "suggestion": "Luật Bảo vệ môi trường",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật tài nguyên nước",
+    "suggestion": "Luật Tài nguyên nước",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật việc làm",
+    "suggestion": "Luật Việc làm",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật bảo hiểm xã hội",
+    "suggestion": "Luật Bảo hiểm xã hội",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật nhà giáo",
+    "suggestion": "Luật Nhà giáo",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật giáo dục",
+    "suggestion": "Luật Giáo dục",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật giáo dục nghề nghiệp",
+    "suggestion": "Luật Giáo dục nghề nghiệp",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật giáo dục đại học",
+    "suggestion": "Luật Giáo dục đại học",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật khám bệnh, chữa bệnh",
+    "suggestion": "Luật Khám bệnh, chữa bệnh",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật an ninh mạng",
+    "suggestion": "Luật An ninh mạng",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật bảo vệ dữ liệu cá nhân",
+    "suggestion": "Luật Bảo vệ dữ liệu cá nhân",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật công nghiệp công nghệ số",
+    "suggestion": "Luật Công nghiệp công nghệ số",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật trí tuệ nhân tạo",
+    "suggestion": "Luật Trí tuệ nhân tạo",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật giao thông đường bộ",
+    "suggestion": "Luật Giao thông đường bộ",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật hôn nhân và gia đình",
+    "suggestion": "Luật Hôn nhân và gia đình",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật trẻ em",
+    "suggestion": "Luật Trẻ em",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật quốc phòng",
+    "suggestion": "Luật Quốc phòng",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật an ninh quốc gia",
+    "suggestion": "Luật An ninh quốc gia",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "luật công an nhân dân",
+    "suggestion": "Luật Công an nhân dân",
+    "desc": "Viết hoa tên loại văn bản pháp luật."
+  },
+  {
+    "original": "huân chương sao vàng",
+    "suggestion": "Huân chương Sao vàng",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương hồ chí minh",
+    "suggestion": "Huân chương Hồ Chí Minh",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương độc lập",
+    "suggestion": "Huân chương Độc lập",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương quân công",
+    "suggestion": "Huân chương Quân công",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương lao động",
+    "suggestion": "Huân chương Lao động",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương lao động hạng nhất",
+    "suggestion": "Huân chương Lao động hạng Nhất",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương lao động hạng nhì",
+    "suggestion": "Huân chương Lao động hạng Nhì",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương lao động hạng ba",
+    "suggestion": "Huân chương Lao động hạng Ba",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương bảo vệ tổ quốc",
+    "suggestion": "Huân chương Bảo vệ Tổ quốc",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương bảo vệ tổ quốc hạng nhất",
+    "suggestion": "Huân chương Bảo vệ Tổ quốc hạng Nhất",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương bảo vệ tổ quốc hạng nhì",
+    "suggestion": "Huân chương Bảo vệ Tổ quốc hạng Nhì",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương bảo vệ tổ quốc hạng ba",
+    "suggestion": "Huân chương Bảo vệ Tổ quốc hạng Ba",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương chiến công",
+    "suggestion": "Huân chương Chiến công",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương chiến công hạng nhất",
+    "suggestion": "Huân chương Chiến công hạng Nhất",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương chiến công hạng nhì",
+    "suggestion": "Huân chương Chiến công hạng Nhì",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương chiến công hạng ba",
+    "suggestion": "Huân chương Chiến công hạng Ba",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương đại đoàn kết dân tộc",
+    "suggestion": "Huân chương Đại đoàn kết dân tộc",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương dũng cảm",
+    "suggestion": "Huân chương Dũng cảm",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huân chương hữu nghị",
+    "suggestion": "Huân chương Hữu nghị",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "bà mẹ việt nam anh hùng",
+    "suggestion": "Bà mẹ Việt Nam anh hùng",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "anh hùng lực lượng vũ trang nhân dân",
+    "suggestion": "Anh hùng Lực lượng vũ trang nhân dân",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "anh hùng lao động",
+    "suggestion": "Anh hùng Lao động",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "nhà giáo nhân dân",
+    "suggestion": "Nhà giáo nhân dân",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "nhà giáo ưu tú",
+    "suggestion": "Nhà giáo ưu tú",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "thầy thuốc nhân dân",
+    "suggestion": "Thầy thuốc nhân dân",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "thầy thuốc ưu tú",
+    "suggestion": "Thầy thuốc ưu tú",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "nghệ sĩ nhân dân",
+    "suggestion": "Nghệ sĩ nhân dân",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "nghệ sĩ ưu tú",
+    "suggestion": "Nghệ sĩ ưu tú",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "nghệ nhân nhân dân",
+    "suggestion": "Nghệ nhân nhân dân",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "nghệ nhân ưu tú",
+    "suggestion": "Nghệ nhân ưu tú",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "giải thưởng hồ chí minh",
+    "suggestion": "Giải thưởng Hồ Chí Minh",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "giải thưởng nhà nước",
+    "suggestion": "Giải thưởng Nhà nước",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huy chương quân kỳ quyết thắng",
+    "suggestion": "Huy chương Quân kỳ quyết thắng",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huy chương vì an ninh tổ quốc",
+    "suggestion": "Huy chương Vì an ninh Tổ quốc",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huy chương chiến sĩ vẻ vang",
+    "suggestion": "Huy chương Chiến sĩ vẻ vang",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huy chương hữu nghị",
+    "suggestion": "Huy chương Hữu nghị",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "huy chương thanh niên xung phong vẻ vang",
+    "suggestion": "Huy chương Thanh niên xung phong vẻ vang",
+    "desc": "Viết hoa danh hiệu, huân huy chương, giải thưởng."
+  },
+  {
+    "original": "tết nguyên đán",
+    "suggestion": "tết Nguyên đán",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tết đoan ngọ",
+    "suggestion": "tết Đoan ngọ",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tết trung thu",
+    "suggestion": "tết Trung thu",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "thứ hai",
+    "suggestion": "thứ Hai",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "thứ ba",
+    "suggestion": "thứ Ba",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "thứ tư",
+    "suggestion": "thứ Tư",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "thứ năm",
+    "suggestion": "thứ Năm",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "thứ sáu",
+    "suggestion": "thứ Sáu",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "thứ bảy",
+    "suggestion": "thứ Bảy",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "chủ nhật",
+    "suggestion": "Chủ Nhật",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng một",
+    "suggestion": "tháng Một",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng hai",
+    "suggestion": "tháng Hai",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng ba",
+    "suggestion": "tháng Ba",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng tư",
+    "suggestion": "tháng Tư",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng năm",
+    "suggestion": "tháng Năm",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng sáu",
+    "suggestion": "tháng Sáu",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng bảy",
+    "suggestion": "tháng Bảy",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng tám",
+    "suggestion": "tháng Tám",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng chín",
+    "suggestion": "tháng Chín",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng mười",
+    "suggestion": "tháng Mười",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "tháng mười một",
+    "suggestion": "tháng Mười một",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "cách mạng tháng tám",
+    "suggestion": "Cách mạng tháng Tám",
+    "desc": "Viết hoa chỉ thời gian, sự kiện lịch sử."
+  },
+  {
+    "original": "vua hùng",
+    "suggestion": "Vua Hùng",
+    "desc": "Viết hoa tên nhân vật lịch sử."
+  },
+  {
+    "original": "bà triệu",
+    "suggestion": "Bà Triệu",
+    "desc": "Viết hoa tên nhân vật lịch sử."
+  },
+  {
+    "original": "bác hồ",
+    "suggestion": "Bác Hồ",
+    "desc": "Viết hoa tên nhân vật lịch sử."
+  }
 ]
