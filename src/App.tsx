@@ -6,7 +6,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, Scan, Languages, ChevronRight, HelpCircle, Menu, X, 
-  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut, Users, Bell, Clock, MapPin
+  CalendarDays, QrCode, Image as ImageIcon, Search, Sparkles, LogIn, LogOut, Users, Bell, Clock, MapPin, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PDFProcessor from './components/PDFProcessor';
