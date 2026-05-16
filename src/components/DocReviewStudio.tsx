@@ -87,7 +87,7 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = []; let errCount = 0;
 
-      // A. KIỂM TRA THIẾU DẤU KẾT THÚC CÂU
+      // A. KIỂM TRA THIẾU DẤU KẾT THÚC CÂU (Đã bổ sung loại trừ cụm từ tiêu đề đặc thù)
       const lines = text.split(/\r?\n/);
       lines.forEach((line) => {
           const trimmed = line.trim();
@@ -96,8 +96,12 @@ export default function DocReviewStudio() {
           const isUpperCase = trimmed === trimmed.toUpperCase();
           const isListMarker = /^([IVXLCDM]+|[0-9]+(\.[0-9]+)*|[a-zđA-ZĐ])\s*[.)]|[-+]/.test(trimmed);
           const isLegalHeading = /^(Điều|Khoản|Điểm|Phần|Chương|Mục)\s+([0-9IVX]+|thứ\s+(nhất|hai|ba|tư|năm|sáu|bảy|tám|chín|mười))/i.test(trimmed);
+          
+          // Bộ lọc nhận diện các từ khóa tiêu đề (Không phân biệt chữ hoa, chữ thường)
+          const isCustomHeading = /^(Mở đầu|Tóm tắt|Kết luận|Khuyến nghị|Kiến nghị)/i.test(trimmed);
 
-          if ((isUpperCase || isListMarker || isLegalHeading) && trimmed.length < 150) {
+          // Nếu dòng chứa các từ khóa tiêu đề trên và độ dài ngắn (dưới 150 ký tự) -> Bỏ qua, không bắt lỗi thiếu dấu chấm
+          if ((isUpperCase || isListMarker || isLegalHeading || isCustomHeading) && trimmed.length < 150) {
               return;
           }
 
