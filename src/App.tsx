@@ -176,6 +176,36 @@ const HelpContent = ({ module }: { module: string }) => {
           </ul>
         </div>
       );
+      case 'docreview':
+      return (
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn Rà soát tài liệu</h3>
+          <p>Công cụ “Rà soát văn bản” được thiết kế để rà soát lỗi chính tả, lỗi kỹ thuật, ngữ pháp, lỗi sử dụng từ của văn bản theo chuẩn quy tắc tiếng Việt và các quy định tại Nghị định 30/2020/NĐ-CP, giúp người dùng nâng cao chất lượng soạn thảo các văn bản, tối ưu hóa công việc[cite: 280].</p>
+          <p className="font-bold text-rose-400">Bạn phải đăng nhập với tài khoản Google để sử dụng chức năng này, vì công cụ này có sử dụng AI trong rà soát[cite: 281].</p>
+          <p>Bạn tải văn bản cần rà soát (chỉ file .docx mới được chấp nhận)[cite: 282]. Nếu là tài liệu của file .doc bạn có thể Save as …chuyển thành .docx hoặc bôi đen toàn bộ văn bản, chọn copy, chọn nút “Dán văn bản” và dán văn bản vào khung cần rà soát[cite: 283].</p>
+          
+          <p className="font-bold text-sky-400 mt-2">Để rà soát văn bản có 2 lựa chọn[cite: 284]:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>(1) Rà soát chính tả:</strong> Dùng trong trường hợp văn bản ngắn, đơn giản, cần xử lý nhanh[cite: 285]. Kết quả rà soát là các lỗi chính tả, lỗi viết hoa, lỗi kỹ thuật (đánh máy, thừa ký tự, thừa chữ; khoảng trắng, dấu câu…)[cite: 286]. Kết quả chỉ trong 1, 2 giây cho hàng trăm trang, gần như không độ trễ[cite: 287].</li>
+            <li><strong>(2) Rà soát kỹ:</strong> Dùng trong trường hợp muốn rà soát kỹ lưỡng văn bản đòi hỏi độ chính xác cao cả về chính tả, ngữ pháp mà còn cả ngữ, nghĩa của từ, câu trong văn bản[cite: 288]. Vì độ phức tạp cao, nên thời gian rà soát lâu, khoảng 15s/trang[cite: 289]. Kết quả rà soát là các lỗi chính tả, kỹ thuật văn bản, ngữ pháp, sử dụng từ v.v… [cite: 290]</li>
+          </ul>
+          
+          <p>Giao diện kết quả rà soát của cả 2 tính năng đều cực kỳ thân thiện, thông minh, dễ sử dụng[cite: 291]. Bạn có thể xem lại từng từ, từng chỗ bị cho là lỗi (có nêu lý do từng lỗi), nếu thấy đúng, thì ấn chấp nhận hệ thống sẽ sửa hoặc lỗi không đúng thì chọn Bỏ qua, không sửa[cite: 292].</p>
+          
+          <p className="font-bold text-sky-400 mt-2">Sau khi sửa xong, bạn có 2 lựa chọn[cite: 293]:</p>
+          <ul className="list-none space-y-1 pl-2">
+            <li>(1) Tải word: Kết quả sửa được tải xuống dưới dạng file .docx; [cite: 294]</li>
+            <li>(2) Chọn nút “Copy” để copy và dán vào file word của bạn đang làm. [cite: 295]</li>
+          </ul>
+
+          <p className="font-bold text-amber-400 mt-2">Lưu ý[cite: 296]:</p>
+          <ol className="list-decimal pl-5 space-y-1">
+            <li>Nếu bạn quan tâm đến định dạng của văn bản, khi bạn tải file word lên, sửa xong, download xuống, định dạng sẽ không còn được như ban đầu[cite: 297]. Bạn phải định dạng lại theo ý bạn[cite: 298].</li>
+            <li>Bạn có thể chỉ dùng công cụ này tìm lỗi, sau đó tự sửa ngay trong file word đang soạn thảo, để giữ nguyên định dạng[cite: 299].</li>
+            <li>Xử lý chính tả tiếng Việt là một việc vô cùng khó, nên AI có thể có sai sót[cite: 300]. Nếu kết quả trả về quá nhiều lỗi không đúng, bạn hãy thực hiện lại thao tác rà soát[cite: 301].</li>
+          </ol>
+        </div>
+      );
     default: return <p>Chọn chức năng để xem hướng dẫn.</p>;
   }
 }
