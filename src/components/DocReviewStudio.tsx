@@ -148,17 +148,21 @@ export default function DocReviewStudio() {
         }
       });
 
-      // C. QUÉT TỪ ĐIỂN JSON
+      // C. QUÉT TỪ ĐIỂN JSON (Đã tích hợp chuẩn hóa Unicode NFC chống lỗi gõ phím)
       const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       [...hoaTuDien, ...chinhTaTuDien].forEach(item => {
-        if (!item.wrong) return;
+        if (!item.wrong || !item.right) return;
         item.wrong.forEach((w: string) => {
           const r = new RegExp(`(?<![\\p{L}\\p{M}])(${escape(w)})(?![\\p{L}\\p{M}])`, 'gui');
           let m;
           while ((m = r.exec(text)) !== null) {
-            if (m[0] === item.right) continue; 
-            let s = item.right;
-            foundErrors.push({ id: `off_d_${errCount++}`, original: m[0], suggestion: s, type: 'chinh-ta', description: item.desc || "Sai quy chuẩn/chính tả.", status: 'pending' });
+            // Chuẩn hóa bộ gõ Unicode về cùng chuẩn NFC để đối chiếu chính xác tuyệt đối sự khác biệt Hoa/Thường
+            const textWord = m[0].normalize('NFC');
+            const dictWord = item.right.normalize('NFC');
+
+            if (textWord === dictWord) continue; 
+            
+            foundErrors.push({ id: `off_d_${errCount++}`, original: m[0], suggestion: item.right, type: 'chinh-ta', description: item.desc || "Sai quy chuẩn/chính tả.", status: 'pending' });
           }
         });
       });
@@ -214,8 +218,36 @@ export default function DocReviewStudio() {
     return <div dangerouslySetInnerHTML={{ __html: html.split('\n').join('<br/>') }} onClick={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'SPAN' && t.dataset.id) { setActiveErrorId(t.dataset.id); setTimeout(() => { document.getElementById(`error-card-${t.dataset.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); } }} />;
   };
 
-  const getFinalText = () => { let f = documentText; errors.forEach(err => { if (err.status === 'fixed' && err.original) f = f.replace(new RegExp(`(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?!\\p{L}|\\p{M})`, 'gu'), err.suggestion); }); return f; };
+  const getFinalText = () => {
+    let f = documentText;
+    // Sắp xếp ưu tiên sửa các lỗi có chuỗi dài trước để chống đè chéo cấu trúc văn bản
+    const sorted = [...errors].sort((a, b) => (b.original || "").length - (a.original || "").length);
+    
+    sorted.forEach(err => {
+      if (err.status === 'fixed' && err.original) {
+        // Thuật toán thông minh tự động nhận diện rào chắn chữ cái
+        const startsWithLetter = /^[\p{L}\p{M}]/u.test(err.original);
+        const endsWithLetter = /[\p{L}\p{M}]$/u.test(err.original);
+
+        const prefix = startsWithLetter ? `(?<!\\p{L}|\\p{M})` : ``;
+        const suffix = endsWithLetter ? `(?!\\p{L}|\\p{M})` : ``;
+
+        let regexStr = `${prefix}${escapeUI(err.original)}${suffix}`;
+
+        // BẢO VỆ NGHIÊM NGẶT: Nếu là lỗi thiếu dấu chấm, CHỈ ĐƯỢC PHÉP thay thế từ đó ở cuối câu/đoạn
+        if (err.description === "Thiếu dấu chấm kết thúc đoạn/câu.") {
+           regexStr = `${prefix}${escapeUI(err.original)}(?=\\s*(?:\\r?\\n|$))`;
+        }
+
+        // Thực hiện thay thế an toàn theo ngữ cảnh vị trí lỗi
+        f = f.replace(new RegExp(regexStr, 'gu'), err.suggestion);
+      }
+    });
+    return f;
+  };
+
   const copyToClipboard = () => navigator.clipboard.writeText(getFinalText()).then(() => alert("Đã copy!"));
+
   const exportToWord = () => {
     const text = getFinalText();
     // Tách văn bản thành mảng các dòng dựa trên dấu xuống dòng để bảo toàn cấu trúc đoạn
@@ -228,7 +260,7 @@ export default function DocReviewStudio() {
           new TextRun({
             text: line,
             font: "Times New Roman", // Thiết lập font chữ chuẩn hành chính công vụ
-            size: 28, // Đơn vị tính của thư viện tương đương cỡ chữ 14pt tiêu chuẩn trong Microsoft Word
+            size: 28, // Tương đương cỡ chữ 14pt tiêu chuẩn trong Microsoft Word
           }),
         ],
       });
