@@ -55,12 +55,17 @@ export default function DocReviewStudio() {
       const model = genAI.getGenerativeModel({ model: API_MODEL_NAME, generationConfig: { responseMimeType: "application/json" } });
       for (let i = 0; i < chunks.length; i++) {
           setProgress({ current: i + 1, total: chunks.length });
-          const prompt = `Bạn là Chuyên gia Rà soát Văn bản. Chỉ báo lỗi khi CHẮC CHẮN sai.
-          QUY TẮC:
-          1. Bắt lỗi chính tả nặng, lặp từ, viết hoa sai quy định.
-          2. BỎ QUA khoảng trắng. Không sửa "hóa" thành "hoá".
-          3. KHÔNG BÁO LỖI thiếu dấu chấm kết thúc câu (Hệ thống đã tự xử lý). KHÔNG BÁO LỖI nếu từ đề xuất giống hệt từ gốc.
-          YÊU CẦU: JSON mảng. [ { "original": "từ sai", "suggestion": "từ đúng", "type": "chinh-ta", "description": "Ngắn gọn" } ]
+          const prompt = `Bạn là Chuyên gia ngôn ngữ và Thể thức văn bản hành chính Việt Nam. Hãy rà soát văn bản và trả về JSON mảng các lỗi.
+          QUY TẮC BẮT LỖI NGHIÊM NGẶT:
+          1. DẤU CÂU & KHOẢNG TRẮNG: Phát hiện lỗi thừa khoảng trắng giữa các từ; thiếu dấu chấm ở cuối câu/đoạn; dấu phẩy/chấm không đặt sát từ liền trước. Để bắt lỗi khoảng trắng, trường 'original' phải trích xuất chính xác các từ và khoảng trắng bị thừa.
+          2. VIẾT HOA DANH TỪ RIÊNG: Bắt buộc sửa lỗi không viết hoa tên cơ quan, tổ chức, chức danh (Ví dụ: "quốc hội" -> "Quốc hội", "thủ tướng Chính phủ" -> "Thủ tướng Chính phủ", "nhà nước" -> "Nhà nước").
+          3. VIẾT HOA THEO PHÉP ĐẶT CÂU: Bắt lỗi không viết hoa chữ cái đầu tiên của câu (sau dấu chấm, chấm hỏi, chấm than hoặc đầu dòng).
+          4. CHÍNH TẢ NGỮ CẢNH: Phân tích ngữ cảnh để bắt lỗi phát âm vùng miền (ch/tr, s/x, l/n, r/d/gi). BẮT BUỘC phát hiện các từ sai ngữ nghĩa như "tròn chĩnh" -> "tròn trĩnh", "chập chùng" -> "chập trùng", "suất sắc" -> "xuất sắc".
+          5. NGOẠI LỆ: KHÔNG báo lỗi với các từ có cách đặt dấu thanh khác nhau (ví dụ: "hóa" và "hoá" đều đúng). KHÔNG báo lỗi nếu từ đề xuất giống hệt từ gốc.
+
+          YÊU CẦU ĐẦU RA (Đúng chuẩn JSON Mảng):
+          [ { "original": "cụm từ sai", "suggestion": "cụm từ đúng", "type": "chinh-ta", "description": "Nêu rõ lỗi theo quy tắc" } ]
+          
           ĐOẠN VĂN: ${chunks[i]}`;
           try {
               const result = await model.generateContent(prompt);
