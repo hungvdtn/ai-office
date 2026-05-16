@@ -120,8 +120,8 @@ export default function DocReviewStudio() {
         { regex: /([.,;:!?])(?=[\p{L}\p{M}])/gu, suggestion: "$1 ", desc: "Khoảng trắng sau dấu câu." },
         { regex: /([(\["'])[ \t]+/g, suggestion: "$1", desc: "Mở ngoặc sát chữ sau." },
         { regex: /[ \t]+([)\]"'])/g, suggestion: "$1", desc: "Đóng ngoặc sát chữ trước." },
-        // Regex siêu chuẩn để bắt khoảng trắng thừa giữa 2 chữ (bỏ qua lề đầu dòng)
-        { regex: /(?<=\S)[ \t]{2,}(?=\S)/g, suggestion: " ", desc: "Thừa khoảng trắng giữa các từ." },
+        // Bắt khoảng trắng kèm theo 2 từ ở hai đầu để tạo tính độc nhất cho lỗi, chống bị gộp lỗi
+        { regex: /([^\s]+)[ \t]{2,}([^\s]+)/g, suggestion: "$1 $2", desc: "Thừa khoảng trắng giữa các từ." },
         { regex: /(?<![\p{L}\p{M}])([\p{L}\p{M}]*?)([bcdđghklmnpqrstvx])\2+([\p{L}\p{M}]*)(?![\p{L}\p{M}])/gui, suggestion: (m: any, p1: string, p2: string, p3: string) => p1 + p2 + p3, desc: "Thừa ký tự phụ âm (kẹt phím)." },
         { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản'." },
         { regex: / Điểm /g, suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm'." }
