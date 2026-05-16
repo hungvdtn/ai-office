@@ -87,45 +87,36 @@ export default function DocReviewStudio() {
     setTimeout(() => {
       let foundErrors: TextError[] = []; let errCount = 0;
 
-      // A. KIỂM TRA THIẾU DẤU KẾT THÚC CÂU (Đã nâng cấp thuật toán loại trừ tiêu đề)
+      // =================================================================
+      // A. KIỂM TRA THIẾU DẤU KẾT THÚC CÂU (Sửa lỗi 1: Nhận diện "Phần thứ nhất")
+      // =================================================================
       const lines = text.split(/\r?\n/);
       lines.forEach((line) => {
           const trimmed = line.trim();
-          // Bỏ qua dòng quá ngắn (dưới 5 ký tự)
           if (trimmed.length < 5) return;
 
-          // THUẬT TOÁN LOẠI TRỪ TIÊU ĐỀ THÔNG MINH:
-          // 1. Dòng viết hoa toàn bộ (VD: BÁO CÁO, QUYẾT ĐỊNH...)
           const isUpperCase = trimmed === trimmed.toUpperCase();
-          // 2. Định dạng số thứ tự, điểm, khoản (VD: 1, 1.1, I, a, a), -, +)
           const isListMarker = /^([IVXLCDM]+|[0-9]+(\.[0-9]+)*|[a-zđA-ZĐ])\s*[.)]|[-+]/.test(trimmed);
-          // 3. Tiêu đề quy phạm pháp luật
-          const isLegalHeading = /^(Điều|Khoản|Điểm|Phần|Chương|Mục)\s+[0-9IVX]+/.test(trimmed);
+          // Cập nhật Regex để bắt được "Phần thứ nhất", "Phần thứ hai"...
+          const isLegalHeading = /^(Điều|Khoản|Điểm|Phần|Chương|Mục)\s+([0-9IVX]+|thứ\s+(nhất|hai|ba|tư|năm|sáu|bảy|tám|chín|mười))/i.test(trimmed);
 
-          // Nếu là định dạng tiêu đề VÀ độ dài ngắn (dưới 150 ký tự ~ khoảng 2 dòng) -> Bỏ qua, KHÔNG bắt lỗi
           if ((isUpperCase || isListMarker || isLegalHeading) && trimmed.length < 150) {
               return;
           }
 
           const lastChar = trimmed.slice(-1);
           if (!/[.?!:;]/.test(lastChar)) {
-              // Lấy 1 từ cuối cùng để làm mỏ neo, kết hợp Regex thông minh khi render để tránh bôi đỏ toàn bài
               const words = trimmed.split(/\s+/);
               const anchor = words[words.length - 1];
               if (anchor) {
-                  foundErrors.push({ 
-                      id: `off_p_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // Đảm bảo ID độc nhất 100% để sửa dứt điểm lỗi cuộn màn hình
-                      original: anchor, 
-                      suggestion: anchor + ".", 
-                      type: 'the-thuc', 
-                      description: "Thiếu dấu chấm kết thúc đoạn/câu.", 
-                      status: 'pending' 
-                  });
+                  foundErrors.push({ id: `off_p_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, original: anchor, suggestion: anchor + ".", type: 'the-thuc', description: "Thiếu dấu chấm kết thúc đoạn/câu.", status: 'pending' });
               }
           }
       });
 
-      // B. CÁC QUY TẮC KỸ THUẬT CỨNG (Khôi phục và nâng cấp bộ bắt lỗi kẹt phím)
+      // =================================================================
+      // B. CÁC QUY TẮC KỸ THUẬT CỨNG (Sửa lỗi 2: Thừa dấu cách)
+      // =================================================================
       const regexRules = [
         { regex: /;([ \t]+)([\p{Lu}][\p{Ll}\p{M}]*)/gu, suggestion: (m: any, p1: string, p2: string) => ";" + p1 + p2.toLowerCase(), desc: "Không viết hoa sau dấu chấm phẩy." },
         { regex: /:([ \t]+)([\p{Lu}][\p{Ll}\p{M}]*)/gu, suggestion: (m: any, p1: string, p2: string) => ":" + p1 + p2.toLowerCase(), desc: "Đề nghị xem lại viết hoa sau dấu hai chấm." },
@@ -134,8 +125,8 @@ export default function DocReviewStudio() {
         { regex: /([.,;:!?])(?=[\p{L}\p{M}])/gu, suggestion: "$1 ", desc: "Khoảng trắng sau dấu câu." },
         { regex: /([(\["'])[ \t]+/g, suggestion: "$1", desc: "Mở ngoặc sát chữ sau." },
         { regex: /[ \t]+([)\]"'])/g, suggestion: "$1", desc: "Đóng ngoặc sát chữ trước." },
-        { regex: /(?<=[a-zA-Z0-9.,;:!?\)\]"']) {2,}(?=[a-zA-Z0-9\(\["'])/g, suggestion: " ", desc: "Thừa khoảng trắng." },
-        // Regex siêu việt mới: Bắt lỗi thừa phụ âm (kẹt phím) cho CẢ chữ hoa và chữ thường (Giải quyết chữ "Xác địnhh", "gầnn")
+        // Regex bắt thừa khoảng trắng được khôi phục và tinh chỉnh để tương thích mọi trình duyệt
+        { regex: /([^\s>]) {2,}([^\s<])/g, suggestion: "$1 $2", desc: "Thừa khoảng trắng giữa các từ." },
         { regex: /(?<![\p{L}\p{M}])([\p{L}\p{M}]*?)([bcdđghklmnpqrstvx])\2+([\p{L}\p{M}]*)(?![\p{L}\p{M}])/gui, suggestion: (m: any, p1: string, p2: string, p3: string) => p1 + p2 + p3, desc: "Thừa ký tự phụ âm (kẹt phím)." },
         { regex: / Khoản /g, suggestion: " khoản ", desc: "Không viết hoa chữ 'khoản'." },
         { regex: / Điểm /g, suggestion: " điểm ", desc: "Không viết hoa chữ 'điểm'." }
@@ -145,12 +136,22 @@ export default function DocReviewStudio() {
         let m; const r = new RegExp(rule.regex.source, rule.regex.flags);
         while ((m = r.exec(text)) !== null) {
           if (rule.exclude && rule.exclude.includes(m[0].toLowerCase().trim())) continue;
+          
+          // SỬA LỖI 3: Bỏ qua lỗi kẹt phím nếu là từ viết tắt hoặc tiếng Anh
+          if (rule.desc.includes("kẹt phím")) {
+              const w = m[0].trim();
+              if (w === w.toUpperCase()) continue; // Bỏ qua từ in hoa toàn bộ (GDNN, PPP)
+              if (["ttr", "ttg", "skill", "skills", "bill", "will"].includes(w.toLowerCase())) continue; // Bỏ qua ngoại lệ đặc thù
+          }
+
           let s = typeof rule.suggestion === 'function' ? rule.suggestion(m, m[1], m[2], m[3], m[4]) : m[0].replace(new RegExp(rule.regex.source, rule.regex.flags.replace('g','')), rule.suggestion);
           if (m[0] !== s) foundErrors.push({ id: `off_${errCount++}`, original: m[0], suggestion: s, type: 'the-thuc', description: rule.desc, status: 'pending' });
         }
       });
 
-      // C. QUÉT TỪ ĐIỂN JSON TỪ BÊN NGOÀI
+      // =================================================================
+      // C. QUÉT TỪ ĐIỂN JSON (Sửa lỗi 4: Phát hiện lỗi viết hoa/thường)
+      // =================================================================
       const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       [...hoaTuDien, ...chinhTaTuDien].forEach(item => {
         if (!item.wrong) return;
@@ -158,8 +159,12 @@ export default function DocReviewStudio() {
           const r = new RegExp(`(?<![\\p{L}\\p{M}])(${escape(w)})(?![\\p{L}\\p{M}])`, 'gui');
           let m;
           while ((m = r.exec(text)) !== null) {
-            if (m[0].toLowerCase() === item.right.toLowerCase()) continue;
-            let s = item.right; if (m[0][0] === m[0][0].toUpperCase()) s = s[0].toUpperCase() + s.slice(1);
+            // Đã xóa hàm .toLowerCase() ở đây. Hệ thống sẽ so sánh chính xác hoa/thường.
+            // Ví dụ: Text là "Quốc hội", từ điển right là "Quốc hội" -> Khớp hoàn toàn -> Bỏ qua.
+            // Text là "quốc hội", từ điển right là "Quốc hội" -> Sai khác -> Bắt lỗi.
+            if (m[0] === item.right) continue; 
+            
+            let s = item.right;
             foundErrors.push({ id: `off_d_${errCount++}`, original: m[0], suggestion: s, type: 'chinh-ta', description: item.desc || "Sai quy chuẩn/chính tả.", status: 'pending' });
           }
         });
@@ -205,8 +210,8 @@ export default function DocReviewStudio() {
       }
     });
 
-    // Thêm setTimeout(..., 100) để tạo độ trễ 0.1s, giúp trình duyệt kịp dựng hình trước khi cuộn, khắc phục lỗi cuộn chập chờn
-    return <div dangerouslySetInnerHTML={{ __html: html.split('\n').join('<br/>') }} onClick={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'SPAN' && t.dataset.id) { setActiveErrorId(t.dataset.id); setTimeout(() => { document.getElementById(`error-card-${t.dataset.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); } }} />;
+    // Thêm setTimeout(..., 300) để tạo độ trễ 0.1s, giúp trình duyệt kịp dựng hình trước khi cuộn, khắc phục lỗi cuộn chập chờn
+    return <div dangerouslySetInnerHTML={{ __html: html.split('\n').join('<br/>') }} onClick={(e) => { const t = e.target as HTMLElement; if (t.tagName === 'SPAN' && t.dataset.id) { setActiveErrorId(t.dataset.id); setTimeout(() => { document.getElementById(`error-card-${t.dataset.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); } }} />;
   };
 
   const getFinalText = () => { let f = documentText; errors.forEach(err => { if (err.status === 'fixed' && err.original) f = f.replace(new RegExp(`(?<!\\p{L}|\\p{M})${escapeUI(err.original)}(?!\\p{L}|\\p{M})`, 'gu'), err.suggestion); }); return f; };
@@ -300,7 +305,7 @@ export default function DocReviewStudio() {
                     <motion.div 
                         key={err.id} id={`error-card-${err.id}`}
                         className={`bg-[#0f172a] p-5 rounded-xl border cursor-pointer ${activeErrorId === err.id ? 'border-brand shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'border-[#1e293b]'}`} 
-                        onClick={() => { setActiveErrorId(err.id); setTimeout(() => { document.getElementById(`text-error-${err.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }}
+                        onClick={() => { setActiveErrorId(err.id); setTimeout(() => { document.getElementById(`text-error-${err.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); }}
                     >
                        <div className="flex justify-between mb-3"><span className="text-xs font-bold text-rose-400 uppercase tracking-wider">{err.type}</span><AlertCircle size={16} className="text-rose-400" /></div>
                        <p className="text-base text-rose-300 line-through mb-1 font-normal">{err.original}</p>
