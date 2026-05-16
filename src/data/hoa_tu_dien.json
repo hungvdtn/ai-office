@@ -4,5 +4,6 @@
   { "original": "thủ tướng chính phủ", "suggestion": "Thủ tướng Chính phủ", "desc": "Viết hoa danh từ riêng phổ biến." },
   { "original": "nhà nước", "suggestion": "Nhà nước", "desc": "Viết hoa danh từ riêng phổ biến." },
   { "original": "bộ giáo dục và đào tạo", "suggestion": "Bộ Giáo dục và Đào tạo", "desc": "Viết hoa tên cơ quan." },
+  { "original": "bộ lao động thương binh và xã hội", "suggestion": "Bộ Lao động - Thương binh và Xã hội", "desc": "Viết hoa tên cơ quan." },
   { "original": "ủy ban nhân dân", "suggestion": "Ủy ban nhân dân", "desc": "Viết hoa tên cơ quan hành chính." }
 ]
