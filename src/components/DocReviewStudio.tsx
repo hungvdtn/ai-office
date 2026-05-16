@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileText, Check, X, Download, AlertCircle, RefreshCw, FileWarning, Copy, Type, Settings2, ShieldCheck, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth } from '../firebase';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
 import * as mammoth from 'mammoth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
@@ -27,10 +28,35 @@ export default function DocReviewStudio() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
-  // Hàm bảo vệ: Yêu cầu đăng nhập trước khi thực thi hành động
+  // Trạng thái điều khiển Modal Đăng nhập
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  // Tự động đóng Modal nếu người dùng đăng nhập thành công
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) setShowLoginPrompt(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Xử lý Popup đăng nhập Google
+  const handleGoogleLogin = async () => {
+    try { 
+      await signInWithPopup(auth, googleProvider); 
+    } catch (error: any) { 
+      console.error("Lỗi đăng nhập:", error); 
+      if (error.code === 'auth/popup-blocked') {
+         alert("Trình duyệt đang chặn cửa sổ đăng nhập. Vui lòng cấp quyền để tiếp tục.");
+      } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+         alert("LỖI BẢO MẬT TRÌNH DUYỆT: Vui lòng mở bằng trình duyệt (Chrome/Safari) để đăng nhập Google!");
+      }
+    } 
+  };
+
+  // Hàm bảo vệ: Thay thế alert bằng Modal UI
   const requireLogin = (action: () => void) => {
     if (!auth.currentUser) {
-        alert("Bạn hãy đăng nhập để sử dụng chức năng này!");
+        setShowLoginPrompt(true); // Hiển thị Modal Giao diện đẹp
         return;
     }
     action();
@@ -440,6 +466,30 @@ export default function DocReviewStudio() {
            </div>
         </div>
       )}
+
+      {/* HIỂN THỊ MODAL ĐĂNG NHẬP (UI giống Lịch Vạn Niên) */}
+      <AnimatePresence>
+        {showLoginPrompt && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-sky-500/50 rounded-2xl p-8 max-w-sm w-full shadow-[0_0_50px_rgba(56,189,248,0.2)] text-center relative overflow-hidden">
+                <div className="w-16 h-16 bg-sky-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <ShieldCheck className="text-sky-400" size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 font-sans">Đăng nhập để rà soát kỹ</h3>
+                <p className="text-slate-400 text-sm mb-8 font-sans">Bạn đăng nhập bằng tài khoản Google để sử dụng miễn phí tính năng AI nâng cao này.</p>
+                <div className="flex flex-col gap-3 font-sans">
+                  <button onClick={handleGoogleLogin} className="w-full py-3 bg-sky-600 text-white font-bold rounded-lg hover:scale-105 transition-transform flex justify-center items-center gap-2 shadow-lg shadow-sky-900/20">
+                    <img src="https://www.google.com/favicon.ico" alt="G" className="w-4 h-4" /> Đăng nhập bằng Google
+                  </button>
+                  <button onClick={() => setShowLoginPrompt(false)} className="w-full py-3 bg-[#1e293b] text-slate-300 font-bold rounded-lg hover:bg-slate-800 transition-colors">
+                    Hủy bỏ
+                  </button>
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
