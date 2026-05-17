@@ -562,7 +562,6 @@ export default function App() {
     { id: 'docreview', label: 'Rà soát Văn bản', icon: FileText },
     { id: 'qrcode', label: 'Tạo mã QR', icon: QrCode },
     { id: 'idphoto', label: 'Tạo ảnh thẻ', icon: ImageIcon, isExternal: true, url: 'https://lamchuaigiaoduc.vn/id-photo/' },
-    { id: 'search', label: 'Tra cứu địa phương', icon: Search, isExternal: true, url: 'https://tracuu.hungvdtn.vn/' },
     { id: 'gemini', label: 'Trợ lý Gemini', icon: Sparkles, isExternal: true, url: 'https://gemini.google.com/app' },
   ];
 
