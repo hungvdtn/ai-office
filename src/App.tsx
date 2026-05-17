@@ -14,13 +14,14 @@ import OCRStudio from './components/OCRStudio';
 import Scanner from './components/Scanner';
 import Calendar from './components/Calendar';
 import DocReviewStudio from './components/DocReviewStudio';
+import QRCodeStudio from './components/QRCodeStudio';
 
 // --- IMPORT FIREBASE ---
 import { auth, db, googleProvider } from './firebase';
 import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 
-type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin' | 'docreview'; 
+type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin' | 'docreview' | 'qrcode'; 
 
 // --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN (CẤU TRÚC VÀ GIAO DIỆN NÂNG CẤP) ---
 const AdminPanel = () => {
@@ -302,6 +303,8 @@ const HelpContent = ({ module }: { module: string }) => {
           </ol>
         </div>
       );
+      case 'qrcode':
+  return <QRCodeStudio />;
     default: return <p>Chọn chức năng để xem hướng dẫn.</p>;
   }
 }
@@ -597,9 +600,13 @@ export default function App() {
           </button>
 
           <div className="px-6 mt-2">
-            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className={`flex items-center transition-transform hover:scale-105 origin-left ${!(isSidebarOpen || isMobileMenuOpen) ? 'hidden' : ''}`}>
-              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
-            </a>
+            <button 
+  onClick={() => { setActiveModule('qrcode'); setIsMobileMenuOpen(false); }} 
+  className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all duration-300 ${activeModule === 'qrcode' ? 'bg-gradient-to-r from-sky-500/20 to-transparent text-sky-400 border-l-2 border-sky-400' : 'text-slate-400 hover:text-sky-400 hover:bg-sky-500/10'}`}
+>
+  <QrCode size={20} />
+  <span className="font-bold">Tạo mã QR</span>
+</button>
             {!(isSidebarOpen || isMobileMenuOpen) && (
               <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 w-8 object-contain rounded-full opacity-50" />
             )}
