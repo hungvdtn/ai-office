@@ -304,8 +304,8 @@ const HelpContent = ({ module }: { module: string }) => {
         </div>
       );
       case 'qrcode':
-  return <QRCodeStudio />;
-    default: return <p>Chọn chức năng để xem hướng dẫn.</p>;
+        return <p>Tính năng này giúp Bạn tạo mã QR nhanh chóng và an toàn ngay bên trong Văn phòng số.</p>;
+      default: return <p>Chọn chức năng để xem hướng dẫn.</p>;
   }
 }
 
@@ -535,7 +535,7 @@ export default function App() {
     { id: 'ocr', label: 'Trích xuất OCR', icon: Languages },
     { id: 'scanner', label: 'Scan Tài liệu', icon: Scan },
     { id: 'docreview', label: 'Rà soát Văn bản', icon: FileText },
-    { id: 'qrcode', label: 'Tạo mã QR', icon: QrCode, isExternal: true, url: 'https://lamchuaigiaoduc.vn/qrcode/' },
+    { id: 'qrcode', label: 'Tạo mã QR', icon: QrCode },
     { id: 'idphoto', label: 'Tạo ảnh thẻ', icon: ImageIcon, isExternal: true, url: 'https://lamchuaigiaoduc.vn/id-photo/' },
     { id: 'search', label: 'Tra cứu địa phương', icon: Search, isExternal: true, url: 'https://tracuu.hungvdtn.vn/' },
     { id: 'gemini', label: 'Trợ lý Gemini', icon: Sparkles, isExternal: true, url: 'https://gemini.google.com/app' },
@@ -600,13 +600,7 @@ export default function App() {
           </button>
 
           <div className="px-6 mt-2">
-            <button 
-  onClick={() => { setActiveModule('qrcode'); setIsMobileMenuOpen(false); }} 
-  className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all duration-300 ${activeModule === 'qrcode' ? 'bg-gradient-to-r from-sky-500/20 to-transparent text-sky-400 border-l-2 border-sky-400' : 'text-slate-400 hover:text-sky-400 hover:bg-sky-500/10'}`}
->
-  <QrCode size={20} />
-  <span className="font-bold">Tạo mã QR</span>
-</button>
+            
             {!(isSidebarOpen || isMobileMenuOpen) && (
               <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 w-8 object-contain rounded-full opacity-50" />
             )}
@@ -649,6 +643,7 @@ export default function App() {
                 {activeModule === 'calendar' && <Calendar />}
                 {activeModule === 'admin' && <AdminPanel />}
                 {activeModule === 'docreview' && <DocReviewStudio />}
+                {activeModule === 'qrcode' && <QRCodeStudio />}
               </motion.div>
             </AnimatePresence>
           </div>
