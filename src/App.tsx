@@ -605,11 +605,11 @@ export default function App() {
         <div className="p-6 flex items-center justify-between border-b border-[#1e293b] flex-shrink-0">
           {(isSidebarOpen || isMobileMenuOpen) ? (
             <div className="flex flex-col">
-              <h1 className="text-xl font-black tracking-widest text-brand uppercase whitespace-nowrap">DIGITAL OFFICE</h1>
-              <span className="text-[10px] tracking-normal font-normal text-slate-400 uppercase mt-1">Văn phòng Số Chuyên biệt</span>
+              <h1 className="text-xl font-black tracking-widest text-brand uppercase whitespace-nowrap">AI OFFICE</h1>
+              <span className="text-xs tracking-normal font-medium text-slate-400 uppercase mt-1">Văn phòng AI Chuyên biệt</span>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded bg-brand/10 flex items-center justify-center text-brand font-bold text-xs flex-shrink-0">DO</div>
+            <div className="w-8 h-8 rounded bg-brand/10 flex items-center justify-center text-brand font-bold text-xs flex-shrink-0">AI</div>
           )}
           <button onClick={() => { window.innerWidth < 768 ? setIsMobileMenuOpen(false) : setIsSidebarOpen(!isSidebarOpen); }} className="p-1.5 hover:bg-[#1e293b] rounded-md text-slate-500 transition-colors flex-shrink-0">
             {isMobileMenuOpen ? <X size={18} /> : (isSidebarOpen ? <X size={18} className="hidden md:block" /> : <Menu size={18} className="hidden md:block" />)}
