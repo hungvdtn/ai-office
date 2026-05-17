@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QRCODE - AIBTeM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <style>
+        /* ================= CẤU TRÚC TỔNG THỂ ================= */
+        :root {
+            --primary: #28a745;
+            --primary-hover: #218838;
+            --bg-body: #f4f7f6;
+            --bg-panel: #ffffff;
+            --text-main: #333333;
+            --border-color: #e0e0e0;
+        }
+
+        /* KHẮC PHỤC LỖI TRÀN VIỀN NGANG: Ép mọi phần tử không được vượt quá width */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* KHẮC PHỤC LỖI CUỘN NGANG: Khóa cứng trục X */
+        html, body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            overflow-x: hidden; 
+            width: 100%;
+        }
+
+        header {
+            background-color: #ffffff;
+            padding: 15px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-logo {
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #2c3e50;
+            letter-spacing: 1px;
+        }
+
+        .app-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 30px;
+            padding: 30px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .left-panel { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+        .right-panel { width: 450px; display: flex; flex-direction: column; gap: 20px; }
+
+        .card {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        /* ================= CẬP NHẬT GIAO DIỆN THỰC ĐƠN TABS ================= */
+        .tabs-container {
+            background-color: #eef2f5; /* Nền xám nhạt nổi bật */
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e1e5e8;
+        }
+        .tabs {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: transparent; border: none; padding: 10px 18px; font-size: 15px; font-weight: 600; color: #555; cursor: pointer; border-radius: 6px; transition: 0.2s;
+        }
+        .tab-btn.active { 
+            background: var(--primary); /* Nút đang chọn có màu xanh lá */
+            color: white; 
+            box-shadow: 0 2px 6px rgba(40,167,69,0.4); 
+        }
+        .tab-btn:hover:not(.active) { background: rgba(0,0,0,0.05); }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-group { margin-bottom: 15px; width: 100%; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #555;}
+        input[type="text"], input[type="url"], input[type="email"], input[type="tel"], input[type="password"], input[type="date"], select {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: 0.3s; font-family: inherit;
+        }
+        input:focus, select:focus { border-color: var(--primary); outline: none; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #555; }
+        .checkbox-group input { width: auto; cursor: pointer; }
+
+        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
+        .color-picker-wrapper { display: flex; align-items: center; gap: 10px; }
+        input[type="color"] { border: none; width: 35px; height: 35px; padding: 0; cursor: pointer; background: none; border-radius: 4px;}
+        .color-hex { font-size: 13px; font-family: monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;}
+        
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--primary); }
+        .range-value { font-weight: bold; color: var(--primary); }
+
+        .ec-buttons { display: flex; gap: 10px; width: 100%; flex-wrap: wrap;}
+        .ec-btn { flex: 1; min-width: 60px; padding: 8px 0; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; font-weight: bold; color: #555; transition: 0.2s; text-align: center;}
+        .ec-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .btn-action { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-action:hover { background: var(--primary-hover); }
+
+        .qr-display-area { display: flex; justify-content: center; align-items: center; min-height: 400px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 20px; padding: 20px; position: relative; width: 100%; overflow: hidden;}
+        #finalCanvas { max-width: 100%; height: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 12px; }
+
+        /* ================= TỐI ƯU HÓA MOBILE ================= */
+        @media (max-width: 900px) {
+            header { padding: 15px 20px; }
+            .app-container { flex-direction: column; padding: 15px; } 
+            .left-panel, .right-panel { width: 100%; min-width: 100%; }
+            .card { padding: 15px; } 
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-logo">QR</div>
+    <h1>QRCODE - AIBTeM</h1>
+</header>
+
+<div class="app-container">
+    <div class="left-panel">
+        
+        <div class="card">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'url')">Đường link</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'asset')">Tài sản</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'vcard')">VCard</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'wifi')">Wifi</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'phone')">Điện thoại</button>
+                </div>
+            </div>
+
+            <div id="tab-url" class="tab-content active">
+                <div class="form-group">
+                    <label>Nhập đường dẫn (URL)</label>
+                    <input type="url" id="input-url" placeholder="https://lamchuaigiaoduc.vn" oninput="generateQR()">
+                </div>
+            </div>
+
+            <div id="tab-asset" class="tab-content">
+                <div class="form-group"><label>Mã tài sản (Asset ID) (*)</label><input type="text" id="asset-id" placeholder="VD: TS-2026-001" oninput="generateQR()"></div>
+                <div class="form-group"><label>Loại thiết bị (Category)</label><input type="text" id="asset-cat" placeholder="VD: Máy tính, Máy xúc, Vật tư..." oninput="generateQR()"></div>
+                <div class="form-group"><label>Số Serial/Model</label><input type="text" id="asset-serial" placeholder="VD: SN123456789" oninput="generateQR()"></div>
+                <div class="form-group"><label>Xuất xứ (Origin)</label><input type="text" id="asset-origin" placeholder="VD: Việt Nam, Nhật Bản..." oninput="generateQR()"></div>
+                <div class="form-group"><label>Vị trí (Location)</label><input type="text" id="asset-loc" placeholder="VD: Kho A, Phòng B, Dự án X" oninput="generateQR()"></div>
+                <div class="form-group">
+                    <label>Trạng thái (Status)</label>
+                    <select id="asset-status" onchange="generateQR()">
+                        <option value="Đang sử dụng">Đang sử dụng</option>
+                        <option value="Đang sửa chữa">Đang sửa chữa</option>
+                        <option value="Đã thanh lý">Đã thanh lý</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Thời gian (Ngày nhập/Bảo trì)</label><input type="date" id="asset-date" onchange="generateQR()"></div>
+            </div>
+
+            <div id="tab-vcard" class="tab-content">
+                <div class="form-group"><label>Họ và Tên (*)</label><input type="text" id="vc-name" placeholder="VD: Vũ Xuân Hùng" oninput="generateQR()"></div>
+                <div class="form-group"><label>Chức vụ</label><input type="text" id="vc-title" placeholder="VD: Chuyên gia Cao cấp" oninput="generateQR()"></div>
+                <div class="form-group"><label>Số điện thoại (Di động)</label><input type="tel" id="vc-phone" placeholder="VD: 0988xxxxxx" oninput="generateQR()"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="vc-email" placeholder="VD: email@domain.com" oninput="generateQR()"></div>
+                <div class="form-group"><label>Cơ quan / Tổ chức</label><input type="text" id="vc-org" placeholder="VD: Bộ Nội vụ" oninput="generateQR()"></div>
+                <div class="form-group"><label>Địa chỉ</label><input type="text" id="vc-address" placeholder="VD: Khu Rainbow Linh Đàm, Hà Nội" oninput="generateQR()"></div>
+            </div>
+
+            <div id="tab-wifi" class="tab-content">
+                <div class="form-group"><label>Tên mạng Wifi (SSID) (*)</label><input type="text" id="wifi-ssid" placeholder="Nhập tên mạng Wifi..." oninput="generateQR()"></div>
+                <div class="form-group"><label>Mật khẩu</label><input type="password" id="wifi-pass" placeholder="Nhập mật khẩu (Để trống nếu mạng mở)..." oninput="generateQR()"></div>
+                <div class="form-group">
+                    <label>Loại bảo mật</label>
+                    <select id="wifi-type" onchange="generateQR()">
+                        <option value="WPA">WPA/WPA2</option>
+                        <option value="WEP">WEP</option>
+                        <option value="nopass">Không có mật khẩu</option>
+                    </select>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="wifi-hidden" onchange="generateQR()">
+                    <label for="wifi-hidden" style="margin: 0; font-weight: normal;">Mạng ẩn (Hidden Network)</label>
+                </div>
+            </div>
+
+            <div id="tab-phone" class="tab-content">
+                <div class="form-group"><label>Số điện thoại (*)</label><input type="tel" id="input-phone" placeholder="VD: 0901234567" oninput="generateQR()"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: #444;">Tùy chỉnh Nâng cao</h3>
+            
+            <div class="form-group">
+                <label>Khung mã QR</label>
+                <select id="frame-style" onchange="generateQR()">
+                    <option value="none">Không có khung (Cơ bản)</option>
+                    <option value="border">Khung viền nổi bật (Simple Border)</option>
+                    <option value="scan-white-black">Khung có chữ "QUÉT MÃ" (Trắng trên Đen)</option>
+                    <option value="scan-black-white">Khung có chữ "QUÉT MÃ" (Đen trên Trắng)</option>
+                    <option value="download-app">Khung có chữ "TẢI ỨNG DỤNG" (Trắng trên Đen)</option>
+                    <option value="pin-drop">Khung Pin-drop / Bong bóng thoại</option>
+                </select>
+            </div>
+
+            <div class="setting-row">
+                <label>Màu nền trước (Mã QR)</label>
+                <div class="color-picker-wrapper">
+                    <span class="color-hex" id="hex-fg">#000000</span>
+                    <input type="color" id="color-fg" value="#000000" oninput="document.getElementById('hex-fg').innerText = this.value.toUpperCase(); generateQR();">
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <label>Màu nền sau (Background)</label>
+                <div class="color-picker-wrapper">
+                    <span class="color-hex" id="hex-bg">#FFFFFF</span>
+                    <input type="color" id="color-bg" value="#ffffff" oninput="document.getElementById('hex-bg').innerText = this.value.toUpperCase(); generateQR();">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Kích cỡ: <span class="range-value" id="size-val">300px</span></label>
+                <input type="range" id="size-slider" min="200" max="800" step="50" value="300" oninput="document.getElementById('size-val').innerText = this.value + 'px'; generateQR();">
+            </div>
+
+            <div class="form-group" style="margin-top: 25px;">
+                <label>Mức độ sửa lỗi (Error Correction)</label>
+                <div class="ec-buttons">
+                    <button class="ec-btn" onclick="setEC('L', this)">L (7%)</button>
+                    <button class="ec-btn" onclick="setEC('M', this)">M (15%)</button>
+                    <button class="ec-btn" onclick="setEC('Q', this)">Q (25%)</button>
+                    <button class="ec-btn active" onclick="setEC('H', this)">H (30%)</button>
+                </div>
+                <div style="font-size: 12px; color: #d35400; font-style: italic; margin-top: 8px;">
+                    * Khuyến nghị: Chọn mức độ H (30%) theo mặc định để đảm bảo máy quét đọc chính xác nhất khi chèn logo.
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px;">
+                <label>Chèn Logo (Tùy chọn)</label>
+                <input type="file" id="logo-input" accept="image/png, image/jpeg" style="font-size: 14px; margin-top: 5px; padding: 8px;">
+            </div>
+        </div>
+
+    </div>
+
+    <div class="right-panel">
+        <div class="card" style="text-align: center; position: sticky; top: 20px;">
+            <div class="qr-display-area">
+                <canvas id="finalCanvas" width="300" height="300"></canvas>
+            </div>
+            <button class="btn-action" id="btn-download" style="background: #007bff; display: block;" onclick="downloadQR()">Tải xuống (PNG)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTab = 'url';
+    let currentEC = 'H';
+    let selectedLogo = null;
+    let finalCanvas = document.getElementById("finalCanvas");
+    let ctx = finalCanvas.getContext("2d");
+
+    const DEFAULT_QR_TEXT = "https://lamchuaigiaoduc.vn";
+
+    window.onload = function() { generateQR(); };
+
+    function switchTab(e, tabId) {
+        currentTab = tabId;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        e.currentTarget.classList.add('active'); 
+        
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        
+        generateQR();
+    }
+
+    function setEC(levelStr, btnElement) {
+        document.querySelectorAll('.ec-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        currentEC = levelStr;
+        generateQR();
+    }
+
+    document.getElementById('logo-input').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        if(!file) { 
+            selectedLogo = null; 
+            generateQR();
+            return; 
+        }
+        let reader = new FileReader();
+        reader.onload = function(event) {
+            selectedLogo = new Image();
+            selectedLogo.onload = function() { generateQR(); }
+            selectedLogo.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    });
+
+    function toUTF8(str) {
+        return unescape(encodeURIComponent(str));
+    }
+
+    function fillRoundRect(context, x, y, w, h, r, color) {
+        context.fillStyle = color;
+        context.beginPath();
+        context.moveTo(x + r, y);
+        context.arcTo(x + w, y, x + w, y + h, r);
+        context.arcTo(x + w, y + h, x, y + h, r);
+        context.arcTo(x, y + h, x, y, r);
+        context.arcTo(x, y, x + w, y, r);
+        context.closePath();
+        context.fill();
+    }
+
+    function strokeRoundRect(context, x, y, w, h, r, color, lineWidth) {
+        context.strokeStyle = color;
+        context.lineWidth = lineWidth;
+        context.beginPath();
+        context.moveTo(x + r, y);
+        context.arcTo(x + w, y, x + w, y + h, r);
+        context.arcTo(x + w, y + h, x, y + h, r);
+        context.arcTo(x, y + h, x, y, r);
+        context.arcTo(x, y, x + w, y, r);
+        context.closePath();
+        context.stroke();
+    }
+
+    function generateQR() {
+        let dataToEncode = "";
+        
+        if (currentTab === 'url') {
+            dataToEncode = document.getElementById('input-url').value.trim();
+        } else if (currentTab === 'asset') {
+            let id = document.getElementById('asset-id').value.trim();
+            let cat = document.getElementById('asset-cat').value.trim();
+            let serial = document.getElementById('asset-serial').value.trim();
+            let origin = document.getElementById('asset-origin').value.trim();
+            let loc = document.getElementById('asset-loc').value.trim();
+            let status = document.getElementById('asset-status').value;
+            let date = document.getElementById('asset-date').value;
+            
+            if (id) {
+                let assetArr = ["[THÔNG TIN TÀI SẢN]"];
+                assetArr.push("Mã tài sản: " + id);
+                if (cat) assetArr.push("Loại thiết bị: " + cat);
+                if (serial) assetArr.push("Serial/Model: " + serial);
+                if (origin) assetArr.push("Xuất xứ: " + origin);
+                if (loc) assetArr.push("Vị trí: " + loc);
+                assetArr.push("Trạng thái: " + status);
+                if (date) {
+                    let parts = date.split("-");
+                    if(parts.length === 3) {
+                        assetArr.push("Thời gian: " + parts[2] + "/" + parts[1] + "/" + parts[0]);
+                    } else {
+                        assetArr.push("Thời gian: " + date);
+                    }
+                }
+                dataToEncode = assetArr.join("\n");
+            }
+        } else if (currentTab === 'vcard') {
+            let name = document.getElementById('vc-name').value.trim();
+            let title = document.getElementById('vc-title').value.trim();
+            let phone = document.getElementById('vc-phone').value.trim();
+            let email = document.getElementById('vc-email').value.trim();
+            let org = document.getElementById('vc-org').value.trim();
+            let address = document.getElementById('vc-address').value.trim();
+            
+            if (name) {
+                let vcardArr = [
+                    "BEGIN:VCARD", "VERSION:3.0", 
+                    "N;CHARSET=UTF-8:;" + name + ";;;", 
+                    "FN;CHARSET=UTF-8:" + name          
+                ];
+                if (org) vcardArr.push("ORG;CHARSET=UTF-8:" + org);
+                if (title) vcardArr.push("TITLE;CHARSET=UTF-8:" + title);
+                if (phone) vcardArr.push("TEL;TYPE=CELL:" + phone);
+                if (email) vcardArr.push("EMAIL:" + email);
+                if (address) vcardArr.push("ADR;CHARSET=UTF-8:;;" + address + ";;;;");
+                vcardArr.push("END:VCARD");
+                dataToEncode = vcardArr.join("\n");
+            }
+        } else if (currentTab === 'wifi') {
+            let ssid = document.getElementById('wifi-ssid').value.trim();
+            let pass = document.getElementById('wifi-pass').value;
+            let type = document.getElementById('wifi-type').value;
+            let hidden = document.getElementById('wifi-hidden').checked ? 'true' : 'false';
+            if (ssid) {
+                dataToEncode = `WIFI:T:${type};S:${ssid};P:${pass};H:${hidden};;`;
+            }
+        } else if (currentTab === 'phone') {
+            let phone = document.getElementById('input-phone').value.trim();
+            if (phone) {
+                dataToEncode = `tel:${phone}`;
+            }
+        }
+
+        if (!dataToEncode) { 
+            dataToEncode = DEFAULT_QR_TEXT;
+        }
+
+        let fgColor = document.getElementById('color-fg').value;
+        let bgColor = document.getElementById('color-bg').value;
+        let coreSize = parseInt(document.getElementById('size-slider').value);
+        let frameStyle = document.getElementById('frame-style').value;
+
+        let canvasW = coreSize;
+        let canvasH = coreSize;
+        let offsetX = 0;
+        let offsetY = 0;
+        let margin = 20;
+
+        switch(frameStyle) {
+            case 'border':
+                canvasW = coreSize + (margin * 2);
+                canvasH = coreSize + (margin * 2);
+                offsetX = margin;
+                offsetY = margin;
+                break;
+            case 'scan-white-black':
+            case 'scan-black-white':
+                canvasW = coreSize + (margin * 2);
+                canvasH = coreSize + 100;
+                offsetX = margin;
+                offsetY = margin;
+                break;
+            case 'download-app':
+                canvasW = coreSize + (margin * 2);
+                canvasH = coreSize + 100;
+                offsetX = margin;
+                offsetY = margin;
+                break;
+            case 'pin-drop':
+                canvasW = coreSize + (margin * 2);
+                canvasH = coreSize + 120;
+                offsetX = margin;
+                offsetY = margin;
+                break;
+            default: // none
+                canvasW = coreSize;
+                canvasH = coreSize;
+                offsetX = 0;
+                offsetY = 0;
+        }
+
+        finalCanvas.width = canvasW;
+        finalCanvas.height = canvasH;
+        let padding = Math.floor(coreSize * 0.1); 
+        let innerSize = coreSize - (padding * 2);
+
+        try {
+            var qr = qrcode(0, currentEC);
+            qr.addData(toUTF8(dataToEncode));
+            qr.make();
+
+            var moduleCount = qr.getModuleCount();
+            var cellSize = innerSize / moduleCount;
+
+            ctx.clearRect(0, 0, canvasW, canvasH);
+            
+            if (frameStyle === 'border') {
+                fillRoundRect(ctx, 0, 0, canvasW, canvasH, 15, fgColor);
+                fillRoundRect(ctx, 8, 8, canvasW - 16, canvasH - 16, 10, bgColor);
+
+            } else if (frameStyle === 'scan-white-black') {
+                fillRoundRect(ctx, 0, 0, canvasW, canvasH, 15, fgColor);
+                fillRoundRect(ctx, 8, 8, canvasW - 16, coreSize + 12, 10, bgColor);
+                
+                ctx.fillStyle = bgColor; 
+                ctx.font = "bold 26px 'Segoe UI', Arial, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("QUÉT MÃ", canvasW / 2, coreSize + 60);
+
+            } else if (frameStyle === 'scan-black-white') {
+                fillRoundRect(ctx, 0, 0, canvasW, canvasH, 15, bgColor); 
+                strokeRoundRect(ctx, 4, 4, canvasW - 8, canvasH - 8, 12, fgColor, 4); 
+                fillRoundRect(ctx, 15, coreSize + 20, canvasW - 30, 60, 10, fgColor); 
+                
+                ctx.fillStyle = bgColor; 
+                ctx.font = "bold 24px 'Segoe UI', Arial, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("QUÉT MÃ", canvasW / 2, coreSize + 50);
+
+            } else if (frameStyle === 'download-app') {
+                fillRoundRect(ctx, 0, 0, canvasW, canvasH, 15, fgColor);
+                fillRoundRect(ctx, 8, 8, canvasW - 16, coreSize + 12, 10, bgColor);
+                
+                ctx.fillStyle = bgColor;
+                ctx.font = "bold 24px 'Segoe UI', Arial, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("TẢI ỨNG DỤNG", canvasW / 2, coreSize + 60);
+
+            } else if (frameStyle === 'pin-drop') {
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvasW, canvasH); 
+                strokeRoundRect(ctx, 10, 10, canvasW - 20, coreSize + 10, 15, fgColor, 6); 
+                
+                fillRoundRect(ctx, 20, coreSize + 35, canvasW - 40, 55, 12, fgColor);
+                ctx.fillStyle = fgColor;
+                ctx.beginPath();
+                ctx.moveTo(canvasW/2 - 15, coreSize + 89);
+                ctx.lineTo(canvasW/2 + 15, coreSize + 89);
+                ctx.lineTo(canvasW/2, coreSize + 115); 
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = bgColor; 
+                ctx.font = "bold 24px 'Segoe UI', Arial, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("QUÉT MÃ", canvasW / 2, coreSize + 64);
+
+            } else {
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvasW, canvasH);
+            }
+
+            ctx.fillStyle = fgColor;
+            for (var r = 0; r < moduleCount; r++) {
+                for (var c = 0; c < moduleCount; c++) {
+                    if (qr.isDark(r, c)) {
+                        var x = offsetX + padding + Math.round(c * cellSize);
+                        var y = offsetY + padding + Math.round(r * cellSize);
+                        var w = Math.round((c + 1) * cellSize) - Math.round(c * cellSize);
+                        var h = Math.round((r + 1) * cellSize) - Math.round(r * cellSize);
+                        ctx.fillRect(x, y, w, h);
+                    }
+                }
+            }
+
+            if (selectedLogo && selectedLogo.complete) {
+                let logoSize = Math.floor(coreSize * 0.22); 
+                let x = offsetX + (coreSize - logoSize) / 2;
+                let y = offsetY + (coreSize - logoSize) / 2;
+
+                fillRoundRect(ctx, x - 4, y - 4, logoSize + 8, logoSize + 8, 8, bgColor);
+                ctx.drawImage(selectedLogo, x, y, logoSize, logoSize);
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function downloadQR() {
+        let imageURL = finalCanvas.toDataURL("image/png");
+        let downloadLink = document.createElement("a");
+        downloadLink.href = imageURL;
+        downloadLink.download = "AIBTeM_QRCode.png";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+</script>
+
+</body>
+</html>
