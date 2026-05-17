@@ -632,16 +632,23 @@ export default function App() {
         </nav>
 
         <div className="pb-6 border-t border-[#1e293b] flex-shrink-0 flex flex-col">
-          {/* Căn trái nút Trợ giúp thẳng hàng tuyệt đối với các thực đơn khác */}
+          {/* Nút Trợ giúp căn trái thẳng hàng với các thực đơn phía trên */}
           <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap mb-2 mt-4">
             <HelpCircle size={18} className="flex-shrink-0" />
             {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Trợ giúp</span>}
           </button>
 
-          {/* Hiển thị và căn trái Logo AIBTeM chuẩn xác khi mở rộng hoặc thu gọn menu */}
-          <div className="sidebar-link w-full mt-2 pointer-events-none">
-             <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-7 w-7 object-contain rounded-full opacity-50 flex-shrink-0" />
-             {(isSidebarOpen || isMobileMenuOpen) && <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">AIBTeM Hệ thống</span>}
+          {/* Logo AIBTeM */}
+          <div className="px-6 mt-2">
+            <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className={`flex items-center transition-transform hover:scale-105 origin-left ${!(isSidebarOpen || isMobileMenuOpen) ? 'hidden' : ''}`}>
+              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-10 w-auto object-contain rounded-full drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
+            </a>
+            {/* Trạng thái khi thu gọn menu (vẫn nháy được link và không bị mờ) */}
+            {!(isSidebarOpen || isMobileMenuOpen) && (
+              <a href="https://lamchuaigiaoduc.vn" target="_blank" rel="noreferrer" className="flex items-center transition-transform hover:scale-105 origin-left">
+                <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 w-8 object-contain rounded-full drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]" />
+              </a>
+            )}
           </div>
         </div>
       </aside>
