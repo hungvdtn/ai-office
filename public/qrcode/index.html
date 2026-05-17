@@ -581,6 +581,8 @@
     }
 
     function downloadQR() {
+        window.parent.postMessage('QR_DOWNLOADED', '*');
+        
         let imageURL = finalCanvas.toDataURL("image/png");
         let downloadLink = document.createElement("a");
         downloadLink.href = imageURL;
