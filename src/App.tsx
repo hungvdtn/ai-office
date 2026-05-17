@@ -304,8 +304,33 @@ const HelpContent = ({ module }: { module: string }) => {
         </div>
       );
       case 'qrcode':
-        return <p>Tính năng này giúp Bạn tạo mã QR nhanh chóng và an toàn ngay bên trong Văn phòng số.</p>;
-      default: return <p>Chọn chức năng để xem hướng dẫn.</p>;
+      return (
+        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn tạo mã QR Code</h3>
+          <p>Mã QR không đơn thuần là một biểu tượng đồ họa mã hóa; nó chính là “cây cầu” liên kết tức thì giữa không gian vật lý và không gian số.</p>
+          
+          <p className="font-bold text-sky-400 mt-2">Bạn dùng QR Code để làm gì?</p>
+          <ol className="list-decimal pl-5 space-y-1.5">
+            <li>Bạn muốn truy cập nhanh vào một link website nào đó về tài liệu, về ứng dụng mà không cần phải nhập các địa chỉ?</li>
+            <li>Bạn muốn biết thông tin về trang thiết bị của gia đình mình; của cơ quan, đơn vị mình (loại thiết bị, thời gian sử dụng, bảo hành, nguồn gốc, xuất xứ….) mà không cần mở dữ liệu tra cứu?</li>
+            <li>Bạn muốn gửi thông tin cho mọi người cần liên hệ làm việc với mình, mà không cần nhiều thao tác?</li>
+            <li>Bạn muốn chia sẻ thông tin về wifi cho đại biểu tham dự hội nghị; khách đến cơ quan làm việc, để mọi người không phải tìm, nhập mật khẩu?</li>
+            <li>Bạn cần chia sẻ số điện thoại cho mọi người mà không quá lộ liễu?</li>
+          </ol>
+          <p className="mt-2">Năm loại mã QR Code tích hợp sẵn trong ứng dụng này sẽ giúp bạn dễ dàng giải quyết mọi nhu cầu nêu trên.</p>
+          
+          <p className="font-bold text-sky-400 mt-4">Điểm đặc biệt của ứng dụng:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Chất lượng cao:</strong> QR Code được kết xuất sắc nét, chuẩn định dạng cấu trúc hình ảnh và không bị hỏng lỗi trong quá trình quét.</li>
+            <li><strong>Tùy biến giao diện chuyên nghiệp:</strong> Hỗ trợ thiết lập đổi màu sắc, bo góc các điểm ảnh, thay đổi hoa văn cấu trúc nền và chèn hình ảnh Logo cơ quan ở chính giữa mã để tăng tính thẩm mỹ cao.</li>
+            <li><strong>Tiện ích tối đa:</strong> Hoàn toàn miễn phí, thao tác xử lý tức thì không có độ trễ.</li>
+          </ul>
+
+          <p className="text-xs text-slate-500 mt-6 pt-2 border-t border-[#1e293b]">
+            Để xem thêm các tài liệu phân tích ứng dụng thực tế, Bạn có thể tham khảo trực tiếp bài viết hướng dẫn sâu tại liên kết: <a href="https://lamchuaigiaoduc.vn/cong-cu-tao-ma-qr-mien-phi/" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline font-medium">lamchuaigiaoduc.vn</a>.
+          </p>
+        </div>
+      );
   }
 }
 
