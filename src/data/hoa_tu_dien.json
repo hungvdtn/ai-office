@@ -1,53 +1,38 @@
 [
   {
-    "original": "chủ tịch nước",
-    "suggestion": "Chủ tịch nước",
-    "desc": "Viết hoa chức danh nhà nước."
+    "original": "quốc hội",
+    "suggestion": "Quốc hội",
+    "desc": "Viết hoa danh từ riêng phổ biến."
+  },
+  {
+    "original": "chính phủ",
+    "suggestion": "Chính phủ",
+    "desc": "Viết hoa danh từ riêng phổ biến."
   },
   {
     "original": "thủ tướng chính phủ",
     "suggestion": "Thủ tướng Chính phủ",
-    "desc": "Viết hoa chức danh nhà nước."
+    "desc": "Viết hoa danh từ riêng phổ biến."
   },
   {
-    "original": "phó chủ tịch nước",
-    "suggestion": "Phó Chủ tịch nước",
-    "desc": "Viết hoa chức danh nhà nước."
+    "original": "nhà nước",
+    "suggestion": "Nhà nước",
+    "desc": "Viết hoa danh từ riêng phổ biến."
   },
   {
-    "original": "phó thủ tướng chính phủ",
-    "suggestion": "Phó Thủ tướng Chính phủ",
-    "desc": "Viết hoa chức danh nhà nước."
+    "original": "bộ giáo dục và đào tạo",
+    "suggestion": "Bộ Giáo dục và Đào tạo",
+    "desc": "Viết hoa tên cơ quan."
   },
   {
-    "original": "chủ tịch quốc hội",
-    "suggestion": "Chủ tịch Quốc hội",
-    "desc": "Viết hoa chức danh nhà nước."
+    "original": "bộ lao động - thương binh và xã hội",
+    "suggestion": "Bộ Lao động - Thương binh và Xã hội",
+    "desc": "Viết hoa tên cơ quan."
   },
   {
-    "original": "phó chủ tịch quốc hội",
-    "suggestion": "Phó Chủ tịch Quốc hội",
-    "desc": "Viết hoa chức danh nhà nước."
-  }, 
-  {
-    "original": "chính phủ",
-    "suggestion": "Chính phủ",
-    "desc": "Viết hoa tên cơ quan nhà nước."
-  },
-  {
-    "original": "quốc hội",
-    "suggestion": "Quốc hội",
-    "desc": "Viết hoa tên cơ quan nhà nước."
-  },
-  {
-    "original": "văn phòng chính phủ",
-    "suggestion": "Văn phòng Chính phủ",
-    "desc": "Viết hoa tên cơ quan nhà nước."
-  },
-  {
-    "original": "văn phòng quốc hội",
-    "suggestion": "Văn phòng Quốc hội",
-    "desc": "Viết hoa tên cơ quan nhà nước."
+    "original": "ủy ban nhân dân",
+    "suggestion": "Ủy ban nhân dân",
+    "desc": "Viết hoa tên cơ quan hành chính."
   },
   {
     "original": "bộ quốc phòng",
@@ -105,11 +90,6 @@
     "desc": "Viết hoa tên cơ quan nhà nước."
   },
   {
-    "original": "bộ giáo dục và đào tạo",
-    "suggestion": "Bộ Giáo dục và Đào tạo",
-    "desc": "Viết hoa tên cơ quan nhà nước."
-  },
-  {
     "original": "bộ y tế",
     "suggestion": "Bộ Y tế",
     "desc": "Viết hoa tên cơ quan nhà nước."
@@ -147,7 +127,7 @@
   {
     "original": "bộ chính trị",
     "suggestion": "Bộ Chính trị",
-    "desc": "Viết hoa tên cơ quan của Đảng."
+    "desc": "Viết hoa tên cơ quan nhà nước."
   },
   {
     "original": "ban bí thư",
@@ -372,7 +352,7 @@
   {
     "original": "văn phòng ủy ban nhân dân",
     "suggestion": "Văn phòng Ủy ban nhân dân",
-    "desc": "Viết hoa danh từ riêng."
+    "desc": "Viết hoa tên cơ quan nhà nước."
   },
   {
     "original": "sở ngoại vụ",
@@ -933,7 +913,7 @@
     "original": "bác hồ",
     "suggestion": "Bác Hồ",
     "desc": "Viết hoa tên nhân vật lịch sử."
-  }
+  },
   {
     "original": "vụ tổ chức - biên chế",
     "suggestion": "Vụ Tổ chức - Biên chế",
@@ -1087,6 +1067,11 @@
   {
     "original": "cục khoa học, công nghệ và thông tin",
     "suggestion": "Cục Khoa học, Công nghệ và Thông tin",
+    "desc": "Viết hoa tên cơ quan, đơn vị."
+  },
+  {
+    "original": "cục hợp tác quốc tế",
+    "suggestion": "Cục Hợp tác quốc tế",
     "desc": "Viết hoa tên cơ quan, đơn vị."
   },
   {
