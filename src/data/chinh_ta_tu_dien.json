@@ -413,5 +413,1007 @@
     ],
     "type": "chinh-ta",
     "desc": "Lỗi dùng từ."
+  },
+  {
+    "right": "hành chính",
+    "wrong": ["hanh chính", "hành chinh", "hanh chinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "công chức",
+    "wrong": ["cong chức", "công chưc", "cong chuc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "viên chức",
+    "wrong": ["viên chưc", "vien chức", "vien chuc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "nghị định",
+    "wrong": ["nghi định", "nghị đinh", "nghi đinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "quyết định",
+    "wrong": ["quyet định", "quyết đinh", "quyet đinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "quản lý",
+    "wrong": ["quan lý", "quản ly", "quan ly"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "nhà nước",
+    "wrong": ["nha nước", "nhà nươc", "nha nươc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "công vụ",
+    "wrong": ["cong vụ", "công vu", "cong vu"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "văn bản",
+    "wrong": ["van bản", "văn ban", "van ban"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "biên chế",
+    "wrong": ["biên chê", "bien chế", "bien che"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "kỷ luật",
+    "wrong": ["ky luật", "kỷ luât", "ky luat"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "thi hành",
+    "wrong": ["thi hanh", "thì hành", "thì hanh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chỉ đạo",
+    "wrong": ["chi đạo", "chỉ đao", "chi đao"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "hướng dẫn",
+    "wrong": ["hương dẫn", "hướng dẩn", "huong dan"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh hoặc sai dấu hỏi/ngã."
+  },
+  {
+    "right": "phê duyệt",
+    "wrong": ["phê duyêt", "phe duyệt", "phe duyêt"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "cán bộ",
+    "wrong": ["can bộ", "cán bo", "can bo"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "quy hoạch",
+    "wrong": ["quy hoach", "quý hoạch", "quy hoach"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "bổ nhiệm",
+    "wrong": ["bo nhiệm", "bổ nhiêm", "bo nhiem"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "miễn nhiệm",
+    "wrong": ["miên nhiệm", "miễn nhiêm", "mien nhiem"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "tư pháp",
+    "wrong": ["tu pháp", "tư phap", "tu phap"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "hộ tịch",
+    "wrong": ["ho tịch", "hộ tich", "ho tich"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tài chính",
+    "wrong": ["tai chính", "tài chinh", "tai chinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "ngân sách",
+    "wrong": ["ngan sách", "ngân sach", "ngan sach"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "thanh tra",
+    "wrong": ["thanh tza", "thanh trà", "thanh traa"],
+    "type": "chinh-ta",
+    "desc": "sai phụ âm hoặc thiếu/thừa ký tự."
+  },
+  {
+    "right": "giám sát",
+    "wrong": ["giam sát", "giám sat", "giam sat"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "kiểm soát",
+    "wrong": ["kiem soát", "kiểm soat", "kiem soat"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "báo cáo",
+    "wrong": ["bao cáo", "báo cao", "bao cao"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tờ trình",
+    "wrong": ["tơ trình", "tờ trinh", "to trinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "kế hoạch",
+    "wrong": ["ke hoạch", "kế hoach", "ke hoach"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "đề án",
+    "wrong": ["đê án", "đề an", "de an"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "dự án",
+    "wrong": ["du án", "dự an", "du an"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "thủ tục",
+    "wrong": ["thu tục", "thủ tuc", "thu tuc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "hồ sơ",
+    "wrong": ["ho sơ", "hồ sơr", "ho so"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "lưu trữ",
+    "wrong": ["lưu trử", "lưu chử", "luu tru"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc sai phụ âm."
+  },
+  {
+    "right": "niêm yết",
+    "wrong": ["niem yết", "niêm yêt", "niem yet"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "công khai",
+    "wrong": ["cong khai", "công khải", "cong khaii"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "minh bạch",
+    "wrong": ["minh bach", "mình bạch", "minh bạnh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh hoặc sai âm cuối."
+  },
+  {
+    "right": "cấp phép",
+    "wrong": ["cap phép", "cấp phep", "cap phep"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "đầu tư",
+    "wrong": ["đâu tư", "đầu tu", "dau tu"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "cơ chế",
+    "wrong": ["co chế", "cơ chê", "co che"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chính sách",
+    "wrong": ["chinh sách", "chính sach", "chinh sach"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "sở hữu",
+    "wrong": ["so hữu", "sở hưu", "so huu"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "đất đai",
+    "wrong": ["đât đai", "đất đài", "dat dai"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "xây dựng",
+    "wrong": ["xay dựng", "xây dưng", "xay dung"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "quy định",
+    "wrong": ["quy đinh", "quý định", "quy dinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "định mức",
+    "wrong": ["đinh mức", "định mưc", "dinh muc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tiêu chuẩn",
+    "wrong": ["tieu chuẩn", "tiêu chuân", "tieu chuan"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "thực hiện",
+    "wrong": ["thưc hiện", "thực hiên", "thuc hien"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "triển khai",
+    "wrong": ["triên khai", "chiển khai", "trien khai"],
+    "type": "chinh-ta",
+    "desc": "sai phụ âm hoặc sai dấu thanh."
+  },
+  {
+    "right": "phối hợp",
+    "wrong": ["phôi hợp", "phối hơp", "phoi hop"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "giáo dục",
+    "wrong": ["giao dục", "giáo duc", "giao duc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "đào tạo",
+    "wrong": ["đao tạo", "đào tạo", "đao tao"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "giảng dạy",
+    "wrong": ["giang dạy", "giảng day", "giang day"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "học tập",
+    "wrong": ["hoc tập", "học tâp", "hoc tap"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chương trình",
+    "wrong": ["chuong trình", "chương trinh", "chuong trinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "kiểm định",
+    "wrong": ["kiem định", "kiểm đinh", "kiem dinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chất lượng",
+    "wrong": ["chât lượng", "chất lương", "chat luong"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "giáo án",
+    "wrong": ["giao án", "giáo an", "giao an"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "bài giảng",
+    "wrong": ["bai giảng", "bài giang", "bai giang"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh hoặc sai dấu hỏi/ngã."
+  },
+  {
+    "right": "sư phạm",
+    "wrong": ["su phạm", "sư pham", "su pham"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chuẩn hóa",
+    "wrong": ["chuân hóa", "chuẩn hoa", "chuan hoa"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "học vị",
+    "wrong": ["hoc vị", "học vi", "hoc vi"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "học hàm",
+    "wrong": ["hoc hàm", "học ham", "hoc ham"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "thạc sĩ",
+    "wrong": ["thạc si", "thac sĩ", "thac si"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh hoặc sai dấu hỏi/ngã."
+  },
+  {
+    "right": "tiến sĩ",
+    "wrong": ["tiên sĩ", "tiến si", "tien si"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh hoặc sai dấu hỏi/ngã."
+  },
+  {
+    "right": "cử nhân",
+    "wrong": ["cu nhân", "cử nhan", "cu nhan"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "nghiên cứu",
+    "wrong": ["nghien cứu", "nghiên cưu", "nghien cuu"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "khoa học",
+    "wrong": ["khoa hoc", "khoả học", "khoa hoc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "đổi mới",
+    "wrong": ["đôi mới", "đổi mơi", "doi moi"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "sáng tạo",
+    "wrong": ["sang tạo", "sáng tao", "sang tao"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chuyên môn",
+    "wrong": ["chuyên mộn", "chuyen môn", "chuyen mon"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "nghiệp vụ",
+    "wrong": ["nghiêp vụ", "nghiệp vu", "nghiep vu"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "kỹ năng",
+    "wrong": ["ky năng", "kỹ nang", "ky nang"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "lý luận",
+    "wrong": ["ly luận", "lý luân", "ly luan"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "thực tiễn",
+    "wrong": ["thực tiên", "thưc tiễn", "thuc tien"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "phương pháp",
+    "wrong": ["phuong pháp", "phương phap", "phuong phap"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tư duy",
+    "wrong": ["tu duy", "tư duỳ", "tu duy"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "năng lực",
+    "wrong": ["nang lực", "năng lưc", "nang luc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "phẩm chất",
+    "wrong": ["pham chất", "phẩm chât", "pham chat"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "mầm non",
+    "wrong": ["mam non", "mầm nón", "mam nón"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tiểu học",
+    "wrong": ["tieu học", "tiểu hoc", "tieu hoc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "phổ thông",
+    "wrong": ["pho thông", "phổ thông", "pho thong"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "đại học",
+    "wrong": ["đai học", "đại hoc", "dai hoc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "cao đẳng",
+    "wrong": ["cao đăng", "cao đẵng", "cao dang"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "trung cấp",
+    "wrong": ["trung câp", "trùng cấp", "trung cap"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "học đường",
+    "wrong": ["hoc đường", "học đương", "hoc duong"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "trường học",
+    "wrong": ["truơng học", "trường hoc", "truong hoc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "lớp học",
+    "wrong": ["lơp học", "lớp hoc", "lop hoc"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "giảng đường",
+    "wrong": ["giang đường", "giảng đương", "giang duong"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "giáo viên",
+    "wrong": ["giao viên", "giáo viênn", "giao vien"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "giảng viên",
+    "wrong": ["giang viên", "giảng viênn", "giang vien"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "sinh viên",
+    "wrong": ["sinh viênn", "sinh viên", "sinh vien"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh hoặc thừa ký tự."
+  },
+  {
+    "right": "học sinh",
+    "wrong": ["hoc sinh", "học sình", "hoc sinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tuyển sinh",
+    "wrong": ["tuyên sinh", "tuyển sình", "tuyen sinh"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu thanh."
+  },
+  {
+    "right": "thi cử",
+    "wrong": ["thi cu", "thí cử", "thi cư"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "tốt nghiệp",
+    "wrong": ["tôt nghiệp", "tốt nghiêp", "tot nghiep"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "bằng cấp",
+    "wrong": ["bang cấp", "bằng câp", "bang cap"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "chứng chỉ",
+    "wrong": ["chưng chỉ", "chứng chi", "chung chi"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "ngoại khóa",
+    "wrong": ["ngoai khóa", "ngoai khoa"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "đánh giá",
+    "wrong": ["đanh giá", "đánh gia", "danh gia"],
+    "type": "chinh-ta",
+    "desc": "thiếu/sai dấu thanh."
+  },
+  {
+    "right": "phát triển",
+    "wrong": ["phat triển", "phát triên", "phat trien"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc hoặc dấu hỏi."
+  },
+  {
+    "right": "nghị quyết",
+    "wrong": ["nghị quyêt", "nghi quyết", "nghi quyet"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc hoặc lỗi gõ nhanh."
+  },
+  {
+    "right": "kế hoạch",
+    "wrong": ["kế hoach", "ke hoạch", "ke hoach"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu nặng ở chữ hoạch."
+  },
+  {
+    "right": "điều hành",
+    "wrong": ["điều hanh", "diêu hành", "dieu hanh"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu huyền ở chữ hành."
+  },
+  {
+    "right": "tổ chức",
+    "wrong": ["tổ chưc", "to chức", "to chuc"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ chức."
+  },
+  {
+    "right": "công tác",
+    "wrong": ["công tac", "cong tác", "cong tac"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ tác."
+  },
+  {
+    "right": "quản lý",
+    "wrong": ["quản lýy", "quan lý", "quản ly"],
+    "type": "chinh-ta",
+    "desc": "thừa ký tự cuối hoặc thiếu dấu."
+  },
+  {
+    "right": "phê duyệt",
+    "wrong": ["phê duyêt", "phe duyệt", "phe duyêt"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ duyệt."
+  },
+  {
+    "right": "hướng dẫn",
+    "wrong": ["hướng dẩn", "hương dẫn", "huong dan"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã (phổ biến vùng miền)."
+  },
+  {
+    "right": "lãnh đạo",
+    "wrong": ["lảnh đạo", "lanh đạo", "lãnh đao"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã ở chữ lãnh."
+  },
+  {
+    "right": "kỹ thuật",
+    "wrong": ["kỷ thuật", "ky thuật", "kỹ thuât"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã hoặc thiếu dấu nặng."
+  },
+  {
+    "right": "giải quyết",
+    "wrong": ["giải quyêt", "giai quyết", "giái quyết"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc hoặc sai dấu hỏi/ngã."
+  },
+  {
+    "right": "biên bản",
+    "wrong": ["biên ban", "bien bản", "bien ban"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu hỏi ở chữ bản."
+  },
+  {
+    "right": "phụ lục",
+    "wrong": ["phụ lụcc", "phu lục", "phụ luc"],
+    "type": "chinh-ta",
+    "desc": "thừa ký tự c hoặc thiếu dấu nặng."
+  },
+  {
+    "right": "đăng ký",
+    "wrong": ["đăng kýy", "đăng ky", "dang ký"],
+    "type": "chinh-ta",
+    "desc": "lỗi bộ gõ thừa chữ y hoặc thiếu dấu sắc."
+  },
+  {
+    "right": "cơ cấu",
+    "wrong": ["cơ cấuu", "cơ câu", "co cấu"],
+    "type": "chinh-ta",
+    "desc": "lỗi bộ gõ thừa chữ u hoặc thiếu dấu sắc."
+  },
+  {
+    "right": "nhiệm vụ",
+    "wrong": ["nhiệm vu", "nhiêm vụ", "nhiem vu"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu nặng hoặc dấu nặng đặt sai vị trí."
+  },
+  {
+    "right": "văn bản",
+    "wrong": ["văn bảnn", "văn ban", "van bản"],
+    "type": "chinh-ta",
+    "desc": "thừa chữ n cuối do gõ nhanh."
+  },
+  {
+    "right": "kết quả",
+    "wrong": ["kết quảả", "kêt quả", "ket qua"],
+    "type": "chinh-ta",
+    "desc": "thừa dấu hoặc thiếu dấu do bộ gõ."
+  },
+  {
+    "right": "báo cáo",
+    "wrong": ["bao cáo", "báo cao", "bao cao"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở một trong hai từ."
+  },
+  {
+    "right": "bổ sung",
+    "wrong": ["bổ xung", "bo xung", "bộ xung"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn s/x (phổ biến nhất)."
+  },
+  {
+    "right": "xử lý",
+    "wrong": ["sử lý", "xư lý", "sư lý"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn x/s hoặc thiếu dấu hỏi."
+  },
+  {
+    "right": "kiểm tra",
+    "wrong": ["kiểm tza", "kiểm cha", "kiem tra"],
+    "type": "chinh-ta",
+    "desc": "lỗi gõ nhầm phím z hoặc nhầm tr/ch."
+  },
+  {
+    "right": "tập trung",
+    "wrong": ["tập chung", "tâp trung", "tap trung"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn tr/ch."
+  },
+  {
+    "right": "dấu giáp lai",
+    "wrong": ["dấu dáp lai", "dâu giáp lai", "dau giap lai"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn gi/d ở chữ giáp."
+  },
+  {
+    "right": "giám sát",
+    "wrong": ["dám sát", "giám xát", "giam sat"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn gi/d hoặc s/x."
+  },
+  {
+    "right": "năng suất",
+    "wrong": ["năng xuất", "nang suất", "năng suât"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn s/x (suất/xuất)."
+  },
+  {
+    "right": "trình duyệt",
+    "wrong": ["chình duyệt", "trình duyêt", "trinh duyet"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn tr/ch hoặc thiếu dấu sắc."
+  },
+  {
+    "right": "triển khai",
+    "wrong": ["chiển khai", "triên khai", "trien khai"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn tr/ch hoặc sai dấu hỏi/ngã."
+  },
+  {
+    "right": "soát xét",
+    "wrong": ["xoát xét", "soát xet", "xoat xet"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn s/x ở chữ soát."
+  },
+  {
+    "right": "hoàn thành",
+    "wrong": ["hoàn thạnh", "hoan thành", "hoàn thảnh"],
+    "type": "chinh-ta",
+    "desc": "sai vần n/ng hoặc thiếu dấu."
+  },
+  {
+    "right": "phát hành",
+    "wrong": ["phát hạnh", "phat hành", "phát hảnh"],
+    "type": "chinh-ta",
+    "desc": "sai vần n/ng hoặc thiếu dấu sắc."
+  },
+  {
+    "right": "trưởng phòng",
+    "wrong": ["trưởng phòn", "trướng phòng", "truong phong"],
+    "type": "chinh-ta",
+    "desc": "thiếu chữ g cuối ở chữ phòng."
+  },
+  {
+    "right": "nghiêm túc",
+    "wrong": ["nghiêm tút", "nghiêm tuc", "nghiem tuc"],
+    "type": "chinh-ta",
+    "desc": "sai phụ âm cuối c/t."
+  },
+  {
+    "right": "chứng minh",
+    "wrong": ["chứng mịnh", "chưng minh", "chung minh"],
+    "type": "chinh-ta",
+    "desc": "thừa dấu nặng ở chữ minh do gõ nhanh."
+  },
+  {
+    "right": "tình hình",
+    "wrong": ["tình hịnh", "tinh hình", "tinh hinh"],
+    "type": "chinh-ta",
+    "desc": "thừa dấu nặng ở chữ hình."
+  },
+  {
+    "right": "quy định",
+    "wrong": ["qui định", "quy đinh", "quy dinh"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn i/y hoặc thiếu dấu nặng."
+  },
+  {
+    "right": "lý do",
+    "wrong": ["lí do", "lý dọ", "ly do"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn i/y (tùy quy định cơ quan)."
+  },
+  {
+    "right": "nguyên tắc",
+    "wrong": ["nguyên tát", "nguyên tăc", "nguyen tac"],
+    "type": "chinh-ta",
+    "desc": "sai phụ âm cuối c/t."
+  },
+  {
+    "right": "nhắc nhở",
+    "wrong": ["nhắc nhỡ", "nhăc nhở", "nhac nho"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi/ngã ở chữ nhở."
+  },
+  {
+    "right": "xây dựng",
+    "wrong": ["xây dưn", "xay dựng", "xây dưng"],
+    "type": "chinh-ta",
+    "desc": "thiếu chữ g cuối ở chữ dựng."
+  },
+  {
+    "right": "trực thuộc",
+    "wrong": ["tực thuộc", "trực thuôc", "truc thuoc"],
+    "type": "chinh-ta",
+    "desc": "thiếu phụ âm r hoặc thiếu dấu sắc."
+  },
+  {
+    "right": "Ủy ban nhân dân",
+    "wrong": ["Ủy ban nhân dan", "Uy ban nhân dân", "Uy ban nhan dan"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu huyền ở chữ dân."
+  },
+  {
+    "right": "Bộ Tài chính",
+    "wrong": ["Bộ tai chính", "Bộ tài chinh", "Bo tai chinh"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu huyền hoặc dấu sắc."
+  },
+  {
+    "right": "Thủ tướng",
+    "wrong": ["Thủ tương", "Thu tướng", "Thu tuong"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ tướng."
+  },
+  {
+    "right": "Chủ tịch",
+    "wrong": ["Chú tịch", "Chủ tich", "Chu tich"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi thành sắc hoặc thiếu dấu nặng."
+  },
+  {
+    "right": "đất đai",
+    "wrong": ["đất dai", "đât đai", "dat dai"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn đ/d ở chữ đai."
+  },
+  {
+    "right": "niêm yết",
+    "wrong": ["niêm yêt", "niem yết", "niem yet"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ yết."
+  },
+  {
+    "right": "phối hợp",
+    "wrong": ["phôi hợp", "phối hơp", "phoi hop"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ phối."
+  },
+  {
+    "right": "thanh tra",
+    "wrong": ["thanh tza", "thanh trà", "thanh cha"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn phụ âm hoặc lỗi bàn phím."
+  },
+  {
+    "right": "kiểm toán",
+    "wrong": ["kiêm toán", "kiểm toan", "kiem toan"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu hỏi hoặc dấu sắc."
+  },
+  {
+    "right": "định kỳ",
+    "wrong": ["định kỉ", "đinh kỳ", "dinh ky"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn i/y hoặc thiếu dấu nặng."
+  },
+  {
+    "right": "thường xuyên",
+    "wrong": ["thường xuyênn", "thương xuyên", "thuong xuyen"],
+    "type": "chinh-ta",
+    "desc": "thừa chữ n cuối hoặc thiếu dấu."
+  },
+  {
+    "right": "đột xuất",
+    "wrong": ["đột suất", "đôt xuất", "dot xuat"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn s/x (suất/xuất)."
+  },
+  {
+    "right": "hệ thống",
+    "wrong": ["hệ thông", "hê thống", "he thong"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ thống."
+  },
+  {
+    "right": "phát sinh",
+    "wrong": ["phát xinh", "phat sinh", "phát sình"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn s/x hoặc thiếu dấu."
+  },
+  {
+    "right": "đảm bảo",
+    "wrong": ["đảm báo", "đam bảo", "dam bao"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi thành sắc ở chữ bảo."
+  },
+  {
+    "right": "duy trì",
+    "wrong": ["duy tzi", "duy tri", "duy tzi"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn tr/tz do bộ gõ."
+  },
+  {
+    "right": "cấp trên",
+    "wrong": ["cấp trến", "câp trên", "cap tren"],
+    "type": "chinh-ta",
+    "desc": "thừa dấu sắc ở chữ trên."
+  },
+  {
+    "right": "cơ quan",
+    "wrong": ["cơ quann", "co quan", "cơ quân"],
+    "type": "chinh-ta",
+    "desc": "thừa chữ n cuối hoặc thiếu dấu."
+  },
+  {
+    "right": "đơn vị",
+    "wrong": ["đơn vi", "đơn vi.", "don vi"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu nặng ở chữ vị."
+  },
+  {
+    "right": "cá nhân",
+    "wrong": ["ca nhân", "cá nhânn", "ca nhan"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ cá."
+  },
+  {
+    "right": "tập thể",
+    "wrong": ["tập thê", "tâp thể", "tap the"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu hỏi ở chữ thể."
+  },
+  {
+    "right": "khen thưởng",
+    "wrong": ["khen thướng", "khen tương", "khen thuong"],
+    "type": "chinh-ta",
+    "desc": "sai dấu hỏi thành sắc ở chữ thưởng."
+  },
+  {
+    "right": "kỷ luật",
+    "wrong": ["kỹ luật", "ky luật", "kỷ luât"],
+    "type": "chinh-ta",
+    "desc": "nhầm lẫn dấu hỏi/ngã (kỷ/kỹ)."
+  },
+  {
+    "right": "tổng hợp",
+    "wrong": ["tổng hơp", "tông hợp", "tong hop"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu nặng ở chữ hợp."
+  },
+  {
+    "right": "chi tiết",
+    "wrong": ["chi tiêt", "chỉ tiết", "chi tiet"],
+    "type": "chinh-ta",
+    "desc": "thiếu dấu sắc ở chữ tiết."
   }
 ]
