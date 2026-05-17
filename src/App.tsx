@@ -632,7 +632,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 relative">
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden relative ${activeModule === 'qrcode' ? 'p-0' : 'p-4 md:p-6 lg:p-8'}`}>
           <div className="absolute inset-0 dot-grid opacity-10 pointer-events-none" />
           <div className="w-full mx-auto relative z-10 overflow-x-hidden">
             <AnimatePresence mode="wait">
