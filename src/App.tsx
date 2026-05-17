@@ -25,19 +25,19 @@ type Module = 'calendar' | 'pdf' | 'ocr' | 'scanner' | 'admin' | 'docreview' | '
 
 // --- BẢNG ĐIỀU KHIỂN DÀNH CHO ADMIN (CẤU TRÚC VÀ GIAO DIỆN NÂNG CẤP) ---
 const AdminPanel = () => {
-  const [stats, setStats] = useState({ users: 0, events: 0, loading: true });
+  const [stats, setStats] = useState({ users: 0, events: 0, qrDownloads: 0, loading: true });
   const [userList, setUserList] = useState<any[]>([]);
 
   useEffect(() => {
      const fetchStats = async () => {
         try {
-           const { collection, getDocs } = await import('firebase/firestore');
+           const { collection, getDocs, doc, getDoc } = await import('firebase/firestore');
+           
+           // 1. Quét dữ liệu người dùng và sự kiện (Như cũ)
            const usersSnap = await getDocs(collection(db, 'users'));
            const eventsSnap = await getDocs(collection(db, 'events'));
            
            let usersMap = new Map();
-           
-           // 1. Quét dữ liệu từ bộ lưu trữ phân lớp người dùng hệ thống
            usersSnap.forEach(doc => {
               const data = doc.data();
               usersMap.set(doc.id, {
@@ -50,7 +50,6 @@ const AdminPanel = () => {
               });
            });
 
-           // 2. Đồng bộ quét cơ sở dữ liệu cũ để không bỏ sót người dùng Lịch trước đó
            eventsSnap.forEach(doc => {
               const data = doc.data();
               if (data.userId && !usersMap.has(data.userId)) {
@@ -64,14 +63,20 @@ const AdminPanel = () => {
                  });
               } else if (data.userId && usersMap.has(data.userId)) {
                  const u = usersMap.get(data.userId);
-                 if (!u.tools.includes('Lịch')) {
-                    u.tools.push('Lịch');
-                 }
+                 if (!u.tools.includes('Lịch')) u.tools.push('Lịch');
               }
            });
 
+           // 2. Lấy dữ liệu thống kê từ tính năng quét QR ẩn danh
+           let qrCount = 0;
+           const qrRef = doc(db, 'system_stats', 'qr_usage');
+           const qrSnap = await getDoc(qrRef);
+           if (qrSnap.exists()) {
+               qrCount = qrSnap.data().totalDownloads || 0;
+           }
+
            const list = Array.from(usersMap.values());
-           setStats({ users: list.length, events: eventsSnap.size, loading: false });
+           setStats({ users: list.length, events: eventsSnap.size, qrDownloads: qrCount, loading: false });
            setUserList(list);
         } catch(e) { 
            console.error("Lỗi tải dữ liệu quản trị:", e); 
@@ -81,7 +86,6 @@ const AdminPanel = () => {
      fetchStats();
   }, []);
 
-  // Hàm xuất tệp dữ liệu báo cáo chuẩn mã hóa Unicode hiển thị tiếng Việt trên Excel
   const exportToCSV = () => {
     const headers = ["Họ và tên", "Email", "Ngày tham gia", "Công cụ sử dụng", "Cấp bậc", "Lần đăng nhập cuối"];
     const rows = userList.map(u => [
@@ -108,7 +112,7 @@ const AdminPanel = () => {
      <div className="p-4 md:p-8 text-slate-200 animate-in fade-in duration-500 font-sans">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h2 className="text-xl md:text-2xl font-bold text-brand flex items-center gap-3">
-             <Users size={28} /> Quản trị hệ thống
+             <Users size={28} /> Hệ thống kiểm soát thành viên Quản trị
           </h2>
           {!stats.loading && userList.length > 0 && (
             <button 
@@ -124,18 +128,28 @@ const AdminPanel = () => {
            <p className="text-slate-400 flex items-center gap-2">Đang thiết lập kết nối và trích xuất dữ liệu đám mây...</p>
         ) : (
            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* CHUYỂN TỪ GRID 2 CỘT SANG GRID 3 CỘT ĐỂ CHỨA THỐNG KÊ QR */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-sky-900/50 shadow-[0_0_30px_rgba(56,189,248,0.1)] relative overflow-hidden group hover:border-sky-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={64}/></div>
-                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số tài khoản định danh</h3>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng tài khoản</h3>
                     <p className="text-5xl font-black text-sky-400 relative z-10">{stats.users}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Tổng số cá nhân đã kích hoạt các tính năng bảo mật hệ thống</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Tài khoản định danh hệ thống</p>
                  </div>
+                 
                  <div className="bg-[#0f172a] p-8 rounded-2xl border border-emerald-900/50 shadow-[0_0_30px_rgba(5,150,105,0.1)] relative overflow-hidden group hover:border-emerald-500 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><CalendarDays size={64}/></div>
-                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Tổng số Sự kiện trên hệ thống</h3>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Sự kiện Lịch</h3>
                     <p className="text-5xl font-black text-emerald-400 relative z-10">{stats.events}</p>
-                    <p className="text-xs text-slate-500 mt-2 relative z-10">Dữ liệu hồ sơ công việc được đồng bộ hóa</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Hồ sơ công việc đồng bộ hóa</p>
+                 </div>
+
+                 {/* KHỐI THỐNG KÊ MỚI DÀNH CHO QR CODE */}
+                 <div className="bg-[#0f172a] p-8 rounded-2xl border border-amber-900/50 shadow-[0_0_30px_rgba(245,158,11,0.1)] relative overflow-hidden group hover:border-amber-500 transition-colors">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><QrCode size={64}/></div>
+                    <h3 className="text-slate-400 font-bold mb-2 uppercase tracking-widest text-sm relative z-10">Lượt tạo & Tải QR</h3>
+                    <p className="text-5xl font-black text-amber-400 relative z-10">{stats.qrDownloads}</p>
+                    <p className="text-xs text-slate-500 mt-2 relative z-10">Thống kê từ người dùng ẩn danh</p>
                  </div>
               </div>
 
@@ -196,7 +210,7 @@ const AdminPanel = () => {
         )}
      </div>
   );
-}
+};
 
 // --- NỘI DUNG TRỢ GIÚP THEO TỪNG CHỨC NĂNG ---
 const HelpContent = ({ module }: { module: string }) => {
