@@ -632,16 +632,16 @@ export default function App() {
         </nav>
 
         <div className="pb-6 border-t border-[#1e293b] flex-shrink-0 flex flex-col">
-          <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap mb-2 mt-4 px-6">
+          {/* Căn trái nút Trợ giúp thẳng hàng tuyệt đối với các thực đơn khác */}
+          <button onClick={() => setShowHelpModal(true)} className="sidebar-link w-full whitespace-nowrap mb-2 mt-4">
             <HelpCircle size={18} className="flex-shrink-0" />
             {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Trợ giúp</span>}
           </button>
 
-          <div className="px-6 mt-2">
-            
-            {!(isSidebarOpen || isMobileMenuOpen) && (
-              <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-8 w-8 object-contain rounded-full opacity-50" />
-            )}
+          {/* Hiển thị và căn trái Logo AIBTeM chuẩn xác khi mở rộng hoặc thu gọn menu */}
+          <div className="sidebar-link w-full mt-2 pointer-events-none">
+             <img src="Logo_anh.png" alt="AIBTeM Logo" className="h-7 w-7 object-contain rounded-full opacity-50 flex-shrink-0" />
+             {(isSidebarOpen || isMobileMenuOpen) && <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">AIBTeM Hệ thống</span>}
           </div>
         </div>
       </aside>
