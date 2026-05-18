@@ -594,7 +594,8 @@ const getDayDetails = (date: Date) => {
   } catch(e){}
 
   // Tính Kiểu Ngày Hoàng Đạo (Thập Nhị Thần) Đồng bộ tuyệt đối theo Tháng Âm Lịch
-  const monthChiIdxForThapNhi = (lunar.monthNum + 1) % 12;
+  const currentLunarDate = getLunarDate(date); // [ĐÃ SỬA LỖI]: Bổ sung dòng khai báo lấy dữ liệu tháng Âm lịch
+  const monthChiIdxForThapNhi = (currentLunarDate.monthNum + 1) % 12;
   const thanhLongMap: Record<number, number> = { 2: 0, 8: 0, 3: 2, 9: 2, 4: 4, 10: 4, 5: 6, 11: 6, 0: 8, 6: 8, 1: 10, 7: 10 };
   const thanhLongStart = thanhLongMap[monthChiIdxForThapNhi] !== undefined ? thanhLongMap[monthChiIdxForThapNhi] : 0;
   
