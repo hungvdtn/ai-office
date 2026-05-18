@@ -566,11 +566,48 @@ const getDayDetails = (date: Date) => {
     'Mùi': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)'
   };
 
+ // --- BỔ SUNG THÔNG TIN NẠP ÂM, KIỂU NGÀY, TUỔI XUNG THÁNG ---
+  const FULL_NAYIN: Record<string, string> = {
+    'Giáp Tý': 'Hải Trung Kim', 'Ất Sửu': 'Hải Trung Kim', 'Bính Dần': 'Lư Trung Hỏa', 'Đinh Mão': 'Lư Trung Hỏa', 'Mậu Thìn': 'Đại Lâm Mộc', 'Kỷ Tỵ': 'Đại Lâm Mộc', 'Canh Ngọ': 'Lộ Bàng Thổ', 'Tân Mùi': 'Lộ Bàng Thổ', 'Nhâm Thân': 'Kiếm Phong Kim', 'Quý Dậu': 'Kiếm Phong Kim', 'Giáp Tuất': 'Sơn Đầu Hỏa', 'Ất Hợi': 'Sơn Đầu Hỏa', 'Bính Tý': 'Giản Hạ Thủy', 'Đinh Sửu': 'Giản Hạ Thủy', 'Mậu Dần': 'Thành Đầu Thổ', 'Kỷ Mão': 'Thành Đầu Thổ', 'Canh Thìn': 'Bạch Lạp Kim', 'Tân Tỵ': 'Bạch Lạp Kim', 'Nhâm Ngọ': 'Dương Liễu Mộc', 'Quý Mùi': 'Dương Liễu Mộc', 'Giáp Thân': 'Tuyền Trung Thủy', 'Ất Dậu': 'Tuyền Trung Thủy', 'Bính Tuất': 'Ốc Thượng Thổ', 'Đinh Hợi': 'Ốc Thượng Thổ', 'Mậu Tý': 'Thích Lịch Hỏa', 'Kỷ Sửu': 'Thích Lịch Hỏa', 'Canh Dần': 'Tùng Bách Mộc', 'Tân Mão': 'Tùng Bách Mộc', 'Nhâm Thìn': 'Trường Lưu Thủy', 'Quý Tỵ': 'Trường Lưu Thủy', 'Giáp Ngọ': 'Sa Trung Kim', 'Ất Mùi': 'Sa Trung Kim', 'Bính Thân': 'Sơn Hạ Hỏa', 'Đinh Dậu': 'Sơn Hạ Hỏa', 'Mậu Tuất': 'Bình Địa Mộc', 'Kỷ Hợi': 'Bình Địa Mộc', 'Canh Tý': 'Bích Thượng Thổ', 'Tân Sửu': 'Bích Thượng Thổ', 'Nhâm Dần': 'Kim Bạch Kim', 'Quý Mão': 'Kim Bạch Kim', 'Giáp Thìn': 'Phú Đăng Hỏa', 'Ất Tỵ': 'Phú Đăng Hỏa', 'Bính Ngọ': 'Thiên Hà Thủy', 'Đinh Mùi': 'Thiên Hà Thủy', 'Mậu Thân': 'Đại Trạch Thổ', 'Kỷ Dậu': 'Đại Trạch Thổ', 'Canh Tuất': 'Thoa Xuyến Kim', 'Tân Hợi': 'Thoa Xuyến Kim', 'Nhâm Tý': 'Tang Đố Mộc', 'Quý Sửu': 'Tang Đố Mộc', 'Giáp Dần': 'Đại Khê Thủy', 'Ất Mão': 'Đại Khê Thủy', 'Bính Thìn': 'Sa Trung Thổ', 'Đinh Tỵ': 'Sa Trung Thổ', 'Mậu Ngọ': 'Thiên Thượng Hỏa', 'Kỷ Mùi': 'Thiên Thượng Hỏa', 'Canh Thân': 'Thạch Lựu Mộc', 'Tân Dậu': 'Thạch Lựu Mộc', 'Nhâm Tuất': 'Đại Hải Thủy', 'Quý Hợi': 'Đại Hải Thủy'
+  };
+
+  const canChiDayStr = `${CAN_CHU[dayInfo.canIdx]} ${CHI_CHU[dayInfo.chiIdx]}`;
+  const fullNguHanhDay = `${NA_YIN_MAP[sumNguHanh]} (${FULL_NAYIN[canChiDayStr] || ''})`;
+
+  let fullNguHanhYear = "Đang cập nhật...";
+  let monthChiIdx = date.getMonth();
+  try {
+    const lunarObj = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar();
+    const CAN_MAP: any = {'甲':'Giáp', '乙':'Ất', '丙':'Bính', '丁':'Đinh', '戊':'Mậu', '己':'Kỷ', '庚':'Canh', '辛':'Tân', '壬':'Nhâm', '癸':'Quý'};
+    const CHI_MAP: any = {'子':'Tý', '丑':'Sửu', '寅':'Dần', '卯':'Mão', '辰':'Thìn', '巳':'Tỵ', '午':'Ngọ', '未':'Mùi', '申':'Thân', '酉':'Dậu', '戌':'Tuất', '亥':'Hợi'};
+    
+    const yCanStr = CAN_MAP[lunarObj.getYearGan()] || '';
+    const yChiStr = CHI_MAP[lunarObj.getYearZhi()] || '';
+    if(yCanStr && yChiStr) {
+       fullNguHanhYear = FULL_NAYIN[`${yCanStr} ${yChiStr}`] || "Đang cập nhật...";
+    }
+    
+    const idx = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(lunarObj.getMonthZhiExact());
+    if (idx !== -1) monthChiIdx = idx;
+  } catch(e){}
+
+  // Tính Kiểu Ngày Hoàng Đạo (Thập Nhị Thần)
+  const thanhLongMap: Record<number, number> = { 2: 0, 8: 0, 3: 2, 9: 2, 4: 4, 10: 4, 5: 6, 11: 6, 6: 8, 0: 8, 7: 10, 1: 10 };
+  const thanhLongStart = thanhLongMap[monthChiIdx] !== undefined ? thanhLongMap[monthChiIdx] : 0;
+  const THAP_NHI_THAN = ['Thanh Long', 'Minh Đường', 'Thiên Hình', 'Chu Tước', 'Kim Quỹ', 'Thiên Đức', 'Bạch Hổ', 'Ngọc Đường', 'Thiên Lao', 'Nguyên Vũ', 'Tư Mệnh', 'Câu Trận'];
+  const hoangDaoType = THAP_NHI_THAN[(dayInfo.chiIdx - thanhLongStart + 12) % 12];
+  
+  // Tuổi xung tháng (Lục Xung của Chi)
+  const tuoiXungThang = `${CHI_CHU[(monthChiIdx + 6) % 12]}`;
+
   return {
     truc: evalData.trucName,
     sao: saoName,
     saoDesc: SAO_LUCK[saoName] === 'Cát' ? `Ngày có sao ${saoName} chiếu mệnh, là sao Cát, làm việc gì cũng hanh thông, thuận lợi.` : `Ngày có sao ${saoName} chiếu mệnh, là sao Hung, vạn sự cần cẩn trọng.`,
-    nguHanh: NA_YIN_MAP[sumNguHanh] || "Không xác định",
+    nguHanh: fullNguHanhDay,
+    nguHanhNienMenh: fullNguHanhYear,
+    hoangDaoType: hoangDaoType,
+    tuoiXungThang: tuoiXungThang,
     tietKhi,
     hyThan,
     taiThan,
@@ -1332,11 +1369,12 @@ export default function Calendar() {
                      <span className="text-white font-bold">[{dayEval.score}]</span>
                      {renderStars(dayEval.score)}
                   </div>
-                  <p className="mt-2 font-sans">Kiểu ngày: <span className={`font-bold ${dayEval.isHoangDao ? 'text-emerald-400' : 'text-rose-400'}`}>{dayEval.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span></p>
+                  <p className="mt-2 font-sans">Kiểu ngày: <span className={`font-bold ${dayEval.isHoangDao ? 'text-emerald-400' : 'text-rose-400'}`}>{dayDet.hoangDaoType} {dayEval.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span></p>
                   <p className="font-sans">Trực: <span className="text-amber-400 font-bold">{dayDet.truc}</span></p>
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngũ hành & Tiết khí</h5>
-                  <p className="font-sans">Nạp âm: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
+                  <p className="font-sans">Nạp âm ngày: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
+                  <p className="font-sans">Ngũ hành niên mệnh: <span className="text-sky-400 font-bold">{dayDet.nguHanhNienMenh}</span></p>
                   <p className="font-sans">Tiết khí: <span className="text-emerald-400 font-bold">{dayDet.tietKhi}</span></p>
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Hướng xuất hành</h5>
@@ -1364,17 +1402,9 @@ export default function Calendar() {
                   <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
                 </div>
 
-                {/* 3. GIỜ HOÀNG ĐẠO VÀ XUNG KHẮC */}
+                {/* 3. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Giờ Hoàng đạo & Xung khắc</h4>
-                  <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}.</p>
-                  <p className="text-white font-bold mt-3 font-sans">Tuổi xung khắc với ngày:</p>
-                  <p className="font-sans">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span>, bị xung với ngày này, làm việc gì cũng cần tránh khởi sự vào giờ chính xung.</p>
-                </div>
-
-                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (theo Ngọc hạp thông thư)</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Các sao tốt xấu (Ngọc Hạp Thông Thư)</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
                       dayDet.catTinh.map((s: string, sIdx: number) => (
                         <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.catTinh.length - 1 ? ', ' : ''}</span>
@@ -1385,6 +1415,22 @@ export default function Calendar() {
                         <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.hungTinh.length - 1 ? ', ' : ''}</span>
                       ))
                     ) : 'Không có'}</p>
+                </div>
+
+                {/* 4. GIỜ HOÀNG ĐẠO */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Giờ Hoàng đạo</h4>
+                  <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}.</p>
+                </div>
+
+                {/* 5. XUNG KHẮC */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc</h4>
+                  <p className="text-white font-bold mt-1 font-sans">- Tuổi xung khắc với ngày:</p>
+                  <p className="font-sans pl-4">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> bị xung với ngày, cần tránh khởi sự vào giờ chính xung.</p>
+                  
+                  <p className="text-white font-bold mt-2 font-sans">- Tuổi xung khắc với tháng:</p>
+                  <p className="font-sans pl-4">Tháng này xung khắc với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.</p>
                 </div>
 
               </div>
