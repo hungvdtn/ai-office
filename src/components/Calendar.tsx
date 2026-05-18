@@ -311,11 +311,73 @@ const getDayEvaluation = (date: Date) => {
   const lunar = getLunarDate(date);
   let monthChiIdx = date.getMonth();
   
+  // --- THUẬT TOÁN AN SAO THEO NGỌC HẠP THÔNG THƯ (VIỆT NAM) ---
   try {
-    const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    const idx = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(solar.getLunar().getMonthZhiExact()); 
-    if(idx !== -1) monthChiIdx = idx;
-  } catch (e) {}
+    const m = lunar.monthNum; // Tháng âm lịch thực tế
+    const chiDay = CHI_CHU[dayInfo.chiIdx]; // Chi của ngày (Tý, Sửu, Dần...)
+    const canDay = CAN_CHU[dayInfo.canIdx]; // Can của ngày (Giáp, Ất, Bính...)
+
+    let ngocHapCat: string[] = [];
+    let ngocHapHung: string[] = [];
+
+    // 1. Thuật toán tra cứu Cát Tinh (Sao tốt)
+    // An sao Thiên Đức & Nguyệt Đức
+    const thienDucMap: Record<number, string> = { 1: 'Đinh', 2: 'Thân', 3: 'Nhâm', 4: 'Tân', 5: 'Hợi', 6: 'Giáp', 7: 'Quý', 8: 'Dần', 9: 'Bính', 10: 'Ất', 11: 'Tỵ', 12: 'Canh' };
+    if (canDay === thienDucMap[m] || chiDay === thienDucMap[m]) ngocHapCat.push('Thiên đức');
+
+    if ([1, 5, 9].includes(m) && canDay === 'Bính') ngocHapCat.push('Nguyệt đức');
+    else if ([2, 6, 10].includes(m) && canDay === 'Giáp') ngocHapCat.push('Nguyệt đức');
+    else if ([3, 7, 11].includes(m) && canDay === 'Nhâm') ngocHapCat.push('Nguyệt đức');
+    else if ([4, 8, 12].includes(m) && canDay === 'Canh') ngocHapCat.push('Nguyệt đức');
+
+    // An sao Thiên Hỷ (Niềm vui lớn)
+    const thienHyMap: Record<number, string> = { 1: 'Tuất', 2: 'Hợi', 3: 'Tý', 4: 'Sửu', 5: 'Dần', 6: 'Mão', 7: 'Thìn', 8: 'Tỵ', 9: 'Ngọ', 10: 'Mùi', 11: 'Thân', 12: 'Dậu' };
+    if (chiDay === thienHyMap[m]) ngocHapCat.push('Thiên hỷ');
+
+    // An sao Sinh Khí (Tốt cho khởi công, động thổ)
+    const sinhKhiMap: Record<number, string> = { 1: 'Tý', 2: 'Sửu', 3: 'Dần', 4: 'Mão', 5: 'Thìn', 6: 'Tỵ', 7: 'Ngọ', 8: 'Mùi', 9: 'Thân', 10: 'Dậu', 11: 'Tuất', 12: 'Hợi' };
+    if (chiDay === sinhKhiMap[m]) ngocHapCat.push('Sinh khí');
+
+    // An sao Giải Thần (Giải trừ tai ách, hung tinh)
+    if ([1, 2].includes(m) && chiDay === 'Thân') ngocHapCat.push('Giải thần');
+    else if ([3, 4].includes(m) && chiDay === 'Tuất') ngocHapCat.push('Giải thần');
+    else if ([5, 6].includes(m) && chiDay === 'Tý') ngocHapCat.push('Giải thần');
+    else if ([7, 8].includes(m) && chiDay === 'Dần') ngocHapCat.push('Giải thần');
+    else if ([9, 10].includes(m) && chiDay === 'Thìn') ngocHapCat.push('Giải thần');
+    else if ([11, 12].includes(m) && chiDay === 'Ngọ') ngocHapCat.push('Giải thần');
+
+    // An sao Dịch Mã (Tốt cho xuất hành)
+    const dichMaMap: Record<number, string> = { 1: 'Thân', 5: 'Thân', 9: 'Thân', 2: 'Tỵ', 6: 'Tỵ', 10: 'Tỵ', 3: 'Dần', 7: 'Dần', 11: 'Dần', 4: 'Hợi', 8: 'Hợi', 12: 'Hợi' };
+    if (chiDay === dichMaMap[m]) ngocHapCat.push('Dịch mã');
+
+
+    // 2. Thuật toán tra cứu Hung Tinh (Sao xấu đại kỵ)
+    // An sao Sát Chủ (Đại kỵ khởi sự)
+    const satChuMap: Record<number, string> = { 1: 'Tỵ', 2: 'Tý', 3: 'Mùi', 4: 'Mão', 5: 'Thân', 6: 'Tuất', 7: 'Hợi', 8: 'Sửu', 9: 'Ngọ', 10: 'Dậu', 11: 'Dần', 12: 'Thìn' };
+    if (chiDay === satChuMap[m]) ngocHapHung.push('Sát chủ');
+
+    // An sao Thọ Tử / Thụ Tử (Tuyệt đối kỵ mọi việc)
+    const thoTuMap: Record<number, string> = { 1: 'Tuất', 2: 'Thìn', 3: 'Hợi', 4: 'Tỵ', 5: 'Tý', 6: 'Ngọ', 7: 'Sửu', 8: 'Mùi', 9: 'Dần', 10: 'Thân', 11: 'Mão', 12: 'Dậu' };
+    if (chiDay === thoTuMap[m]) ngocHapHung.push('Thọ tử');
+
+    // An sao Nguyệt Phá (Xung đột với tháng)
+    const nguyetPhaMap: Record<number, string> = { 1: 'Thân', 2: 'Dậu', 3: 'Tuất', 4: 'Hợi', 5: 'Tý', 6: 'Sửu', 7: 'Dần', 8: 'Mão', 9: 'Thìn', 10: 'Tỵ', 11: 'Ngọ', 12: 'Mùi' };
+    if (chiDay === nguyetPhaMap[m]) ngocHapHung.push('Nguyệt phá');
+
+    // An sao Đại Hao / Tiểu Hao
+    const daiHaoMap: Record<number, string> = { 1: 'Thân', 2: 'Tuất', 3: 'Tý', 4: 'Dần', 5: 'Thìn', 6: 'Ngọ', 7: 'Tuất', 8: 'Tý', 9: 'Dần', 10: 'Thìn', 11: 'Ngọ', 12: 'Thân' };
+    if (chiDay === daiHaoMap[m]) ngocHapHung.push('Đại hao');
+
+    // An sao Kiếp Sát
+    const kiepSatMap: Record<number, string> = { 1: 'Hợi', 5: 'Hợi', 9: 'Hợi', 2: 'Dần', 6: 'Dần', 10: 'Dần', 3: 'Tỵ', 7: 'Tỵ', 11: 'Tỵ', 4: 'Thân', 8: 'Thân', 12: 'Thân' };
+    if (chiDay === kiepSatMap[m]) ngocHapHung.push('Kiếp sát');
+
+    // Tích hợp đồng bộ vào hệ thống đánh giá dữ liệu của App
+    allCat = [...allCat, ...ngocHapCat];
+    allHung = [...allHung, ...ngocHapHung];
+  } catch (e) {
+    console.error("Lỗi thuật toán Ngọc Hạp Thông Thư:", e);
+  }
 
   const hoangDaoMap: Record<number, number[]> = {
     2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10],
@@ -348,7 +410,7 @@ const getDayEvaluation = (date: Date) => {
 
   const DAI_CAT = ['Thiên đức', 'Nguyệt đức', 'Thiên ân', 'Thiên hỷ', 'Thiên xá', 'Giải thần', 'Sinh khí', 'Thiên y', 'Tam hợp', 'Nhân chuyên', 'Sát cống'];
   const CUU_GIAI = ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần'];
-  const FATAL = ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử', 'Nguyệt phá', 'Đại hao']; 
+  const FATAL = ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Nguyệt phá', 'Đại hao', 'Kiếp sát']; 
 
   let score = isHoangDao ? 4.0 : 2.5; 
   const hasFatal = allHung.some(s => FATAL.includes(s));
@@ -1312,7 +1374,7 @@ export default function Calendar() {
 
                 {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (theo Ngọc hạp thông thư)</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
                       dayDet.catTinh.map((s: string, sIdx: number) => (
                         <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.catTinh.length - 1 ? ', ' : ''}</span>
