@@ -310,10 +310,15 @@ const getDayEvaluation = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   const lunar = getLunarDate(date);
   
-  // SỬA LỖI 1: Lấy chuẩn Tháng Âm Lịch làm gốc khởi vòng (Không dùng Tiết khí để tránh xô lệch)
-  const monthChiIdx = (lunar.monthNum + 1) % 12;
+  // 1. CHUẨN HÓA TIẾT KHÍ (Lấy mốc 12h00 trưa để an Trực và Hoàng Đạo chính xác 100%)
+  let monthChiIdx = date.getMonth(); 
+  try {
+    const solarH = Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12, 0, 0);
+    const idx = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(solarH.getLunar().getMonthZhiExact()); 
+    if(idx !== -1) monthChiIdx = idx;
+  } catch (e) {}
 
-  // Khởi vòng Hoàng Đạo chuẩn Ngọc Hạp Thông Thư
+  // 2. KHỞI VÒNG HOÀNG ĐẠO (Theo chuẩn Tiết khí)
   const hoangDaoMap: Record<number, number[]> = {
     2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10], // Dần, Thân
     3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],   // Mão, Dậu
@@ -326,7 +331,7 @@ const getDayEvaluation = (date: Date) => {
 
   const folkTaboos = getFolkTaboos(lunar.monthNum, lunar.day, CHI_CHU[dayInfo.chiIdx]);
   
-  // Tính Trực chuẩn theo Tháng Âm lịch (Khắc phục lỗi ngày 6/5)
+  // 3. TÍNH TRỰC CHUẨN XÁC THEO TIẾT KHÍ (Sửa lỗi xô lệch ngày 4-6/4/2026)
   const trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
   const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
   const trucName = TRUC_12_LOCAL[trucIdx];
@@ -335,6 +340,7 @@ const getDayEvaluation = (date: Date) => {
   let allCat = [...manualStars.cat];
   let allHung = [...manualStars.hung];
 
+  // 4. AN SAO CHỈ SỬ DỤNG SÁCH NGỌC HẠP THÔNG THƯ (LOẠI BỎ THƯ VIỆN NGOÀI)
   try {
     const m = lunar.monthNum; 
     const chiDay = CHI_CHU[dayInfo.chiIdx]; 
@@ -385,40 +391,43 @@ const getDayEvaluation = (date: Date) => {
     allCat = [...allCat, ...ngocHapCat];
     allHung = [...allHung, ...ngocHapHung];
 
-    const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    allCat = [...allCat, ...translateArray(solar.getLunar().getDayJiShen(), SHEN_SHA_MAP)];
-    allHung = [...allHung, ...translateArray(solar.getLunar().getDayXiongShen(), SHEN_SHA_MAP)];
+    // Xóa chặn API của lunar-javascript tại đây để triệt tiêu các sao từ Hiệp Kỷ Biện Phương Thư
   } catch (e) {}
 
   allCat = Array.from(new Set(allCat));
   
-  // SỬA LỖI 4: Tuyệt đối không đưa Ngày kỵ dân gian vào mảng Sao Xấu
-  allHung = Array.from(new Set(allHung)).filter(s => !['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong'].includes(s));
+  // Tách biệt Ngày kỵ dân gian khỏi danh sách Sao Xấu
+  allHung = Array.from(new Set(allHung)).filter(s => !['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong', 'Sát chủ'].includes(s));
 
-  // SỬA LỖI 2: KHẮC PHỤC THUẬT TOÁN ĐÁNH GIÁ CHẤM ĐIỂM LOGIC 
+  // 5. CƠ CHẾ ĐÁNH GIÁ ĐIỂM (DYNAMIC SCORING) VỚI QUY TẮC "TỬ HÌNH" & "GIẢI CỨU"
   const DAI_CAT = ['Thiên đức', 'Nguyệt đức', 'Thiên ân', 'Thiên hỷ', 'Thiên xá', 'Giải thần', 'Sinh khí', 'Thiên y', 'Tam hợp', 'Nhân chuyên', 'Sát cống'];
   const CUU_GIAI = ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần', 'Thiên đức', 'Nguyệt đức'];
-  const FATAL = ['Sát chủ', 'Thọ tử', 'Nguyệt phá', 'Tứ phế', 'Đại sát', 'Tuyệt âm']; 
+  
+  // PHÂN LOẠI 1: KHÔNG THỂ CỨU GIẢI (Án Tử)
+  const UNRESCUABLE = ['Sát chủ', 'Thọ tử', 'Thụ tử', 'Vãng vong'];
+  
+  // PHÂN LOẠI 2: CÓ THỂ CỨU GIẢI (Phạt hành chính)
+  const RESCUABLE = ['Tam nương sát', 'Nguyệt kỵ', 'Nguyệt phá', 'Tứ phế', 'Đại sát', 'Tuyệt âm', 'Đại hao', 'Kiếp sát']; 
 
   let score = isHoangDao ? 3.5 : 2.5; 
   
-  const hasFatal = allHung.some(s => FATAL.includes(s));
-  const hasFolkTaboo = folkTaboos.length > 0;
+  const allBadThings = [...allHung, ...folkTaboos];
+  const hasUnrescuable = allBadThings.some(s => UNRESCUABLE.includes(s));
+  const hasRescuable = allBadThings.some(s => RESCUABLE.includes(s));
   const hasCuuGiai = allCat.some(s => CUU_GIAI.includes(s));
 
-  // Bước Khóa điểm (Cap Score) để sửa triệt để lỗi đánh giá cao ảo:
-  if (hasFatal) {
-     score = hasCuuGiai ? 2.0 : 1.0; 
-  } else if (hasFolkTaboo) {
+  if (hasUnrescuable) {
+     score = 1.0; // Phạt chết cứng ở mức 1.0, sao tốt không có tác dụng
+  } else if (hasRescuable) {
      if (hasCuuGiai) {
         score = isHoangDao ? 3.0 : 2.5; 
-        score += (allCat.filter(s => DAI_CAT.includes(s)).length * 0.2); // Cộng điểm dè dặt
-        score = Math.min(3.5, score); // Khóa tuyệt đối không cho vượt quá 3.5 (Trung bình/Tốt nhẹ)
+        score += (allCat.filter(s => DAI_CAT.includes(s)).length * 0.2); 
+        score = Math.min(3.5, score); // Khóa trần điểm cứu giải
      } else {
-        score = 1.5; // Không có cứu giải thì vĩnh viễn là 1.5
+        score = 1.5; // Không có cứu giải
      }
   } else {
-     // Ngày bình thường không kỵ, thoải mái cộng điểm sao tốt
+     // Ngày an toàn, cộng điểm bình thường
      score += (allCat.filter(s => DAI_CAT.includes(s)).length * 0.3);
   }
 
@@ -428,12 +437,12 @@ const getDayEvaluation = (date: Date) => {
 
   let generalDesc = "";
   if (score >= 4.5) generalDesc = "Vạn sự hanh thông, đại cát đại lợi.";
-  else if (hasFatal && !hasCuuGiai) generalDesc = `Ngày Đại Kỵ (${allHung.filter(s => FATAL.includes(s)).join(', ')}), tuyệt đối tránh khởi sự.`;
-  else if (hasFatal && hasCuuGiai) generalDesc = `Phạm Đại kỵ (${allHung.filter(s => FATAL.includes(s)).join(', ')}) nhưng may mắn có sao Cứu giải, chỉ nên làm việc nhỏ.`;
-  else if (hasFolkTaboo) generalDesc = hasCuuGiai ? `Phạm kỵ (${folkTaboos.join(', ')}) nhưng có sao Cứu giải, có thể tiến hành công việc.` : `Phạm kỵ (${folkTaboos.join(', ')}), tránh làm việc lớn.`;
+  else if (hasUnrescuable) generalDesc = `Ngày Đại Kỵ (${allBadThings.filter(s => UNRESCUABLE.includes(s)).join(', ')}). Tuyệt đối tránh khởi sự, sao tốt không thể hóa giải.`;
+  else if (hasRescuable && !hasCuuGiai) generalDesc = `Phạm Đại kỵ (${allBadThings.filter(s => RESCUABLE.includes(s)).join(', ')}), tránh làm việc lớn.`;
+  else if (hasRescuable && hasCuuGiai) generalDesc = `Phạm kỵ (${allBadThings.filter(s => RESCUABLE.includes(s)).join(', ')}) nhưng may mắn có sao Cứu giải, có thể tiến hành công việc nhỏ.`;
   else generalDesc = isHoangDao ? "Ngày tốt, có nhiều cát tinh phù trợ." : "Thích hợp làm các công việc nhỏ, sinh hoạt hàng ngày.";
 
-  return { score: score.toFixed(1), text, isHoangDao, folkTaboos, generalDesc, catTinh: allCat, hungTinh: allHung, hasFatal: (hasFatal && !hasCuuGiai), trucName };
+  return { score: score.toFixed(1), text, isHoangDao, folkTaboos, generalDesc, catTinh: allCat, hungTinh: allHung, hasFatal: hasUnrescuable || (hasRescuable && !hasCuuGiai), trucName };
 };
 
 const getDayDetails = (date: Date) => {
@@ -593,13 +602,17 @@ const getDayDetails = (date: Date) => {
     if (idx !== -1) monthChiIdx = idx;
   } catch(e){}
 
-  // Tính Kiểu Ngày Hoàng Đạo (Thập Nhị Thần) Đồng bộ tuyệt đối theo Tháng Âm Lịch
-  const currentLunarDate = getLunarDate(date); // [ĐÃ SỬA LỖI]: Bổ sung dòng khai báo lấy dữ liệu tháng Âm lịch
-  const monthChiIdxForThapNhi = (currentLunarDate.monthNum + 1) % 12;
+  // Tính Kiểu Ngày Hoàng Đạo (Thập Nhị Thần) Đồng bộ tuyệt đối theo Tiết Khí 12h
+  let monthChiIdxForThapNhi = date.getMonth();
+  try {
+     const solarH = Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12, 0, 0);
+     const idxH = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(solarH.getLunar().getMonthZhiExact());
+     if (idxH !== -1) monthChiIdxForThapNhi = idxH;
+  } catch(e){}
+
   const thanhLongMap: Record<number, number> = { 2: 0, 8: 0, 3: 2, 9: 2, 4: 4, 10: 4, 5: 6, 11: 6, 0: 8, 6: 8, 1: 10, 7: 10 };
   const thanhLongStart = thanhLongMap[monthChiIdxForThapNhi] !== undefined ? thanhLongMap[monthChiIdxForThapNhi] : 0;
   
-  // Đổi tên Thiên Đức thành Bảo Quang theo chuẩn Lịch Việt Nam
   const THAP_NHI_THAN = ['Thanh Long', 'Minh Đường', 'Thiên Hình', 'Chu Tước', 'Kim Quỹ', 'Bảo Quang', 'Bạch Hổ', 'Ngọc Đường', 'Thiên Lao', 'Nguyên Vũ', 'Tư Mệnh', 'Câu Trận'];
   const hoangDaoType = THAP_NHI_THAN[(dayInfo.chiIdx - thanhLongStart + 12) % 12];
   
