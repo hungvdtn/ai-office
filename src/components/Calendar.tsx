@@ -426,14 +426,60 @@ const getDayDetails = (date: Date) => {
   if (sumNguHanh > 5) sumNguHanh -= 5;
   const NA_YIN_MAP: any = { 1: 'Mộc', 2: 'Kim', 3: 'Thủy', 4: 'Hỏa', 5: 'Thổ' };
 
-  let hopList = [...manualYiJi.hop.replace(/\.$/, '').split(', ')];
-  if (lunarYi.length > 0) hopList = [...hopList, ...lunarYi];
-  const finalHopList = Array.from(new Set(hopList)).filter(item => item && item.trim() !== '');
-  const hopText = finalHopList.length > 0 ? finalHopList.join(', ') + '.' : 'Bình thường.';
+  // --- THUẬT TOÁN LOẠI TRỪ LỖI LOGIC NÊN LÀM / KIÊNG KỴ ---
+  const capitalizeFirst = (s: string) => {
+      if (!s) return '';
+      return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  };
+  
+  let rawHop = [...manualYiJi.hop.replace(/\.$/, '').split(', '), ...lunarYi].map(s => capitalizeFirst(s.trim())).filter(s => s !== '');
+  let rawKy = [...manualYiJi.ky.replace(/\.$/, '').split(', '), ...lunarJi].map(s => capitalizeFirst(s.trim())).filter(s => s !== '');
 
-  let kyList = [...manualYiJi.ky.replace(/\.$/, '').split(', ')];
-  if (lunarJi.length > 0) kyList = [...kyList, ...lunarJi];
-  const finalKyList = Array.from(new Set(kyList)).filter(item => item && item.trim() !== '');
+  // 1. Xử lý các từ khóa đặc biệt bị xếp nhầm từ API
+  if (rawHop.includes('Mọi việc đều kỵ') || rawHop.includes('Các việc khác không nên làm')) {
+      rawHop = rawHop.filter(s => s !== 'Mọi việc đều kỵ' && s !== 'Các việc khác không nên làm');
+      rawKy.push('Mọi việc đều kỵ');
+  }
+
+  // 2. Xử lý logic Đại Kỵ / Ngày xấu
+  const majorEvents = ['Cưới hỏi', 'Kết hôn', 'Giá thú', 'Khai trương', 'Mở cửa hàng', 'Động thổ', 'Phá thổ', 'Khởi công', 'Nhập trạch', 'Ký hợp đồng', 'Giao dịch', 'An táng', 'Mai táng', 'Xuất hành', 'Đính hôn', 'Nhậm chức'];
+  
+  if (evalData.hasFatal || (evalData.folkTaboos.length > 0 && parseFloat(evalData.score) < 3.0)) {
+      // Ngày Đại Kỵ hoặc Xấu: Xóa mọi việc lớn khỏi danh mục Nên làm
+      rawHop = rawHop.filter(job => !majorEvents.some(major => job.toLowerCase().includes(major.toLowerCase())));
+  }
+
+  // 3. Xử lý gom nhóm từ đồng nghĩa (Ví dụ: Khai trương = Mở cửa hàng)
+  const isSameMeaning = (a: string, b: string) => {
+      const aLow = a.toLowerCase(); const bLow = b.toLowerCase();
+      if (aLow === bLow) return true;
+      if (aLow.length > 4 && bLow.length > 4 && (aLow.includes(bLow) || bLow.includes(aLow))) return true;
+      
+      const checkGroup = (group: string[]) => group.some(w => aLow.includes(w)) && group.some(w => bLow.includes(w));
+      if (checkGroup(['khai trương', 'mở cửa hàng', 'mở hàng'])) return true;
+      if (checkGroup(['cưới hỏi', 'kết hôn', 'giá thú', 'đính hôn'])) return true;
+      if (checkGroup(['động thổ', 'khởi công', 'phá thổ'])) return true;
+      if (checkGroup(['an táng', 'mai táng', 'nhập liệm', 'khởi cữu'])) return true;
+      if (checkGroup(['nhập trạch', 'dời nhà', 'di dời'])) return true;
+      
+      return false;
+  };
+
+  // 4. Lọc trùng lặp nội bộ trong danh sách
+  let uniqueKy: string[] = [];
+  rawKy.forEach(item => { if (!uniqueKy.some(u => isSameMeaning(u, item))) uniqueKy.push(item); });
+  
+  let uniqueHop: string[] = [];
+  rawHop.forEach(item => { if (!uniqueHop.some(u => isSameMeaning(u, item))) uniqueHop.push(item); });
+
+  // 5. Thuật toán loại trừ mâu thuẫn: LỆNH CẤM ƯU TIÊN CAO HƠN LỆNH KHUYÊN
+  let finalKyList = [...uniqueKy];
+  let finalHopList = uniqueHop.filter(hopItem => {
+      // Nếu việc Nên Làm đã nằm trong danh sách Kiêng Kỵ hoặc ngày cấm kỵ mọi việc -> Loại bỏ khỏi Nên làm
+      return !finalKyList.some(kyItem => isSameMeaning(kyItem, hopItem) || kyItem === 'Mọi việc đều kỵ');
+  });
+
+  const hopText = finalHopList.length > 0 ? finalHopList.join(', ') + '.' : 'Chỉ nên làm các công việc nhỏ, sinh hoạt hàng ngày.';
   let baseKyText = finalKyList.length > 0 ? finalKyList.join(', ') + '.' : 'Không có kiêng kỵ lớn.';
 
   let kyText = baseKyText;
@@ -441,6 +487,7 @@ const getDayDetails = (date: Date) => {
       const kyCauses = evalData.folkTaboos.length > 0 ? evalData.folkTaboos : evalData.hungTinh.filter(s => ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử'].includes(s));
       kyText = `Kiêng kỵ việc trọng đại vì phạm (${kyCauses.join(', ')}). ` + kyText;
   }
+  // --- KẾT THÚC THUẬT TOÁN ---
 
   const GIO_HOANG_DAO = {
     'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
