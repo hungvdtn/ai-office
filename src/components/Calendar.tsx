@@ -440,7 +440,7 @@ const getDayEvaluation = (date: Date) => {
      }
 
      // Khóa mức điểm trần (Max 5.0) và sàn (Min 1.5 - vì không bị Hard Kill)
-     score = Math.max(1.5, Math.min(5.0, score));
+     score = Math.max(2.0, Math.min(5.0, score));
   }
 
   // 6. XẾP LOẠI KẾT QUẢ ĐẦU RA
@@ -641,6 +641,35 @@ const getDayDetails = (date: Date) => {
   
   const tuoiXungThang = `${CHI_CHU[(monthChiIdxForThapNhi + 6) % 12]}`;
 
+  // --- BỔ SUNG: 1. TÍNH CHẤT CAN CHI (Bảo nhật, Nghĩa nhật...) ---
+  const getNguHanhCanChi = (canI: number, chiI: number) => {
+      const canNH = [1, 1, 4, 4, 5, 5, 2, 2, 3, 3]; // 1:Mộc, 2:Kim, 3:Thủy, 4:Hỏa, 5:Thổ
+      const chiNH = [3, 5, 1, 1, 5, 4, 4, 5, 2, 2, 5, 3];
+      const c = canNH[canI]; const z = chiNH[chiI];
+      if (c === z) return "Chuyên tuế (Ngày bình hòa)";
+      if ((c===1&&z===4)||(c===4&&z===5)||(c===5&&z===2)||(c===2&&z===3)||(c===3&&z===1)) return "Bảo nhật (Can sinh Chi - Đại cát)";
+      if ((z===1&&c===4)||(z===4&&c===5)||(z===5&&c===2)||(z===2&&c===3)||(z===3&&c===1)) return "Nghĩa nhật (Chi sinh Can - Thứ cát)";
+      if ((c===1&&z===5)||(c===5&&z===3)||(c===3&&z===4)||(c===4&&z===2)||(c===2&&z===1)) return "Chế nhật (Can khắc Chi - Bình thường)";
+      return "Phạt nhật (Chi khắc Can - Đại hung)";
+  }
+  const canChiRelation = getNguHanhCanChi(dayInfo.canIdx, dayInfo.chiIdx);
+
+  // --- BỔ SUNG: 2. HẠN TAM SÁT ---
+  const getTamSat = (chiI: number) => {
+      if ([8, 0, 4].includes(chiI)) return "Tỵ, Ngọ, Mùi"; // Thân, Tý, Thìn
+      if ([11, 3, 7].includes(chiI)) return "Thân, Dậu, Tuất"; // Hợi, Mão, Mùi
+      if ([2, 6, 10].includes(chiI)) return "Hợi, Tý, Sửu"; // Dần, Ngọ, Tuất
+      if ([5, 9, 1].includes(chiI)) return "Dần, Mão, Thìn"; // Tỵ, Dậu, Sửu
+      return "";
+  }
+  const tamSat = getTamSat(dayInfo.chiIdx);
+
+  // --- BỔ SUNG: 3. ĐÍCH DANH TUỔI THIÊN KHẮC ĐỊA XUNG ---
+  const canKhac1 = (dayInfo.canIdx + 6) % 10; // Can khắc lại ngày
+  const canKhac2 = (dayInfo.canIdx + 4) % 10; // Ngày khắc lại can
+  const chiXung = (dayInfo.chiIdx + 6) % 12; // Địa chi xung
+  const tuoiXungChinhXac = `${CAN_CHU[canKhac1]} ${CHI_CHU[chiXung].toLowerCase()}, ${CAN_CHU[canKhac2]} ${CHI_CHU[chiXung].toLowerCase()}`;
+
   return {
     truc: evalData.trucName,
     sao: saoName,
@@ -657,8 +686,9 @@ const getDayDetails = (date: Date) => {
     hop: hopText,
     ky: kyText,
     gioHoangDao: gioLanh,
-    // Sửa bổ sung: Thiên can xung khắc (Chuyên gia 4)
-    tuoiXung: `${CAN_CHU[(dayInfo.canIdx + 6)%10]} ${CHI_CHU[(dayInfo.chiIdx + 6)%12].toLowerCase()} (Thiên can xung: ${CAN_CHU[(dayInfo.canIdx + 4)%10]} ${CHI_CHU[dayInfo.chiIdx]})`,
+    tuoiXung: tuoiXungChinhXac, // Đã cập nhật
+    canChiRelation: canChiRelation, // Thêm mới
+    tamSat: tamSat, // Thêm mới
     generalDesc: evalData.generalDesc,
     folkTaboos: evalData.folkTaboos
   };
@@ -1416,6 +1446,7 @@ export default function Calendar() {
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngũ hành & Tiết khí</h5>
                   <p className="font-sans">Nạp âm ngày: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
+                  <p className="font-sans">Đánh giá Can Chi: <span className="text-emerald-400 font-bold">{dayDet.canChiRelation}</span></p>
                   <p className="font-sans">Ngũ hành niên mệnh: <span className="text-sky-400 font-bold">{dayDet.nguHanhNienMenh}</span></p>
                   <p className="font-sans">Tiết khí: <span className="text-emerald-400 font-bold">{dayDet.tietKhi}</span></p>
                   
@@ -1440,20 +1471,20 @@ export default function Calendar() {
                   </p>
                 </div>
 
-                {/* 2. GIỜ HOÀNG ĐẠO (Được đưa lên từ mục 4) */}
+                {/* 2. GIỜ HOÀNG ĐẠO */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Giờ Hoàng đạo</h4>
                   <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}</p>
                 </div>
 
-                {/* 3. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC (Đổi từ mục 2 thành mục 3) */}
+                {/* 3. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Việc nên làm và không nên làm</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
                   <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
                 </div>
 
-                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ (Đổi từ mục 3 thành mục 4) */}
+                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (Ngọc Hạp Thông Thư)</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
@@ -1468,14 +1499,17 @@ export default function Calendar() {
                     ) : 'Không có'}</p>
                 </div>
 
-                {/* 5. XUNG KHẮC (Gom nội dung lên cùng một hàng) */}
+                {/* 5. XUNG KHẮC & TAM SÁT */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc & Sát khí</h4>
                   <p className="font-sans mt-1">
-                    <span className="text-white font-bold">- Tuổi xung khắc với ngày:</span> Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> bị xung với ngày, cần tránh khởi sự vào giờ chính xung.
+                    <span className="text-white font-bold">- Tuổi xung khắc ngày:</span> Xung mạnh nhất với các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> (Thiên khắc Địa xung).
                   </p>
                   <p className="font-sans mt-2">
-                    <span className="text-white font-bold">- Tuổi xung khắc với tháng:</span> Tháng này xung khắc với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.
+                    <span className="text-white font-bold">- Tuổi xung khắc tháng:</span> Tháng này kỵ với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.
+                  </p>
+                  <p className="font-sans mt-2">
+                    <span className="text-white font-bold">- Tam Sát (Kỵ động thổ, an táng):</span> Ngày hôm nay sát khí tọa tại các hướng và tuổi <span className="text-rose-400 font-bold">{dayDet.tamSat}</span>.
                   </p>
                 </div>
 
