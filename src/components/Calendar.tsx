@@ -310,7 +310,7 @@ const getDayEvaluation = (date: Date) => {
   const dayInfo = getCanChiDay(date);
   const lunar = getLunarDate(date);
   
-  // Lấy chuẩn Tháng Tiết Khí (Nguyệt Lệnh) làm gốc khởi vòng và an sao Ngọc Hạp Thông Thư
+  // 1. CHUẨN HÓA TIẾT KHÍ (Lấy mốc 12h00 trưa để an Trực và Hoàng Đạo chính xác 100%)
   let monthChiIdx = date.getMonth(); 
   try {
     const solarH = Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12, 0, 0);
@@ -318,11 +318,7 @@ const getDayEvaluation = (date: Date) => {
     if(idx !== -1) monthChiIdx = idx;
   } catch (e) {}
 
-  // Quy đổi số tháng âm lịch tương ứng với Tiết Khí (Dùng để khớp ma trận Ngọc Hạp chuẩn xác)
-  // Tháng Tý = 11, Sửu = 12, Dần = 1, Mão = 2, Thìn = 3, Tỵ = 4, Ngọ = 5, Mùi = 6, Thân = 7, Dậu = 8, Tuất = 9, Hợi = 10
-  const m = ((monthChiIdx - 2 + 12) % 12) + 1;
-
-  // Khởi vòng Hoàng Đạo chuẩn theo Nguyệt Lệnh Tiết Khí
+  // 2. KHỞI VÒNG HOÀNG ĐẠO (Theo chuẩn Tiết khí)
   const hoangDaoMap: Record<number, number[]> = {
     2: [0, 1, 4, 5, 7, 10], 8: [0, 1, 4, 5, 7, 10], // Dần, Thân
     3: [2, 3, 6, 7, 9, 0],  9: [2, 3, 6, 7, 9, 0],   // Mão, Dậu
@@ -335,7 +331,7 @@ const getDayEvaluation = (date: Date) => {
 
   const folkTaboos = getFolkTaboos(lunar.monthNum, lunar.day, CHI_CHU[dayInfo.chiIdx]);
   
-  // Tính Trực chuẩn theo Nguyệt lệnh Tiết khí
+  // 3. TÍNH TRỰC CHUẨN XÁC THEO TIẾT KHÍ (Sửa lỗi xô lệch ngày 4-6/4/2026)
   const trucIdx = (dayInfo.chiIdx - monthChiIdx + 12) % 12;
   const TRUC_12_LOCAL = ['Kiến', 'Trừ', 'Mãn', 'Bình', 'Định', 'Chấp', 'Phá', 'Nguy', 'Thành', 'Thâu', 'Khai', 'Bế'];
   const trucName = TRUC_12_LOCAL[trucIdx];
@@ -344,8 +340,9 @@ const getDayEvaluation = (date: Date) => {
   let allCat = [...manualStars.cat];
   let allHung = [...manualStars.hung];
 
-  // AN SAO CHUẨN NGỌC HẠP THÔNG THƯ THEO NGUYỆT LỆNH TIẾT KHÍ
+  // 4. AN SAO CHỈ SỬ DỤNG SÁCH NGỌC HẠP THÔNG THƯ (LOẠI BỎ THƯ VIỆN NGOÀI)
   try {
+    const m = lunar.monthNum; 
     const chiDay = CHI_CHU[dayInfo.chiIdx]; 
     const canDay = CAN_CHU[dayInfo.canIdx]; 
 
@@ -376,10 +373,6 @@ const getDayEvaluation = (date: Date) => {
     const dichMaMap: Record<number, string> = { 1: 'Thân', 5: 'Thân', 9: 'Thân', 2: 'Tỵ', 6: 'Tỵ', 10: 'Tỵ', 3: 'Dần', 7: 'Dần', 11: 'Dần', 4: 'Hợi', 8: 'Hợi', 12: 'Hợi' };
     if (chiDay === dichMaMap[m]) ngocHapCat.push('Dịch mã');
 
-    // Bổ sung sao Thiên Mã chuẩn học thuật (CG 2 góp ý)
-    const thienMaMap: Record<number, string> = { 1: 'Ngọ', 2: 'Thân', 3: 'Tuất', 4: 'Tý', 5: 'Dần', 6: 'Thìn', 7: 'Ngọ', 8: 'Thân', 9: 'Tuất', 10: 'Tý', 11: 'Dần', 12: 'Thìn' };
-    if (chiDay === thienMaMap[m]) ngocHapCat.push('Thiên mã');
-
     const satChuMap: Record<number, string> = { 1: 'Tỵ', 2: 'Tý', 3: 'Mùi', 4: 'Mão', 5: 'Thân', 6: 'Tuất', 7: 'Hợi', 8: 'Sửu', 9: 'Ngọ', 10: 'Dậu', 11: 'Dần', 12: 'Thìn' };
     if (chiDay === satChuMap[m]) ngocHapHung.push('Sát chủ');
 
@@ -397,19 +390,23 @@ const getDayEvaluation = (date: Date) => {
 
     allCat = [...allCat, ...ngocHapCat];
     allHung = [...allHung, ...ngocHapHung];
+
+    // Xóa chặn API của lunar-javascript tại đây để triệt tiêu các sao từ Hiệp Kỷ Biện Phương Thư
   } catch (e) {}
 
   allCat = Array.from(new Set(allCat));
   
-  // Chặn lọc tuyệt đối: Không đưa Ngày kỵ dân gian vào danh sách Sao Xấu
-  allHung = Array.from(new Set(allHung)).filter(s => !['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong'].includes(s));
+  // Tách biệt Ngày kỵ dân gian khỏi danh sách Sao Xấu
+  allHung = Array.from(new Set(allHung)).filter(s => !['Tam nương sát', 'Nguyệt kỵ', 'Vãng vong', 'Sát chủ'].includes(s));
 
-  // THUẬT TOÁN ĐÁNH GIÁ CHẤM ĐIỂM LOGIC 4 BƯỚC
+  // 5. CƠ CHẾ ĐÁNH GIÁ ĐIỂM (DYNAMIC SCORING) VỚI QUY TẮC "TỬ HÌNH" & "GIẢI CỨU"
   const DAI_CAT = ['Thiên đức', 'Nguyệt đức', 'Thiên ân', 'Thiên hỷ', 'Thiên xá', 'Giải thần', 'Sinh khí', 'Thiên y', 'Tam hợp', 'Nhân chuyên', 'Sát cống'];
   const CUU_GIAI = ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần', 'Thiên đức', 'Nguyệt đức'];
   
-  // Vãng vong, Sát chủ, Thọ tử là Án tử - KHÔNG THỂ CỨU GIẢI (Tiếp thu CG 1, 3, 4)
+  // PHÂN LOẠI 1: KHÔNG THỂ CỨU GIẢI (Án Tử)
   const UNRESCUABLE = ['Sát chủ', 'Thọ tử', 'Thụ tử', 'Vãng vong'];
+  
+  // PHÂN LOẠI 2: CÓ THỂ CỨU GIẢI (Phạt hành chính)
   const RESCUABLE = ['Tam nương sát', 'Nguyệt kỵ', 'Nguyệt phá', 'Tứ phế', 'Đại sát', 'Tuyệt âm', 'Đại hao', 'Kiếp sát']; 
 
   let score = isHoangDao ? 3.5 : 2.5; 
@@ -420,16 +417,17 @@ const getDayEvaluation = (date: Date) => {
   const hasCuuGiai = allCat.some(s => CUU_GIAI.includes(s));
 
   if (hasUnrescuable) {
-     score = 1.0; // Khóa cứng điểm liệt thấp nhất
+     score = 1.0; // Phạt chết cứng ở mức 1.0, sao tốt không có tác dụng
   } else if (hasRescuable) {
      if (hasCuuGiai) {
         score = isHoangDao ? 3.0 : 2.5; 
         score += (allCat.filter(s => DAI_CAT.includes(s)).length * 0.2); 
         score = Math.min(3.5, score); // Khóa trần điểm cứu giải
      } else {
-        score = 1.5; 
+        score = 1.5; // Không có cứu giải
      }
   } else {
+     // Ngày an toàn, cộng điểm bình thường
      score += (allCat.filter(s => DAI_CAT.includes(s)).length * 0.3);
   }
 
@@ -510,58 +508,47 @@ const getDayDetails = (date: Date) => {
   let rawHop = [...manualYiJi.hop.replace(/\.$/, '').split(', '), ...lunarYi].map(s => capitalizeFirst(s.trim())).filter(s => s !== '');
   let rawKy = [...manualYiJi.ky.replace(/\.$/, '').split(', '), ...lunarJi].map(s => capitalizeFirst(s.trim())).filter(s => s !== '');
 
+  // 1. Xử lý các từ khóa đặc biệt bị xếp nhầm từ API
   if (rawHop.includes('Mọi việc đều kỵ') || rawHop.includes('Các việc khác không nên làm')) {
       rawHop = rawHop.filter(s => s !== 'Mọi việc đều kỵ' && s !== 'Các việc khác không nên làm');
       rawKy.push('Mọi việc đều kỵ');
   }
 
-  // --- THUẬT TOÁN CATEGORY MAPPING: LỌC CÔNG VIỆC CHUYÊN BIỆT THEO TÍNH CHẤT SAO (Tiếp thu CG 3) ---
-  const allStarsAndTaboos = [...evalData.catTinh, ...evalData.hungTinh, ...evalData.folkTaboos];
-  
-  // Nhóm Hôn nhân: Gặp Cô thần, Quả tú, Không phòng, Tam nương, Thọ tử, Sát chủ -> CẤM CƯỚI HỎI
-  const kỵCuoiHoi = ['Cô thần', 'Quả tú', 'Không phòng', 'Tam nương sát', 'Thọ tử', 'Sát chủ', 'Vãng vong', 'Nguyệt phá'];
-  if (allStarsAndTaboos.some(s => kỵCuoiHoi.includes(s))) {
-      rawHop = rawHop.filter(job => !['Cưới hỏi', 'Kết hôn', 'Giá thú', 'Đính hôn'].some(keyword => job.includes(keyword)));
-  }
-  
-  // Nhóm Xây dựng: Gặp Thổ phủ, Địa tặc, Kiếp sát, Trực Phá, Thọ tử, Sát chủ -> CẤM ĐỘNG THỔ/LÀM NHÀ
-  const kỵXayDung = ['Thổ phủ', 'Địa tặc', 'Kiếp sát', 'Phá', 'Thọ tử', 'Sát chủ', 'Vãng vong'];
-  if (allStarsAndTaboos.some(s => kỵXayDung.includes(s)) || evalData.trucName === 'Phá') {
-      rawHop = rawHop.filter(job => !['Động thổ', 'Khởi công', 'Phá thổ', 'Xây nhà', 'Sửa nhà', 'Làm nhà'].some(keyword => job.includes(keyword)));
-  }
-
-  // Nhóm Tài chính: Gặp Đại hao, Tiểu hao, Nguyệt phá -> CẤM KHAI TRƯƠNG/GIAO DỊCH
-  const kỵTaiChinh = ['Đại hao', 'Tiểu hao', 'Nguyệt phá', 'Thọ tử', 'Sát chủ'];
-  if (allStarsAndTaboos.some(s => kỵTaiChinh.includes(s))) {
-      rawHop = rawHop.filter(job => !['Khai trương', 'Mở cửa hàng', 'Ký hợp đồng', 'Giao dịch', 'Thu tiền'].some(keyword => job.includes(keyword)));
-  }
-
+  // 2. Xử lý logic Đại Kỵ / Ngày xấu
   const majorEvents = ['Cưới hỏi', 'Kết hôn', 'Giá thú', 'Khai trương', 'Mở cửa hàng', 'Động thổ', 'Phá thổ', 'Khởi công', 'Nhập trạch', 'Ký hợp đồng', 'Giao dịch', 'An táng', 'Mai táng', 'Xuất hành', 'Đính hôn', 'Nhậm chức'];
-  if (evalData.hasFatal) {
+  
+  if (evalData.hasFatal || (evalData.folkTaboos.length > 0 && parseFloat(evalData.score) < 3.0)) {
+      // Ngày Đại Kỵ hoặc Xấu: Xóa mọi việc lớn khỏi danh mục Nên làm
       rawHop = rawHop.filter(job => !majorEvents.some(major => job.toLowerCase().includes(major.toLowerCase())));
   }
 
+  // 3. Xử lý gom nhóm từ đồng nghĩa (Ví dụ: Khai trương = Mở cửa hàng)
   const isSameMeaning = (a: string, b: string) => {
       const aLow = a.toLowerCase(); const bLow = b.toLowerCase();
       if (aLow === bLow) return true;
       if (aLow.length > 4 && bLow.length > 4 && (aLow.includes(bLow) || bLow.includes(aLow))) return true;
+      
       const checkGroup = (group: string[]) => group.some(w => aLow.includes(w)) && group.some(w => bLow.includes(w));
       if (checkGroup(['khai trương', 'mở cửa hàng', 'mở hàng'])) return true;
       if (checkGroup(['cưới hỏi', 'kết hôn', 'giá thú', 'đính hôn'])) return true;
       if (checkGroup(['động thổ', 'khởi công', 'phá thổ'])) return true;
       if (checkGroup(['an táng', 'mai táng', 'nhập liệm', 'khởi cữu'])) return true;
       if (checkGroup(['nhập trạch', 'dời nhà', 'di dời'])) return true;
+      
       return false;
   };
 
+  // 4. Lọc trùng lặp nội bộ trong danh sách
   let uniqueKy: string[] = [];
   rawKy.forEach(item => { if (!uniqueKy.some(u => isSameMeaning(u, item))) uniqueKy.push(item); });
   
   let uniqueHop: string[] = [];
   rawHop.forEach(item => { if (!uniqueHop.some(u => isSameMeaning(u, item))) uniqueHop.push(item); });
 
+  // 5. Thuật toán loại trừ mâu thuẫn: LỆNH CẤM ƯU TIÊN CAO HƠN LỆNH KHUYÊN
   let finalKyList = [...uniqueKy];
   let finalHopList = uniqueHop.filter(hopItem => {
+      // Nếu việc Nên Làm đã nằm trong danh sách Kiêng Kỵ hoặc ngày cấm kỵ mọi việc -> Loại bỏ khỏi Nên làm
       return !finalKyList.some(kyItem => isSameMeaning(kyItem, hopItem) || kyItem === 'Mọi việc đều kỵ');
   });
 
@@ -569,11 +556,11 @@ const getDayDetails = (date: Date) => {
   let baseKyText = finalKyList.length > 0 ? finalKyList.join(', ') + '.' : 'Không có kiêng kỵ lớn.';
 
   let kyText = baseKyText;
-  const UNRESCUABLE = ['Sát chủ', 'Thọ tử', 'Thụ tử', 'Vãng vong'];
-  if (evalData.folkTaboos.length > 0 || evalData.hungTinh.some(s => UNRESCUABLE.includes(s))) {
-      const kyCauses = evalData.folkTaboos.length > 0 ? evalData.folkTaboos : evalData.hungTinh.filter(s => UNRESCUABLE.includes(s));
+  if (evalData.hasFatal || evalData.folkTaboos.length > 0) {
+      const kyCauses = evalData.folkTaboos.length > 0 ? evalData.folkTaboos : evalData.hungTinh.filter(s => ['Sát chủ', 'Thiên cương', 'Thọ tử', 'Thụ tử'].includes(s));
       kyText = `Kiêng kỵ việc trọng đại vì phạm (${kyCauses.join(', ')}). ` + kyText;
   }
+  // --- KẾT THÚC THUẬT TOÁN ---
 
   const GIO_HOANG_DAO = {
     'Dần': 'Tý (23-1), Sửu (1-3), Thìn (7-9), Tỵ (9-11), Mùi (13-15), Tuất (19-21)',
@@ -590,6 +577,7 @@ const getDayDetails = (date: Date) => {
     'Mùi': 'Dần (3-5), Mão (5-7), Tỵ (9-11), Thân (15-17), Tuất (19-21), Hợi (21-23)'
   };
 
+ // --- BỔ SUNG THÔNG TIN NẠP ÂM, KIỂU NGÀY, TUỔI XUNG THÁNG ---
   const FULL_NAYIN: Record<string, string> = {
     'Giáp Tý': 'Hải Trung Kim', 'Ất Sửu': 'Hải Trung Kim', 'Bính Dần': 'Lư Trung Hỏa', 'Đinh Mão': 'Lư Trung Hỏa', 'Mậu Thìn': 'Đại Lâm Mộc', 'Kỷ Tỵ': 'Đại Lâm Mộc', 'Canh Ngọ': 'Lộ Bàng Thổ', 'Tân Mùi': 'Lộ Bàng Thổ', 'Nhâm Thân': 'Kiếm Phong Kim', 'Quý Dậu': 'Kiếm Phong Kim', 'Giáp Tuất': 'Sơn Đầu Hỏa', 'Ất Hợi': 'Sơn Đầu Hỏa', 'Bính Tý': 'Giản Hạ Thủy', 'Đinh Sửu': 'Giản Hạ Thủy', 'Mậu Dần': 'Thành Đầu Thổ', 'Kỷ Mão': 'Thành Đầu Thổ', 'Canh Thìn': 'Bạch Lạp Kim', 'Tân Tỵ': 'Bạch Lạp Kim', 'Nhâm Ngọ': 'Dương Liễu Mộc', 'Quý Mùi': 'Dương Liễu Mộc', 'Giáp Thân': 'Tuyền Trung Thủy', 'Ất Dậu': 'Tuyền Trung Thủy', 'Bính Tuất': 'Ốc Thượng Thổ', 'Đinh Hợi': 'Ốc Thượng Thổ', 'Mậu Tý': 'Thích Lịch Hỏa', 'Kỷ Sửu': 'Thích Lịch Hỏa', 'Canh Dần': 'Tùng Bách Mộc', 'Tân Mão': 'Tùng Bách Mộc', 'Nhâm Thìn': 'Trường Lưu Thủy', 'Quý Tỵ': 'Trường Lưu Thủy', 'Giáp Ngọ': 'Sa Trung Kim', 'Ất Mùi': 'Sa Trung Kim', 'Bính Thân': 'Sơn Hạ Hỏa', 'Đinh Dậu': 'Sơn Hạ Hỏa', 'Mậu Tuất': 'Bình Địa Mộc', 'Kỷ Hợi': 'Bình Địa Mộc', 'Canh Tý': 'Bích Thượng Thổ', 'Tân Sửu': 'Bích Thượng Thổ', 'Nhâm Dần': 'Kim Bạch Kim', 'Quý Mão': 'Kim Bạch Kim', 'Giáp Thìn': 'Phú Đăng Hỏa', 'Ất Tỵ': 'Phú Đăng Hỏa', 'Bính Ngọ': 'Thiên Hà Thủy', 'Đinh Mùi': 'Thiên Hà Thủy', 'Mậu Thân': 'Đại Trạch Thổ', 'Kỷ Dậu': 'Đại Trạch Thổ', 'Canh Tuất': 'Thoa Xuyến Kim', 'Tân Hợi': 'Thoa Xuyến Kim', 'Nhâm Tý': 'Tang Đố Mộc', 'Quý Sửu': 'Tang Đố Mộc', 'Giáp Dần': 'Đại Khê Thủy', 'Ất Mão': 'Đại Khê Thủy', 'Bính Thìn': 'Sa Trung Thổ', 'Đinh Tỵ': 'Sa Trung Thổ', 'Mậu Ngọ': 'Thiên Thượng Hỏa', 'Kỷ Mùi': 'Thiên Thượng Hỏa', 'Canh Thân': 'Thạch Lựu Mộc', 'Tân Dậu': 'Thạch Lựu Mộc', 'Nhâm Tuất': 'Đại Hải Thủy', 'Quý Hợi': 'Đại Hải Thủy'
   };
@@ -598,32 +586,37 @@ const getDayDetails = (date: Date) => {
   const fullNguHanhDay = `${NA_YIN_MAP[sumNguHanh]} (${FULL_NAYIN[canChiDayStr] || ''})`;
 
   let fullNguHanhYear = "Đang cập nhật...";
+  let monthChiIdx = date.getMonth();
   try {
-    const lunarObj = Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12, 0, 0).getLunar();
+    const lunarObj = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate()).getLunar();
     const CAN_MAP: any = {'甲':'Giáp', '乙':'Ất', '丙':'Bính', '丁':'Đinh', '戊':'Mậu', '己':'Kỷ', '庚':'Canh', '辛':'Tân', '壬':'Nhâm', '癸':'Quý'};
     const CHI_MAP: any = {'子':'Tý', '丑':'Sửu', '寅':'Dần', '卯':'Mão', '辰':'Thìn', '巳':'Tỵ', '午':'Ngọ', '未':'Mùi', '申':'Thân', '酉':'Dậu', '戌':'Tuất', '亥':'Hợi'};
+    
     const yCanStr = CAN_MAP[lunarObj.getYearGan()] || '';
     const yChiStr = CHI_MAP[lunarObj.getYearZhi()] || '';
-    if(yCanStr && yChiStr) fullNguHanhYear = FULL_NAYIN[`${yCanStr} ${yChiStr}`] || "Đang cập nhật...";
+    if(yCanStr && yChiStr) {
+       fullNguHanhYear = FULL_NAYIN[`${yCanStr} ${yChiStr}`] || "Đang cập nhật...";
+    }
+    
+    const idx = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(lunarObj.getMonthZhiExact());
+    if (idx !== -1) monthChiIdx = idx;
   } catch(e){}
 
-  // --- THUẬT TOÁN ĐỐI CHIẾU THIÊN CAN XUNG KHẮC VÀ ĐỊA CHI XUNG (Tiếp thu CG 4) ---
-  const canXungMap: Record<string, string> = { 'Giáp': 'Mậu', 'Ất': 'Kỷ', 'Bính': 'Canh', 'Đinh': 'Tân', 'Mậu': 'Nhâm', 'Kỷ': 'Quý', 'Canh': 'Giáp', 'Tân': 'Ất', 'Nhâm': 'Bính', 'Quý': 'Đinh' };
-  const currentCanDay = CAN_CHU[dayInfo.canIdx];
-  const currentChiDay = CHI_CHU[dayInfo.chiIdx];
-  
-  // Tìm ra các Can và Chi bị xung khắc trực tiếp hình thành tuổi đại xung
-  const chiXungStr = CHI_CHU[(dayInfo.chiIdx + 6) % 12];
-  const canXungNangNhat = Object.keys(canXungMap).find(key => canXungMap[key] === currentCanDay) || CAN_CHU[(dayInfo.canIdx + 4) % 10];
-  const canXungVừa = canXungMap[currentCanDay] || CAN_CHU[(dayInfo.canIdx + 6) % 10];
-  
-  const tuoiDaiXungNgay = `${canXungNangNhat} ${chiXungStr}, ${canXungVừa} ${chiXungStr}`;
+  // Tính Kiểu Ngày Hoàng Đạo (Thập Nhị Thần) Đồng bộ tuyệt đối theo Tiết Khí 12h
+  let monthChiIdxForThapNhi = date.getMonth();
+  try {
+     const solarH = Solar.fromYmdHms(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12, 0, 0);
+     const idxH = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(solarH.getLunar().getMonthZhiExact());
+     if (idxH !== -1) monthChiIdxForThapNhi = idxH;
+  } catch(e){}
 
-  const monthChiIdxForThapNhi = (lunar.monthNum + 1) % 12;
   const thanhLongMap: Record<number, number> = { 2: 0, 8: 0, 3: 2, 9: 2, 4: 4, 10: 4, 5: 6, 11: 6, 0: 8, 6: 8, 1: 10, 7: 10 };
   const thanhLongStart = thanhLongMap[monthChiIdxForThapNhi] !== undefined ? thanhLongMap[monthChiIdxForThapNhi] : 0;
+  
   const THAP_NHI_THAN = ['Thanh Long', 'Minh Đường', 'Thiên Hình', 'Chu Tước', 'Kim Quỹ', 'Bảo Quang', 'Bạch Hổ', 'Ngọc Đường', 'Thiên Lao', 'Nguyên Vũ', 'Tư Mệnh', 'Câu Trận'];
   const hoangDaoType = THAP_NHI_THAN[(dayInfo.chiIdx - thanhLongStart + 12) % 12];
+  
+  // Tuổi xung tháng (Lục Xung của Chi)
   const tuoiXungThang = `${CHI_CHU[(monthChiIdxForThapNhi + 6) % 12]}`;
 
   return {
@@ -1408,29 +1401,24 @@ export default function Calendar() {
                   <p className="font-sans">Tài thần - TỐT: <span className="text-emerald-400 font-bold">{dayDet.taiThan}</span></p>
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Nhị thập bát tú</h5>
-                  <p className="font-sans">
-                    Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span> 
-                    {(() => {
-                      const SAO_DETAILS: Record<string, string> = {
-                        'Giác': '(Thuộc hành: Mộc, Con vật: Giao Long)', 'Cang': '(Thuộc hành: Kim, Con vật: Long)', 'Đê': '(Thuộc hành: Thổ, Con vật: Lạc)', 'Phòng': 'Thuộc hành: Thái Dương, Con vật: Thố)', 'Tâm': '(Thuộc hành: Thái Âm, Con vật: Hồ)', 'Vĩ': '(Thuộc hành: Hỏa, Con vật: Hổ)', 'Cơ': '(Thuộc hành: Thủy, Con vật: Báo)', 'Đẩu': '(Thuộc hành: Mộc, Con vật: Giải)', 'Ngưu': '(Thuộc hành: Kim, Con vật: Ngưu)', 'Nữ': '(Thuộc hành: Thổ, Con vật: Sưu)', 'Hư': '(Thuộc hành: Thái Dương, Con vật: Thử)', 'Nguy': '(Thuộc hành: Thái Âm, Con vật: Én)', 'Thất': '(Thuộc hành: Hỏa, Con vật: Trư)', 'Bích': '(Thuộc hành: Thủy, Con vật: Du)', 'Khuê': '(Thuộc hành: Mộc, Con vật: Lang)', 'Lâu': '(Thuộc hành: Kim, Con vật: Cẩu)', 'Vị': '(Thuộc hành: Thổ, Con vật: Trĩ)', 'Mão': '(Thuộc hành: Thái Dương, Con vật: Kê)', 'Tất': '(Thuộc hành: Thái Âm, Con vật: Ô)', 'Chủy': '(Thuộc hành: Hỏa, Con vật: Hầu)', 'Sâm': '(Thuộc hành: Thủy, Con vật: Viên)', 'Tỉnh': '(Thuộc hành: Mộc, Con vật: Hãn)', 'Quỷ': '(Thuộc hành: Kim, Con vật: Dương)', 'Liễu': '(Thuộc hành: Thổ, Con vật: Chương)', 'Tinh': '(Thuộc hành: Thái Dương, Con vật: Mã)', 'Trương': '(Thuộc hành: Thái Âm, Con vật: Lộc)', 'Dực': '(Thuộc hành: Hỏa, Con vật: Xà)', 'Chẩn': '(Thuộc hành: Thủy, Con vật: Chẩn)'
-                      };
-                      return <span className="text-slate-400 ml-1.5 text-xs">{SAO_DETAILS[dayDet.sao] || ''}</span>;
-                    })()}
-                  </p>
+                  <p className="font-sans">Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span></p>
+                  <p className="italic font-sans">"{dayDet.saoDesc}"</p>
 
-                  {dayDet.folkTaboos.length > 0 && (
-                    <>
-                      <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngày đại kỵ</h5>
-                      <p className="font-sans"><span className="text-rose-400 font-bold">{dayDet.folkTaboos.join(', ')}</span></p>
-                    </>
-                  )}
+                  <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngày đại kỵ</h5>
+                  <p className="font-sans">
+                    {dayDet.folkTaboos.length > 0 ? (
+                      <span className="text-rose-400 font-bold">{dayDet.folkTaboos.join(', ')}</span>
+                    ) : (
+                      <span className="text-emerald-400 font-bold">Không</span>
+                    )}
+                  </p>
                 </div>
 
                 {/* 2. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Việc nên làm và không nên làm</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
-                  <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span>{dayDet.ky}</span></p>
+                  <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
                 </div>
 
                 {/* 3. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
@@ -1457,11 +1445,11 @@ export default function Calendar() {
                 {/* 5. XUNG KHẮC */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc</h4>
-                  <p className="text-white font-bold mt-1 font-sans">- Tuổi xung khắc nặng nhất với ngày (Thiên can & Địa chi xung):</p>
-                  <p className="font-sans pl-4">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiDaiXungNgay}</span> bị đại xung với ngày này, tuyệt đối thận trọng khởi sự.</p>
+                  <p className="text-white font-bold mt-1 font-sans">- Tuổi xung khắc với ngày:</p>
+                  <p className="font-sans pl-4">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> bị xung với ngày, cần tránh khởi sự vào giờ chính xung.</p>
                   
                   <p className="text-white font-bold mt-2 font-sans">- Tuổi xung khắc với tháng:</p>
-                  <p className="font-sans pl-4">Tháng này xung khắc với những người có địa chi tuổi là <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.</p>
+                  <p className="font-sans pl-4">Tháng này xung khắc với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.</p>
                 </div>
 
               </div>
