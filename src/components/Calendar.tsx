@@ -10,6 +10,7 @@ import { collection, query, where, getDocs, setDoc, doc, deleteDoc } from 'fireb
 
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
 const CHI_CHU = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+const UNRESCUABLE = ['Sát chủ', 'Thọ tử', 'Thụ tử', 'Vãng vong'];
 
 const getCanChiYear = (year: number) => {
   const can = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'][year % 10];
@@ -409,7 +410,6 @@ const getDayEvaluation = (date: Date) => {
   const CUU_GIAI = ['Thiên xá', 'Nhân chuyên', 'Sát cống', 'Giải thần', 'Thiên đức', 'Nguyệt đức'];
   
   // Vãng vong, Sát chủ, Thọ tử là Án tử - KHÔNG THỂ CỨU GIẢI (Tiếp thu CG 1, 3, 4)
-  const UNRESCUABLE = ['Sát chủ', 'Thọ tử', 'Thụ tử', 'Vãng vong'];
   const RESCUABLE = ['Tam nương sát', 'Nguyệt kỵ', 'Nguyệt phá', 'Tứ phế', 'Đại sát', 'Tuyệt âm', 'Đại hao', 'Kiếp sát']; 
 
   let score = isHoangDao ? 3.5 : 2.5; 
