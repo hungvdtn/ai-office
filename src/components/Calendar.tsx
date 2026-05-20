@@ -444,7 +444,7 @@ const getDayEvaluation = (date: Date) => {
   }
 
   // 6. XẾP LOẠI KẾT QUẢ ĐẦU RA
-  let text = score >= 4.0 ? "Ngày tốt" : (score >= 3.0 ? "Ngày khá" : (score >= 2.0 ? "Ngày trung bình yếu" : "Ngày rất xấu (Đại kỵ)"));
+  let text = score >= 4.0 ? "Ngày tốt" : (score >= 3.0 ? "Ngày khá" : (score >= 2.0 ? "Ngày trung bình xấu" : "Ngày rất xấu (Đại kỵ)"));
   if (score >= 4.5) text = "Ngày rất tốt";
 
   let generalDesc = "";
@@ -1440,16 +1440,22 @@ export default function Calendar() {
                   </p>
                 </div>
 
-                {/* 2. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
+                {/* 2. GIỜ HOÀNG ĐẠO (Được đưa lên từ mục 4) */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Việc nên làm và không nên làm</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Giờ Hoàng đạo</h4>
+                  <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}</p>
+                </div>
+
+                {/* 3. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC (Đổi từ mục 2 thành mục 3) */}
+                <div>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Việc nên làm và không nên làm</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
                   <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
                 </div>
 
-                {/* 3. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
+                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ (Đổi từ mục 3 thành mục 4) */}
                 <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Các sao tốt xấu (Ngọc Hạp Thông Thư)</h4>
+                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (Ngọc Hạp Thông Thư)</h4>
                   <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
                       dayDet.catTinh.map((s: string, sIdx: number) => (
                         <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.catTinh.length - 1 ? ', ' : ''}</span>
@@ -1462,20 +1468,15 @@ export default function Calendar() {
                     ) : 'Không có'}</p>
                 </div>
 
-                {/* 4. GIỜ HOÀNG ĐẠO */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Giờ Hoàng đạo</h4>
-                  <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}.</p>
-                </div>
-
-                {/* 5. XUNG KHẮC */}
+                {/* 5. XUNG KHẮC (Gom nội dung lên cùng một hàng) */}
                 <div>
                   <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc</h4>
-                  <p className="text-white font-bold mt-1 font-sans">- Tuổi xung khắc với ngày:</p>
-                  <p className="font-sans pl-4">Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> bị xung với ngày, cần tránh khởi sự vào giờ chính xung.</p>
-                  
-                  <p className="text-white font-bold mt-2 font-sans">- Tuổi xung khắc với tháng:</p>
-                  <p className="font-sans pl-4">Tháng này xung khắc với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.</p>
+                  <p className="font-sans mt-1">
+                    <span className="text-white font-bold">- Tuổi xung khắc với ngày:</span> Các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> bị xung với ngày, cần tránh khởi sự vào giờ chính xung.
+                  </p>
+                  <p className="font-sans mt-2">
+                    <span className="text-white font-bold">- Tuổi xung khắc với tháng:</span> Tháng này xung khắc với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.
+                  </p>
                 </div>
 
               </div>
