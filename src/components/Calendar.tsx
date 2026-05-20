@@ -569,6 +569,7 @@ const getDayDetails = (date: Date) => {
   let baseKyText = finalKyList.length > 0 ? finalKyList.join(', ') + '.' : 'Không có kiêng kỵ lớn.';
 
   let kyText = baseKyText;
+  const UNRESCUABLE = ['Sát chủ', 'Thọ tử', 'Thụ tử', 'Vãng vong'];
   if (evalData.folkTaboos.length > 0 || evalData.hungTinh.some(s => UNRESCUABLE.includes(s))) {
       const kyCauses = evalData.folkTaboos.length > 0 ? evalData.folkTaboos : evalData.hungTinh.filter(s => UNRESCUABLE.includes(s));
       kyText = `Kiêng kỵ việc trọng đại vì phạm (${kyCauses.join(', ')}). ` + kyText;
