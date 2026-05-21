@@ -780,7 +780,7 @@ const LUNAR_HOLIDAYS: Record<string, HolidayInfo> = {
 interface UserEvent { id: string; dateStr: string; title: string; time: string; location?: string; reminderAdvance: number; userId?: string; email?: string; }
 
 export default function Calendar() {
-  const [activeTab, setActiveTab] = useState<'calendar' | 'converter' | 'find-good-days'>('calendar');
+  const [activeTab, setActiveTab] = useState<'calendar' | 'converter' | 'find-good-days' | 'quick-lunar'>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<UserEvent[]>([]);
@@ -925,6 +925,7 @@ export default function Calendar() {
         if (found) {
             setSelectedDate(found);
             setCurrentDate(found);
+            setActiveTab('calendar');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             alert("Không tìm thấy ngày Âm lịch này!");
@@ -1093,6 +1094,7 @@ export default function Calendar() {
          <button onClick={() => setActiveTab('calendar')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><CalendarIcon size={16}/> Lịch Vạn Niên</button>
          <button onClick={() => setActiveTab('find-good-days')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'find-good-days' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><Search size={16}/> Tìm ngày tốt</button>
          <button onClick={() => setActiveTab('converter')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'converter' ? 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><ArrowRightLeft size={16}/> Đổi ngày Âm - Dương</button>
+         <button onClick={() => setActiveTab('quick-lunar')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'quick-lunar' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><Search size={16}/> Tìm nhanh Âm lịch</button>
       </div>
 
       {activeTab === 'calendar' && (
@@ -1234,17 +1236,7 @@ export default function Calendar() {
               </div>
             </div>
           </div>
-
-          {/* TÌM NHANH NGÀY ÂM LỊCH */}
-          <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-4 sm:p-6 shadow-xl mt-6 flex flex-col sm:flex-row items-center gap-4 font-sans">
-             <span className="text-emerald-400 font-bold uppercase tracking-widest text-sm whitespace-nowrap flex items-center gap-2"><Search size={18}/> Tìm nhanh Âm lịch</span>
-             <div className="flex gap-2 w-full sm:w-auto flex-1">
-                <input type="number" placeholder="Ngày" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-2.5 text-center text-slate-200 focus:border-emerald-500 focus:outline-none font-sans text-sm" />
-                <input type="number" placeholder="Tháng" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-2.5 text-center text-slate-200 focus:border-emerald-500 focus:outline-none font-sans text-sm" />
-                <input type="number" placeholder="Năm" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-2.5 text-center text-slate-200 focus:border-emerald-500 focus:outline-none font-sans text-sm" />
-             </div>
-             <button onClick={handleQuickLunarSearch} className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-[0_0_15px_rgba(5,150,105,0.4)] whitespace-nowrap font-sans text-sm">ĐI TỚI NGÀY</button>
-          </div>
+          
         </>
       )}
 
@@ -1281,6 +1273,26 @@ export default function Calendar() {
         </div>
       )}
 
+      {/* TAB MỚI: TÌM NHANH ÂM LỊCH */}
+      {activeTab === 'quick-lunar' && (
+        <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl font-sans">
+           <h3 className="text-xl font-bold text-purple-500 flex items-center gap-2 mb-6 uppercase tracking-widest font-sans"><Search size={24} /> Tìm Nhanh Ngày Âm Lịch</h3>
+           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-9 flex gap-2">
+                 <input type="number" placeholder="Ngày âm lịch" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-purple-500 font-sans" />
+                 <input type="number" placeholder="Tháng âm lịch" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-purple-500 font-sans" />
+                 <input type="number" placeholder="Năm âm lịch" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-purple-500 font-sans" />
+              </div>
+              <div className="md:col-span-3">
+                 <button onClick={handleQuickLunarSearch} className="w-full h-full bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 transition shadow-[0_0_15px_rgba(147,51,234,0.4)] py-3 font-sans">ĐI TỚI NGÀY</button>
+              </div>
+           </div>
+           <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 text-sm italic font-medium flex items-center gap-2 font-sans">
+              <Info size={16}/> Hệ thống sẽ tự động chuyển sang trang Lịch Vạn Niên và mở đúng ngày Dương lịch tương ứng với ngày Âm lịch bạn vừa tìm.
+           </div>
+        </div>
+      )}
+
       {/* TAB 3: TÌM NGÀY TỐT TRONG THÁNG */}
       {activeTab === 'find-good-days' && (
         <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl font-sans">
@@ -1290,7 +1302,7 @@ export default function Calendar() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                    <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Ngày sinh (Dương lịch)</label>
-                   <input type="date" value={fgdDob} onChange={e => setFgdDob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans" />
+                   <input type="date" value={fgdDob} onChange={e => setFgdDob(e.target.value)} className="w-full bg-[#0f172a] border border-[#1e293b] rounded-lg p-3 text-slate-200 focus:border-emerald-500 focus:outline-none font-sans [color-scheme:dark]" />
                 </div>
                 <div>
                    <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Tìm trong Tháng (DL)</label>
@@ -1390,21 +1402,23 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* HIỂN THỊ LƯU Ý TRẠCH CÁT (ÁP DỤNG CHUNG) */}
-      <div className="mt-8 p-6 lg:p-8 bg-[#0f172a] border border-[#1e293b] rounded-2xl shadow-xl font-sans">
-        <h3 className="text-lg font-bold text-brand uppercase tracking-widest mb-4 border-b border-[#1e293b] pb-3 font-sans">Lưu ý xem ngày tốt</h3>
-        <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <p>Ứng dụng Lịch Vạn niên AI với công nghệ lõi là sử dụng thư viện thiên văn học mã nguồn mở Lunar-javascript, tài liệu tích hợp các lý luận cổ đại Trung Hoa làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu nghiêm ngặt theo "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy trạch cát truyền thống. Theo đó, cách tính ngày tốt xấu của Lịch Vạn niên AI như sau:</p>
-          <ol className="list-decimal pl-5 space-y-3">
-            <li>Xác định tính chất Hoàng đạo (tốt) hoặc Hắc đạo (xấu) của ngày để thiết lập mức điểm xuất phát.</li>
-            <li>Xác định các hung tinh mang sát khí cực mạnh. Nếu hệ thống phát hiện ngày đó phạm các đại kỵ như Sát Chủ, Thọ Tử, Thiên Cương, điểm số sẽ lập tức bị kéo về mức thấp nhất và bị loại bỏ hoàn toàn khỏi danh sách ngày tốt, bất chấp trong ngày có bao nhiêu sao tốt đi kèm.</li>
-            <li>Đối với các ngày phạm kỵ dân gian ở mức độ nhẹ hơn (như Tam Nương, Nguyệt Kỵ, Vãng Vong), hệ thống cũng sẽ hạ điểm nhưng nếu phát hiện có các Đại Cát tinh có năng lực "Cứu giải" vạn vật (như Thiên Xá, Nhân Chuyên, Sát Cống, Giải Thần), hệ thống sẽ kích hoạt cơ chế bù trừ, nâng điểm số lên mức an toàn để có thể thực hiện một số công việc nhất định.</li>
-            <li>Cuối cùng, thuật toán đối chiếu trực tiếp Can Chi của ngày với tuổi (năm sinh âm lịch) của người sử dụng. Dù một ngày có điểm số cao tuyệt đối (Đại Cát với đại đa số), nhưng nếu phạm Lục xung với bản mệnh người xem, ngày đó cũng sẽ bị hệ thống tự động loại bỏ.</li>
-          </ol>
-          <p>Thực chất, việc đánh giá ngày tốt xấu là một quá trình phân tích tổng hợp, đa tầng và lồng ghép nhiều hệ thống lý luận khác nhau. Một ngày được ứng dụng đề xuất là "Ngày Tốt" khi thỏa mãn đồng thời hai điều kiện: (1) Đạt điểm số từ 3.0 trở lên (đã qua bù trừ, chế hóa) và (2) Tuyệt đối không xung khắc với tuổi của người sử dụng.</p>
-          <p className="italic text-slate-300 mt-6 border-t border-[#1e293b] pt-4 font-sans">Lịch Vạn niên AI không sáng tạo ra các nội dung này. Lịch chỉ là sự kết hợp giữa công nghệ hiện đại với một hệ thống thiên văn, trạch cát, phong thủy truyền thống mang đậm bản sắc văn hóa phương Đông, để người dùng tham khảo, tự chiêm nghiệm bản thân, phục vụ cho việc học tập, nghiên cứu và đời sống. Một ngày được coi là ngày tốt thực sự phải hài hòa các yếu tố "Thiên - Địa - Nhân" hợp nhất.</p>
+      {/* HIỂN THỊ LƯU Ý TRẠCH CÁT (CHỈ HIỂN THỊ Ở TRANG TÌM NGÀY TỐT) */}
+      {activeTab === 'find-good-days' && (
+        <div className="mt-8 p-6 lg:p-8 bg-[#0f172a] border border-[#1e293b] rounded-2xl shadow-xl font-sans">
+          <h3 className="text-xl font-bold text-brand uppercase tracking-widest mb-5 border-b border-[#1e293b] pb-3 font-sans">Lưu ý xem ngày tốt</h3>
+          <div className="space-y-4 text-base text-slate-300 leading-relaxed font-sans">
+            <p>Ứng dụng Lịch Vạn niên AI với công nghệ lõi là sử dụng thư viện thiên văn học mã nguồn mở Lunar-javascript, tài liệu tích hợp các lý luận cổ đại Trung Hoa làm nền tảng thuật toán. Ngoài ra, các quy tắc phân tích chọn ngày chuyên sâu được tham chiếu nghiêm ngặt theo "Ngọc Hạp Thông Thư" của Việt Nam và những tài liệu kinh điển về phong thủy trạch cát truyền thống. Theo đó, cách tính ngày tốt xấu của Lịch Vạn niên AI như sau:</p>
+            <ol className="list-decimal pl-5 space-y-3">
+              <li>Xác định tính chất Hoàng đạo (tốt) hoặc Hắc đạo (xấu) của ngày để thiết lập mức điểm xuất phát.</li>
+              <li>Xác định các hung tinh mang sát khí cực mạnh. Nếu hệ thống phát hiện ngày đó phạm các đại kỵ như Sát Chủ, Thọ Tử, Thiên Cương, điểm số sẽ lập tức bị kéo về mức thấp nhất và bị loại bỏ hoàn toàn khỏi danh sách ngày tốt, bất chấp trong ngày có bao nhiêu sao tốt đi kèm.</li>
+              <li>Đối với các ngày phạm kỵ dân gian ở mức độ nhẹ hơn (như Tam Nương, Nguyệt Kỵ, Vãng Vong), hệ thống cũng sẽ hạ điểm nhưng nếu phát hiện có các Đại Cát tinh có năng lực "Cứu giải" vạn vật (như Thiên Xá, Nhân Chuyên, Sát Cống, Giải Thần), hệ thống sẽ kích hoạt cơ chế bù trừ, nâng điểm số lên mức an toàn để có thể thực hiện một số công việc nhất định.</li>
+              <li>Cuối cùng, thuật toán đối chiếu trực tiếp Can Chi của ngày với tuổi (năm sinh âm lịch) của người sử dụng. Dù một ngày có điểm số cao tuyệt đối (Đại Cát với đại đa số), nhưng nếu phạm Lục xung với bản mệnh người xem, ngày đó cũng sẽ bị hệ thống tự động loại bỏ.</li>
+            </ol>
+            <p>Thực chất, việc đánh giá ngày tốt xấu là một quá trình phân tích tổng hợp, đa tầng và lồng ghép nhiều hệ thống lý luận khác nhau. Một ngày được ứng dụng đề xuất là "Ngày Tốt" khi thỏa mãn đồng thời hai điều kiện: (1) Đạt điểm số từ 3.0 trở lên (đã qua bù trừ, chế hóa) và (2) Tuyệt đối không xung khắc với tuổi của người sử dụng.</p>
+            <p className="italic text-slate-300 mt-6 border-t border-[#1e293b] pt-5 font-sans">Lịch Vạn niên AI không sáng tạo ra các nội dung này. Lịch chỉ là sự kết hợp giữa công nghệ hiện đại với một hệ thống thiên văn, trạch cát, phong thủy truyền thống mang đậm bản sắc văn hóa phương Đông, để người dùng tham khảo, tự chiêm nghiệm bản thân, phục vụ cho việc học tập, nghiên cứu và đời sống. Phong thủy trạch cát cần kết hợp cả 3 yếu tố: Thiên thời (Ngày) - Địa lợi (Hướng/Địa điểm) - Nhân hòa (Tuổi gia chủ). Một ngày được coi là ngày tốt thực sự phải hài hòa các yếu tố "Thiên - Địa - Nhân" hợp nhất.</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MODAL CHI TIẾT NGÀY PHONG THỦY */}
       <AnimatePresence>
