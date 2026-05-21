@@ -52,38 +52,39 @@ export default function Scanner() {
       ctx.drawImage(video, 0, 0, 64, 64);
       const data = ctx.getImageData(0, 0, 64, 64).data;
       
-      let centerDetailSum = 0; let edgeDetailSum = 0;
-      let centerCount = 0; let edgeCount = 0;
+      let minCenter = 255, maxCenter = 0;
+      let sumCenter = 0, countCenter = 0;
+      let sumEdge = 0, countEdge = 0;
 
-      // THUẬT TOÁN MỚI: Đo độ "dày đặc" của chi tiết (chữ/hình ảnh) thay vì đo độ sáng
-      for (let y = 0; y < 62; y += 2) {
-        for (let x = 0; x < 62; x += 2) {
+      // THUẬT TOÁN QUÉT ĐIỂM ẢNH
+      for (let y = 0; y < 64; y += 2) {
+        for (let x = 0; x < 64; x += 2) {
           const i = (y * 64 + x) * 4;
-          const iRight = (y * 64 + x + 2) * 4; // Pixel bên phải
-          const iBottom = ((y + 2) * 64 + x) * 4; // Pixel bên dưới
-          
-          const b = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          const bRight = (data[iRight] + data[iRight + 1] + data[iRight + 2]) / 3;
-          const bBottom = (data[iBottom] + data[iBottom + 1] + data[iBottom + 2]) / 3;
-          
-          // Tính độ chênh lệch màu sắc với các pixel xung quanh (Đo nét chữ/hình)
-          const detailStrength = Math.abs(b - bRight) + Math.abs(b - bBottom);
+          // Tính độ sáng (Luma) chuẩn xác
+          const luma = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
 
-          if (x > 16 && x < 48 && y > 16 && y < 48) {
-            centerDetailSum += detailStrength; centerCount++;
+          // Vùng trung tâm (Khung ngắm chứa tài liệu)
+          if (x > 12 && x < 52 && y > 12 && y < 52) {
+            sumCenter += luma; countCenter++;
+            if (luma < minCenter) minCenter = luma;
+            if (luma > maxCenter) maxCenter = luma;
           } else {
-            edgeDetailSum += detailStrength; edgeCount++;
+            // Vùng viền (Mặt bàn, ga giường, bức tường...)
+            sumEdge += luma; countEdge++;
           }
         }
       }
       
-      const centerBusy = centerDetailSum / centerCount;
-      const edgeBusy = edgeDetailSum / edgeCount;
+      const avgCenter = sumCenter / countCenter;
+      const avgEdge = sumEdge / countEdge;
+      const centerContrast = maxCenter - minCenter;
+      const bgDifference = Math.abs(avgCenter - avgEdge);
 
-      // ĐIỀU KIỆN ĐỂ MỞ KHUNG VÀNG:
-      // 1. Vùng trung tâm phải có nhiều chi tiết (chữ/hình ảnh) > 12
-      // 2. Vùng trung tâm phải có mật độ chi tiết cao hơn vùng viền bên ngoài
-      const isDocument = (centerBusy > 12) && (centerBusy > edgeBusy + 2);
+      // LOGIC NHẬN DIỆN MỚI (Khắc phục mọi lỗi trước đó):
+      // 1. Phải có văn bản/hình ảnh bên trong (Độ tương phản vùng trung tâm > 25) => Loại trừ bức tường/giấy trắng tinh.
+      // 2. Phải có sự tách biệt với nền (Chênh lệch sáng/tối giữa tài liệu và mặt bàn/ga giường > 15)
+      // 3. HOẶC nếu trung tâm có độ tương phản CỰC CAO (chữ đen in rõ trên giấy trắng) thì nhận luôn, bỏ qua mặt nền.
+      const isDocument = (centerContrast > 25 && bgDifference > 15) || (centerContrast > 70);
       
       setIsDocumentAligned(isDocument);
     }, 300);
