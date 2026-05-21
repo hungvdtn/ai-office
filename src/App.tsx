@@ -495,8 +495,12 @@ export default function App() {
     const checkAlarms = () => {
       const savedEvents = localStorage.getItem('user_events');
       if (!savedEvents) return;
+      
       const events = JSON.parse(savedEvents);
       const now = new Date();
+      
+      // Lấy danh sách ID các sự kiện "Đã Kêu" từ bộ nhớ máy
+      const notifiedKeys = JSON.parse(localStorage.getItem('notified_alarms') || '[]');
 
       events.forEach((ev: any) => {
         const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); 
@@ -504,19 +508,28 @@ export default function App() {
         const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
         const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
         
-        const alarmKey = `${ev.id}-${now.getHours()}-${now.getMinutes()}`;
+        // Tạo một Key độc nhất cho sự kiện này để lưu vào bộ nhớ
+        const alarmKey = `${ev.id}-rang-${remindTime.getTime()}`;
 
-        // Kiểm tra giờ và chặn báo lặp lại trong cùng 1 phút
+        // Kiểm tra giờ và ĐẢM BẢO CHƯA TỪNG ĐƯỢC BÁO TRƯỚC ĐÓ
         if (
             remindTime.getFullYear() === now.getFullYear() && 
             remindTime.getMonth() === now.getMonth() && 
             remindTime.getDate() === now.getDate() && 
             remindTime.getHours() === now.getHours() && 
             remindTime.getMinutes() === now.getMinutes() &&
-            !alarmedIds.current.has(alarmKey)
+            !alarmedIds.current.has(alarmKey) && // Chưa báo trong phiên làm việc này
+            !notifiedKeys.includes(alarmKey) // Chưa báo trong bộ nhớ vĩnh viễn (localStorage)
         ) {
+            // Đánh dấu đã báo (Memory tạm)
             alarmedIds.current.add(alarmKey);
-            setRingingEvent(ev); // Bật giao diện Chuông
+            
+            // LƯU CỜ VĨNH VIỄN VÀO MÁY (Cắt dứt điểm ma ám)
+            notifiedKeys.push(alarmKey);
+            localStorage.setItem('notified_alarms', JSON.stringify(notifiedKeys));
+
+            // Bật giao diện Chuông
+            setRingingEvent(ev); 
             
             if (audioRef.current) {
                 audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
