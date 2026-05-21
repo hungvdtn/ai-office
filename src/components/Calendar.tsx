@@ -1094,7 +1094,7 @@ export default function Calendar() {
          <button onClick={() => setActiveTab('calendar')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'calendar' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><CalendarIcon size={16}/> Lịch Vạn Niên</button>
          <button onClick={() => setActiveTab('find-good-days')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'find-good-days' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><Search size={16}/> Tìm ngày tốt</button>
          <button onClick={() => setActiveTab('converter')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'converter' ? 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><ArrowRightLeft size={16}/> Đổi ngày Âm - Dương</button>
-         <button onClick={() => setActiveTab('quick-lunar')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'quick-lunar' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><Search size={16}/> Tìm nhanh Âm lịch</button>
+         <button onClick={() => setActiveTab('quick-lunar')} className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'quick-lunar' ? 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.5)]' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}><Search size={16}/> Tìm nhanh Âm lịch</button>
       </div>
 
       {activeTab === 'calendar' && (
@@ -1252,9 +1252,9 @@ export default function Calendar() {
                 </select>
               </div>
               <div className="md:col-span-6 flex gap-2">
-                 <input type="number" placeholder="Ngày" value={cDay} onChange={e=>setCDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand font-sans" />
-                 <input type="number" placeholder="Tháng" value={cMonth} onChange={e=>setCMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand font-sans" />
-                 <input type="number" placeholder="Năm" value={cYear} onChange={e=>setCYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-brand font-sans" />
+                 <input type="number" placeholder="Ngày" value={cDay} onChange={e=>setCDay(e.target.value)} onKeyDown={e => e.key === 'Enter' && doConvert()} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Tháng" value={cMonth} onChange={e=>setCMonth(e.target.value)} onKeyDown={e => e.key === 'Enter' && doConvert()} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Năm" value={cYear} onChange={e=>setCYear(e.target.value)} onKeyDown={e => e.key === 'Enter' && doConvert()} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
               </div>
               <div className="md:col-span-3">
                  <button onClick={doConvert} className="w-full h-full bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-500 transition shadow-[0_0_15px_rgba(217,119,6,0.4)] py-3 font-sans">XEM KẾT QUẢ</button>
@@ -1279,9 +1279,9 @@ export default function Calendar() {
            <h3 className="text-xl font-bold text-amber-500 flex items-center gap-2 mb-6 uppercase tracking-widest font-sans"><Search size={24} /> Tìm Nhanh Ngày Âm Lịch</h3>
            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-9 flex gap-2">
-                 <input type="number" placeholder="Ngày âm lịch" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
-                 <input type="number" placeholder="Tháng âm lịch" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
-                 <input type="number" placeholder="Năm âm lịch" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Ngày âm lịch" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuickLunarSearch()} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Tháng âm lịch" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuickLunarSearch()} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Năm âm lịch" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleQuickLunarSearch()} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
               </div>
               <div className="md:col-span-3">
                  <button onClick={handleQuickLunarSearch} className="w-full h-full bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-500 transition shadow-[0_0_15px_rgba(217,119,6,0.4)] py-3 font-sans">ĐI TỚI NGÀY</button>
