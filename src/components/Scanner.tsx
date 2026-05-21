@@ -169,12 +169,13 @@ export default function Scanner() {
           <div className="absolute inset-0 z-20 flex flex-col bg-black">
             <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" />
             <div className="absolute inset-0 p-6 pb-40 flex items-center justify-center z-10 pointer-events-none">
-               <div className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]`}>
-                  <div className="absolute inset-0">
-                    <div className={`absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
-                    <div className={`absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
-                    <div className={`absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
-                    <div className={`absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
+               <div className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 ${isDocumentAligned ? 'shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]' : 'shadow-[0_0_0_9999px_rgba(0,0,0,0.2)]'}`}>
+                  {/* Dòng dưới đây đã được thêm lại ref={scanBoxRef} để sửa lỗi không chụp được ảnh */}
+                  <div ref={scanBoxRef} className="absolute inset-0">
+                    <div className={`absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white opacity-40'}`} />
+                    <div className={`absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white opacity-40'}`} />
+                    <div className={`absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white opacity-40'}`} />
+                    <div className={`absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white opacity-40'}`} />
                   </div>
                </div>
             </div>
@@ -197,7 +198,7 @@ export default function Scanner() {
                </div>
                <div className="flex items-center justify-between w-full">
                  <button onClick={stopCamera} className="w-16 h-12 flex flex-col items-center justify-center text-slate-400 hover:text-rose-400 transition-colors"><X size={24} /><span className="text-[10px] mt-1 font-bold">HỦY</span></button>
-                 <button onClick={capturePage} disabled={!!previewImage} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${!!previewImage ? 'border-slate-500 opacity-50' : (isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white opacity-100')}`}><div className={`w-full h-full rounded-full transition-colors ${!!previewImage ? 'bg-slate-500' : 'bg-white'}`} /></button>
+                 <button onClick={capturePage} disabled={!!previewImage || !isDocumentAligned} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${isDocumentAligned && !previewImage ? 'border-yellow-400 opacity-100' : 'border-slate-500 opacity-50'}`}><div className={`w-full h-full rounded-full transition-colors ${isDocumentAligned && !previewImage ? 'bg-white' : 'bg-slate-500'}`} /></button>
                  <button onClick={handleDone} disabled={scannedPages.length === 0 && !previewImage} className="w-16 h-12 flex flex-col items-center justify-center text-brand disabled:text-slate-600 transition-colors">
                     <div className="relative"><Check size={24} />{scannedPages.length > 0 && <span className="absolute -top-2 -right-3 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">{scannedPages.length}</span>}</div>
                     <span className="text-[10px] mt-1 font-bold">XONG</span>
