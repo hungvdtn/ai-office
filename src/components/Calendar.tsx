@@ -1276,19 +1276,19 @@ export default function Calendar() {
       {/* TAB MỚI: TÌM NHANH ÂM LỊCH */}
       {activeTab === 'quick-lunar' && (
         <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-6 lg:p-8 shadow-xl font-sans">
-           <h3 className="text-xl font-bold text-purple-500 flex items-center gap-2 mb-6 uppercase tracking-widest font-sans"><Search size={24} /> Tìm Nhanh Ngày Âm Lịch</h3>
+           <h3 className="text-xl font-bold text-amber-500 flex items-center gap-2 mb-6 uppercase tracking-widest font-sans"><Search size={24} /> Tìm Nhanh Ngày Âm Lịch</h3>
            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-9 flex gap-2">
-                 <input type="number" placeholder="Ngày âm lịch" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-purple-500 font-sans" />
-                 <input type="number" placeholder="Tháng âm lịch" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-purple-500 font-sans" />
-                 <input type="number" placeholder="Năm âm lịch" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-purple-500 font-sans" />
+                 <input type="number" placeholder="Ngày âm lịch" value={qLunarDay} onChange={e=>setQLunarDay(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Tháng âm lịch" value={qLunarMonth} onChange={e=>setQLunarMonth(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
+                 <input type="number" placeholder="Năm âm lịch" value={qLunarYear} onChange={e=>setQLunarYear(e.target.value)} className="w-1/3 bg-[#05070a] border border-[#1e293b] rounded-lg p-3 text-center text-slate-200 focus:outline-none focus:border-amber-500 font-sans" />
               </div>
               <div className="md:col-span-3">
-                 <button onClick={handleQuickLunarSearch} className="w-full h-full bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 transition shadow-[0_0_15px_rgba(147,51,234,0.4)] py-3 font-sans">ĐI TỚI NGÀY</button>
+                 <button onClick={handleQuickLunarSearch} className="w-full h-full bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-500 transition shadow-[0_0_15px_rgba(217,119,6,0.4)] py-3 font-sans">ĐI TỚI NGÀY</button>
               </div>
            </div>
-           <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 text-sm italic font-medium flex items-center gap-2 font-sans">
-              <Info size={16}/> Hệ thống sẽ tự động chuyển sang trang Lịch Vạn Niên và mở đúng ngày Dương lịch tương ứng với ngày Âm lịch bạn vừa tìm.
+           <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-sm italic font-medium flex items-center gap-2 font-sans">
+              <Info size={16}/> Hệ thống sẽ tự động chuyển sang trang Lịch Vạn Niên và mở đúng ngày Dương lịch tương ứng với ngày Âm lịch.
            </div>
         </div>
       )}
@@ -1415,7 +1415,7 @@ export default function Calendar() {
               <li>Cuối cùng, thuật toán đối chiếu trực tiếp Can Chi của ngày với tuổi (năm sinh âm lịch) của người sử dụng. Dù một ngày có điểm số cao tuyệt đối (Đại Cát với đại đa số), nhưng nếu phạm Lục xung với bản mệnh người xem, ngày đó cũng sẽ bị hệ thống tự động loại bỏ.</li>
             </ol>
             <p>Thực chất, việc đánh giá ngày tốt xấu là một quá trình phân tích tổng hợp, đa tầng và lồng ghép nhiều hệ thống lý luận khác nhau. Một ngày được ứng dụng đề xuất là "Ngày Tốt" khi thỏa mãn đồng thời hai điều kiện: (1) Đạt điểm số từ 3.0 trở lên (đã qua bù trừ, chế hóa) và (2) Tuyệt đối không xung khắc với tuổi của người sử dụng.</p>
-            <p className="italic text-slate-300 mt-6 border-t border-[#1e293b] pt-5 font-sans">Lịch Vạn niên AI không sáng tạo ra các nội dung này. Lịch chỉ là sự kết hợp giữa công nghệ hiện đại với một hệ thống thiên văn, trạch cát, phong thủy truyền thống mang đậm bản sắc văn hóa phương Đông, để người dùng tham khảo, tự chiêm nghiệm bản thân, phục vụ cho việc học tập, nghiên cứu và đời sống. Phong thủy trạch cát cần kết hợp cả 3 yếu tố: Thiên thời (Ngày) - Địa lợi (Hướng/Địa điểm) - Nhân hòa (Tuổi gia chủ). Một ngày được coi là ngày tốt thực sự phải hài hòa các yếu tố "Thiên - Địa - Nhân" hợp nhất.</p>
+            <p className="italic text-slate-300 mt-6 border-t border-[#1e293b] pt-5 font-sans">Lịch Vạn niên AI không sáng tạo ra các nội dung này. Lịch chỉ là sự ứng dụng công nghệ hiện đại vào một hệ thống thiên văn, trạch cát, phong thủy truyền thống mang đậm bản sắc văn hóa phương Đông, để người dùng tham khảo, tự chiêm nghiệm, phục vụ cho việc học tập, nghiên cứu và đời sống. Phong thủy trạch cát cần kết hợp cả 3 yếu tố: Thiên thời (Ngày) - Địa lợi (Hướng/Địa điểm) - Nhân hòa (Tuổi gia chủ). Một ngày được coi là ngày tốt thực sự phải hài hòa các yếu tố "Thiên - Địa - Nhân" hợp nhất.</p>
           </div>
         </div>
       )}
