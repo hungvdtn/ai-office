@@ -1455,8 +1455,9 @@ export default function Calendar() {
                   <p className="font-sans">Tài thần - TỐT: <span className="text-emerald-400 font-bold">{dayDet.taiThan}</span></p>
                   
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Nhị thập bát tú</h5>
-                  <p className="font-sans">Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span></p>
-                  <p className="italic font-sans">"{dayDet.saoDesc}"</p>
+                  <p className="font-sans">
+                    Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span> ({dayDet.saoDesc.replace('Thuộc', 'thuộc')})
+                  </p>
 
                   <h5 className="font-bold text-white mt-4 mb-1 font-sans">Lưu ý đặc biệt</h5>
                   <p className="font-sans">
