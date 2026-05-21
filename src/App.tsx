@@ -499,7 +499,7 @@ export default function App() {
       const events = JSON.parse(savedEvents);
       const now = new Date();
       
-      // Lấy danh sách ID các sự kiện "Đã Kêu" từ bộ nhớ máy
+      // Lấy danh sách ID các sự kiện "Đã Kêu Chuông" từ bộ nhớ máy
       const notifiedKeys = JSON.parse(localStorage.getItem('notified_alarms') || '[]');
 
       events.forEach((ev: any) => {
@@ -511,38 +511,39 @@ export default function App() {
         // Tạo một Key độc nhất cho sự kiện này để lưu vào bộ nhớ
         const alarmKey = `${ev.id}-rang-${remindTime.getTime()}`;
 
-        // Kiểm tra giờ và ĐẢM BẢO CHƯA TỪNG ĐƯỢC BÁO TRƯỚC ĐÓ
-        if (
+        // Kiểm tra xem hiện tại CÓ ĐÚNG LÀ PHÚT CẦN BÁO THỨC HAY KHÔNG
+        const isExactlyNow = 
             remindTime.getFullYear() === now.getFullYear() && 
             remindTime.getMonth() === now.getMonth() && 
             remindTime.getDate() === now.getDate() && 
             remindTime.getHours() === now.getHours() && 
-            remindTime.getMinutes() === now.getMinutes() &&
-            !alarmedIds.current.has(alarmKey) && // Chưa báo trong phiên làm việc này
-            !notifiedKeys.includes(alarmKey) // Chưa báo trong bộ nhớ vĩnh viễn (localStorage)
-        ) {
-            // Đánh dấu đã báo (Memory tạm)
+            remindTime.getMinutes() === now.getMinutes();
+
+        if (isExactlyNow && !alarmedIds.current.has(alarmKey)) {
+            // Đánh dấu để trong 1 phút này hàm không bị lặp lại gọi UI liên tục
             alarmedIds.current.add(alarmKey);
             
-            // LƯU CỜ VĨNH VIỄN VÀO MÁY (Cắt dứt điểm ma ám)
-            notifiedKeys.push(alarmKey);
-            localStorage.setItem('notified_alarms', JSON.stringify(notifiedKeys));
-
-            // Bật giao diện Chuông
+            // 1. LUÔN LUÔN MỞ GIAO DIỆN MÀU ĐỎ (Dù có mở muộn vài giây vẫn hiện)
             setRingingEvent(ev); 
-            
-            if (audioRef.current) {
-                audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
-            }
             
             // BẮN THÔNG BÁO HỆ THỐNG VỚI QUYỀN ƯU TIÊN CAO
             if ('Notification' in window && Notification.permission === 'granted') { 
                 new Notification(`BÁO VIỆC: ${ev.title}`, { 
                     body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
                     icon: '/Logo_anh.png', 
-                    requireInteraction: true, // Bắt buộc thông báo nằm lỳ trên màn hình cho đến khi tắt
-                    vibrate: [200, 100, 200, 100, 200, 100, 200] // Rung mạnh trên điện thoại Android
+                    requireInteraction: true, 
+                    vibrate: [200, 100, 200, 100, 200, 100, 200] 
                 }); 
+            }
+
+            // 2. CHỈ PHÁT ÂM THANH NẾU CHƯA TỪNG PHÁT (Chống ma ám khi mở app muộn vào các buổi tối)
+            if (!notifiedKeys.includes(alarmKey)) {
+                if (audioRef.current) {
+                    audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
+                }
+                // Lưu vĩnh viễn là đã phát chuông rồi
+                notifiedKeys.push(alarmKey);
+                localStorage.setItem('notified_alarms', JSON.stringify(notifiedKeys));
             }
         }
       });
