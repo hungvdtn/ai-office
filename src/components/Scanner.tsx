@@ -41,7 +41,7 @@ export default function Scanner() {
 
   useEffect(() => { return () => stopCamera(); }, [stopCamera]);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!isScanning || previewImage || showSaveModal) return;
     const analyzeInterval = setInterval(() => {
       const video = videoRef.current; const canvas = analyzeCanvasRef.current;
@@ -52,42 +52,41 @@ export default function Scanner() {
       ctx.drawImage(video, 0, 0, 64, 64);
       const data = ctx.getImageData(0, 0, 64, 64).data;
       
-      let minCenter = 255, maxCenter = 0;
-      let sumCenter = 0, countCenter = 0;
-      let sumEdge = 0, countEdge = 0;
+      let edgeStrength = 0; // Đếm số lượng "cạnh" sắc nét (như mép giấy, viền chữ)
+      let minLuma = 255, maxLuma = 0; // Đo độ tương phản tổng thể
 
-      // THUẬT TOÁN QUÉT ĐIỂM ẢNH
-      for (let y = 0; y < 64; y += 2) {
-        for (let x = 0; x < 64; x += 2) {
+      // Thuật toán nhận diện cạnh siêu nhẹ (Tìm mép giấy/chữ)
+      for (let y = 10; y < 54; y += 2) {
+        for (let x = 10; x < 54; x += 2) {
           const i = (y * 64 + x) * 4;
-          // Tính độ sáng (Luma) chuẩn xác
-          const luma = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
+          const iRight = (y * 64 + x + 2) * 4;
+          const iBottom = ((y + 2) * 64 + x) * 4;
+          
+          const luma = (data[i] * 299 + data[i+1] * 587 + data[i+2] * 114) / 1000;
+          const lumaRight = (data[iRight] * 299 + data[iRight+1] * 587 + data[iRight+2] * 114) / 1000;
+          const lumaBottom = (data[iBottom] * 299 + data[iBottom+1] * 587 + data[iBottom+2] * 114) / 1000;
 
-          // Vùng trung tâm (Khung ngắm chứa tài liệu)
-          if (x > 12 && x < 52 && y > 12 && y < 52) {
-            sumCenter += luma; countCenter++;
-            if (luma < minCenter) minCenter = luma;
-            if (luma > maxCenter) maxCenter = luma;
-          } else {
-            // Vùng viền (Mặt bàn, ga giường, bức tường...)
-            sumEdge += luma; countEdge++;
+          if (luma < minLuma) minLuma = luma;
+          if (luma > maxLuma) maxLuma = luma;
+
+          // Nếu chênh lệch độ sáng giữa 2 điểm cạnh nhau > 20, đó là 1 "cạnh" (mép giấy/viền chữ)
+          if (Math.abs(luma - lumaRight) > 20 || Math.abs(luma - lumaBottom) > 20) {
+            edgeStrength++;
           }
         }
       }
       
-      const avgCenter = sumCenter / countCenter;
-      const avgEdge = sumEdge / countEdge;
-      const centerContrast = maxCenter - minCenter;
-      const bgDifference = Math.abs(avgCenter - avgEdge);
+      const contrast = maxLuma - minLuma;
 
-      // LOGIC NHẬN DIỆN MỚI (Khắc phục mọi lỗi trước đó):
-      // 1. Phải có văn bản/hình ảnh bên trong (Độ tương phản vùng trung tâm > 25) => Loại trừ bức tường/giấy trắng tinh.
-      // 2. Phải có sự tách biệt với nền (Chênh lệch sáng/tối giữa tài liệu và mặt bàn/ga giường > 15)
-      // 3. HOẶC nếu trung tâm có độ tương phản CỰC CAO (chữ đen in rõ trên giấy trắng) thì nhận luôn, bỏ qua mặt nền.
-      const isDocument = (centerContrast > 25 && bgDifference > 15) || (centerContrast > 70);
+      // ĐIỀU KIỆN KÉP NGHIÊM NGẶT:
+      // 1. Phải có độ tương phản tổng thể > 50 (Có mảng sáng tối rõ rệt, không phải mặt bàn trơn).
+      // 2. Phải đếm được số lượng "Cạnh sắc nét" (edgeStrength) vừa đủ: Lớn hơn 20 (chắc chắn có mép giấy/chữ).
+      // (Không cần đo nền viền nữa để tránh bị nhiễu bởi mặt bàn kẻ sọc).
       
+      const isDocument = (contrast > 50 && edgeStrength > 20);
       setIsDocumentAligned(isDocument);
-    }, 300);
+      
+    }, 400); // Quét chậm lại một chút để chống nhấp nháy
     
     return () => clearInterval(analyzeInterval);
   }, [isScanning, previewImage, showSaveModal]);
