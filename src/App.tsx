@@ -499,51 +499,41 @@ export default function App() {
       const events = JSON.parse(savedEvents);
       const now = new Date();
       
-      // Lấy danh sách ID các sự kiện "Đã Kêu Chuông" từ bộ nhớ máy
-      const notifiedKeys = JSON.parse(localStorage.getItem('notified_alarms') || '[]');
+      // Lấy danh sách ID các sự kiện "ĐÃ BẤM TẮT CHUÔNG" từ bộ nhớ
+      const dismissedAlarms = JSON.parse(localStorage.getItem('dismissed_alarms') || '[]');
 
       events.forEach((ev: any) => {
         const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); 
         const [evH, evM] = ev.time.split(':').map(Number);
-        const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
-        const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
         
-        // Tạo một Key độc nhất cho sự kiện này để lưu vào bộ nhớ
-        const alarmKey = `${ev.id}-rang-${remindTime.getTime()}`;
+        const eventTime = new Date(evY, evMo - 1, evD, evH, evM); // Giờ diễn ra sự kiện (VD: 8h00)
+        const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000)); // Giờ bắt đầu nhắc (VD: 7h30)
+        
+        // Thời gian hết hạn của thông báo (Ví dụ: Qua giờ sự kiện 1 tiếng thì tự động hủy bỏ không báo nữa)
+        const expireTime = new Date(eventTime.getTime() + 60 * 60000); 
 
-        // Kiểm tra xem hiện tại CÓ ĐÚNG LÀ PHÚT CẦN BÁO THỨC HAY KHÔNG
-        const isExactlyNow = 
-            remindTime.getFullYear() === now.getFullYear() && 
-            remindTime.getMonth() === now.getMonth() && 
-            remindTime.getDate() === now.getDate() && 
-            remindTime.getHours() === now.getHours() && 
-            remindTime.getMinutes() === now.getMinutes();
-
-        if (isExactlyNow && !alarmedIds.current.has(alarmKey)) {
-            // Đánh dấu để trong 1 phút này hàm không bị lặp lại gọi UI liên tục
-            alarmedIds.current.add(alarmKey);
+        // LOGIC CHUẨN: "Bây giờ" nằm trong khoảng từ [Giờ nhắc] đến [Hết hạn] (Để mở app lúc 7h45 vẫn kêu)
+        if (now >= remindTime && now <= expireTime) {
             
-            // 1. LUÔN LUÔN MỞ GIAO DIỆN MÀU ĐỎ (Dù có mở muộn vài giây vẫn hiện)
-            setRingingEvent(ev); 
-            
-            // BẮN THÔNG BÁO HỆ THỐNG VỚI QUYỀN ƯU TIÊN CAO
-            if ('Notification' in window && Notification.permission === 'granted') { 
-                new Notification(`BÁO VIỆC: ${ev.title}`, { 
-                    body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
-                    icon: '/Logo_anh.png', 
-                    requireInteraction: true, 
-                    vibrate: [200, 100, 200, 100, 200, 100, 200] 
-                }); 
-            }
-
-            // 2. CHỈ PHÁT ÂM THANH NẾU CHƯA TỪNG PHÁT (Chống ma ám khi mở app muộn vào các buổi tối)
-            if (!notifiedKeys.includes(alarmKey)) {
+            // CHỈ BÁO KHI SỰ KIỆN CHƯA TỪNG BỊ BẤM "TẮT CHUÔNG"
+            if (!dismissedAlarms.includes(ev.id) && !alarmedIds.current.has(ev.id)) {
+                
+                alarmedIds.current.add(ev.id); // Khóa tạm trong phiên chạy để không bị chớp giật liên tục
+                
+                setRingingEvent(ev); // BẬT GIAO DIỆN ĐỎ VÀ THÔNG TIN SỰ KIỆN
+                
                 if (audioRef.current) {
-                    audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
+                    audioRef.current.play().catch(e => console.log('Chưa tương tác', e)); // KÊU CHUÔNG
                 }
-                // Lưu vĩnh viễn là đã phát chuông rồi
-                notifiedKeys.push(alarmKey);
-                localStorage.setItem('notified_alarms', JSON.stringify(notifiedKeys));
+                
+                if ('Notification' in window && Notification.permission === 'granted') { 
+                    new Notification(`BÁO VIỆC: ${ev.title}`, { 
+                        body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
+                        icon: '/Logo_anh.png', 
+                        requireInteraction: true, 
+                        vibrate: [200, 100, 200, 100, 200, 100, 200] 
+                    }); 
+                }
             }
         }
       });
@@ -559,10 +549,22 @@ export default function App() {
   }, []);
 
   const stopAlarm = () => {
+      // 1. Tắt âm thanh
       if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
       }
+      
+      // 2. LƯU VĨNH VIỄN VÀO MÁY: "TÔI ĐÃ ĐỌC VÀ TẮT SỰ KIỆN NÀY RỒI, ĐỪNG KÊU LẠI VÀO BUỔI TỐI NỮA"
+      if (ringingEvent) {
+          const dismissedAlarms = JSON.parse(localStorage.getItem('dismissed_alarms') || '[]');
+          if (!dismissedAlarms.includes(ringingEvent.id)) {
+              dismissedAlarms.push(ringingEvent.id);
+              localStorage.setItem('dismissed_alarms', JSON.stringify(dismissedAlarms));
+          }
+      }
+      
+      // 3. Đóng giao diện màu đỏ
       setRingingEvent(null);
   };
 
