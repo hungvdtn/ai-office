@@ -47,37 +47,47 @@ export default function Scanner() {
       const video = videoRef.current; const canvas = analyzeCanvasRef.current;
       if (!video || !canvas || video.readyState !== 4) return;
       const ctx = canvas.getContext('2d', { willReadFrequently: true }); if (!ctx) return;
-      canvas.width = 64; canvas.height = 64; ctx.drawImage(video, 0, 0, 64, 64);
+      
+      canvas.width = 64; canvas.height = 64; 
+      ctx.drawImage(video, 0, 0, 64, 64);
       const data = ctx.getImageData(0, 0, 64, 64).data;
       
-      let minB = 255, maxB = 0;
-      let centerSum = 0, edgeSum = 0;
-      let centerCount = 0, edgeCount = 0;
+      let centerDetailSum = 0; let edgeDetailSum = 0;
+      let centerCount = 0; let edgeCount = 0;
 
-      for (let y = 0; y < 64; y += 4) {
-        for (let x = 0; x < 64; x += 4) {
+      // THUẬT TOÁN MỚI: Đo độ "dày đặc" của chi tiết (chữ/hình ảnh) thay vì đo độ sáng
+      for (let y = 0; y < 62; y += 2) {
+        for (let x = 0; x < 62; x += 2) {
           const i = (y * 64 + x) * 4;
-          const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          const iRight = (y * 64 + x + 2) * 4; // Pixel bên phải
+          const iBottom = ((y + 2) * 64 + x) * 4; // Pixel bên dưới
+          
+          const b = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          const bRight = (data[iRight] + data[iRight + 1] + data[iRight + 2]) / 3;
+          const bBottom = (data[iBottom] + data[iBottom + 1] + data[iBottom + 2]) / 3;
+          
+          // Tính độ chênh lệch màu sắc với các pixel xung quanh (Đo nét chữ/hình)
+          const detailStrength = Math.abs(b - bRight) + Math.abs(b - bBottom);
+
           if (x > 16 && x < 48 && y > 16 && y < 48) {
-            if (brightness < minB) minB = brightness;
-            if (brightness > maxB) maxB = brightness;
-            centerSum += brightness; centerCount++;
+            centerDetailSum += detailStrength; centerCount++;
           } else {
-            edgeSum += brightness; edgeCount++;
+            edgeDetailSum += detailStrength; edgeCount++;
           }
         }
       }
       
-      const contrast = maxB - minB;
-      const centerAvg = centerSum / centerCount;
-      const edgeAvg = edgeSum / edgeCount;
+      const centerBusy = centerDetailSum / centerCount;
+      const edgeBusy = edgeDetailSum / edgeCount;
 
-      // THUẬT TOÁN MỚI: 
-      // 1. Phải có độ tương phản cao ở giữa (Bìa sách có hình/chữ)
-      // 2. Hoặc ở giữa sáng hơn viền (Tờ giấy trắng) VÀ có sự thay đổi pixel (Tránh nhận nhầm bức tường)
-      const isDoc = (contrast > 45) || (centerAvg > edgeAvg + 15 && contrast > 20);
-      setIsDocumentAligned(isDoc);
-    }, 400);
+      // ĐIỀU KIỆN ĐỂ MỞ KHUNG VÀNG:
+      // 1. Vùng trung tâm phải có nhiều chi tiết (chữ/hình ảnh) > 12
+      // 2. Vùng trung tâm phải có mật độ chi tiết cao hơn vùng viền bên ngoài
+      const isDocument = (centerBusy > 12) && (centerBusy > edgeBusy + 2);
+      
+      setIsDocumentAligned(isDocument);
+    }, 300);
+    
     return () => clearInterval(analyzeInterval);
   }, [isScanning, previewImage, showSaveModal]);
 
