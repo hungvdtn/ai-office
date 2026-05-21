@@ -49,15 +49,35 @@ export default function Scanner() {
       const ctx = canvas.getContext('2d', { willReadFrequently: true }); if (!ctx) return;
       canvas.width = 64; canvas.height = 64; ctx.drawImage(video, 0, 0, 64, 64);
       const data = ctx.getImageData(0, 0, 64, 64).data;
-      let centerBrightness = 0, edgeBrightness = 0; let centerPixels = 0, edgePixels = 0;
-      for (let y = 0; y < 64; y += 2) {
-        for (let x = 0; x < 64; x += 2) {
-          const i = (y * 64 + x) * 4; const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          if (x > 16 && x < 48 && y > 16 && y < 48) { centerBrightness += brightness; centerPixels++; } else { edgeBrightness += brightness; edgePixels++; }
+      
+      let minB = 255, maxB = 0;
+      let centerSum = 0, edgeSum = 0;
+      let centerCount = 0, edgeCount = 0;
+
+      for (let y = 0; y < 64; y += 4) {
+        for (let x = 0; x < 64; x += 4) {
+          const i = (y * 64 + x) * 4;
+          const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          if (x > 16 && x < 48 && y > 16 && y < 48) {
+            if (brightness < minB) minB = brightness;
+            if (brightness > maxB) maxB = brightness;
+            centerSum += brightness; centerCount++;
+          } else {
+            edgeSum += brightness; edgeCount++;
+          }
         }
       }
-      setIsDocumentAligned((centerBrightness / centerPixels) > (edgeBrightness / edgePixels) + 20);
-    }, 300);
+      
+      const contrast = maxB - minB;
+      const centerAvg = centerSum / centerCount;
+      const edgeAvg = edgeSum / edgeCount;
+
+      // THUẬT TOÁN MỚI: 
+      // 1. Phải có độ tương phản cao ở giữa (Bìa sách có hình/chữ)
+      // 2. Hoặc ở giữa sáng hơn viền (Tờ giấy trắng) VÀ có sự thay đổi pixel (Tránh nhận nhầm bức tường)
+      const isDoc = (contrast > 45) || (centerAvg > edgeAvg + 15 && contrast > 20);
+      setIsDocumentAligned(isDoc);
+    }, 400);
     return () => clearInterval(analyzeInterval);
   }, [isScanning, previewImage, showSaveModal]);
 
@@ -149,15 +169,13 @@ export default function Scanner() {
           <div className="absolute inset-0 z-20 flex flex-col bg-black">
             <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none" />
             <div className="absolute inset-0 p-6 pb-40 flex items-center justify-center z-10 pointer-events-none">
-               <div className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 ${isDocumentAligned ? 'shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]' : 'shadow-[0_0_0_9999px_rgba(0,0,0,0.1)]'}`}>
-                  {isDocumentAligned && (
-                    <div ref={scanBoxRef} className="absolute inset-0">
-                      <div className="absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 border-yellow-400 opacity-90" />
-                      <div className="absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 border-yellow-400 opacity-90" />
-                      <div className="absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 border-yellow-400 opacity-90" />
-                      <div className="absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 border-yellow-400 opacity-90" />
-                    </div>
-                  )}
+               <div className={`w-[85%] aspect-[1/1.414] max-h-full relative transition-all duration-500 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]`}>
+                  <div className="absolute inset-0">
+                    <div className={`absolute -top-1 -left-1 w-12 h-12 border-t-4 border-l-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
+                    <div className={`absolute -top-1 -right-1 w-12 h-12 border-t-4 border-r-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
+                    <div className={`absolute -bottom-1 -left-1 w-12 h-12 border-b-4 border-l-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
+                    <div className={`absolute -bottom-1 -right-1 w-12 h-12 border-b-4 border-r-4 transition-colors duration-300 ${isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white/40'}`} />
+                  </div>
                </div>
             </div>
 
@@ -179,7 +197,7 @@ export default function Scanner() {
                </div>
                <div className="flex items-center justify-between w-full">
                  <button onClick={stopCamera} className="w-16 h-12 flex flex-col items-center justify-center text-slate-400 hover:text-rose-400 transition-colors"><X size={24} /><span className="text-[10px] mt-1 font-bold">HỦY</span></button>
-                 <button onClick={capturePage} disabled={!!previewImage || !isDocumentAligned} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${isDocumentAligned && !previewImage ? 'border-yellow-400 opacity-100' : 'border-slate-500 opacity-50'}`}><div className={`w-full h-full rounded-full transition-colors ${isDocumentAligned ? 'bg-white' : 'bg-slate-500'}`} /></button>
+                 <button onClick={capturePage} disabled={!!previewImage} className={`w-16 h-16 rounded-full border-4 flex items-center justify-center p-1 active:scale-95 transition-transform ${!!previewImage ? 'border-slate-500 opacity-50' : (isDocumentAligned ? 'border-yellow-400 opacity-100' : 'border-white opacity-100')}`}><div className={`w-full h-full rounded-full transition-colors ${!!previewImage ? 'bg-slate-500' : 'bg-white'}`} /></button>
                  <button onClick={handleDone} disabled={scannedPages.length === 0 && !previewImage} className="w-16 h-12 flex flex-col items-center justify-center text-brand disabled:text-slate-600 transition-colors">
                     <div className="relative"><Check size={24} />{scannedPages.length > 0 && <span className="absolute -top-2 -right-3 bg-rose-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">{scannedPages.length}</span>}</div>
                     <span className="text-[10px] mt-1 font-bold">XONG</span>
