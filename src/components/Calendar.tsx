@@ -1200,7 +1200,7 @@ export default function Calendar() {
                             </div>
                           </div>
                           {ev.location && <div className="flex items-center gap-1.5 mt-2 text-sm text-slate-400 ml-7"><MapPin size={14} /> {ev.location}</div>}
-                          <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">Báo trước: {ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}</div>
+                          <div className="text-xs text-slate-500 ml-7 mt-1 uppercase tracking-wider font-semibold">Báo trước: {ev.reminderAdvance === -1 ? 'Không báo' : ev.reminderAdvance === 0 ? 'Đúng giờ' : ev.reminderAdvance >= 1440 ? `${ev.reminderAdvance/1440} ngày` : ev.reminderAdvance >= 60 ? `${ev.reminderAdvance/60} giờ` : `${ev.reminderAdvance} phút`}</div>
                        </li>
                      ))}
                    </ul>
@@ -1584,6 +1584,7 @@ export default function Calendar() {
                 <div>
                   <label className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest block font-sans">Báo trước</label>
                   <select value={newReminderAdvance} onChange={e => setNewReminderAdvance(Number(e.target.value))} className="w-full bg-[#05070a] border border-[#1e293b] rounded-lg p-3 lg:p-4 text-slate-200 text-sm lg:text-base focus:outline-none focus:border-sky-500 transition-colors font-sans">
+                    <option value={-1}>Không báo</option>
                     <option value={0}>Đúng giờ</option>
                     <option value={15}>15 phút</option>
                     <option value={30}>30 phút</option>
