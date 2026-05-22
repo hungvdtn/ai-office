@@ -5,7 +5,7 @@ import { Solar } from 'lunar-javascript';
 
 // --- IMPORT TỪ FIREBASE ---
 import { auth, db, googleProvider } from '../firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { collection, query, where, getDocs, setDoc, doc, deleteDoc } from 'firebase/firestore';
 
 const CAN_CHU = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
@@ -844,7 +844,12 @@ export default function Calendar() {
 
   const handleGoogleLogin = async () => {
     try { 
-      await signInWithPopup(auth, googleProvider); 
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+         await signInWithRedirect(auth, googleProvider);
+      } else {
+         await signInWithPopup(auth, googleProvider); 
+      }
     } catch (error: any) { 
       console.error("Lỗi đăng nhập:", error); 
       if (error.code === 'auth/popup-blocked') {
