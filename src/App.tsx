@@ -464,20 +464,27 @@ export default function App() {
 
   // --- THUẬT TOÁN BÁO SỰ KIỆN KÈM VƯỢT RÀO CẢN DI ĐỘNG ---
   useEffect(() => {
+    // Khởi tạo Audio
     audioRef.current = new Audio('/nhac_bao_hieu.mp3');
     audioRef.current.loop = true;
     audioRef.current.load();
 
+    // Trick để "Mở khóa âm thanh" và "Xin quyền Thông báo" bằng tương tác ĐẦU TIÊN của người dùng
     const unlockAudioAndNotify = () => {
+      // 1. Xin quyền thông báo ngay khi người dùng chạm vào màn hình (Bắt buộc với iOS/Android)
       if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
           Notification.requestPermission();
       }
+
+      // 2. Mở khóa Audio
       if (audioRef.current) {
         audioRef.current.play().then(() => {
           audioRef.current!.pause();
           audioRef.current!.currentTime = 0;
         }).catch(() => {});
       }
+      
+      // Hủy lắng nghe sau khi đã mở khóa thành công
       window.removeEventListener('click', unlockAudioAndNotify);
       window.removeEventListener('touchstart', unlockAudioAndNotify);
     };
@@ -488,54 +495,47 @@ export default function App() {
     const checkAlarms = () => {
       const savedEvents = localStorage.getItem('user_events');
       if (!savedEvents) return;
-      
       const events = JSON.parse(savedEvents);
       const now = new Date();
-      
-      // Lấy danh sách ID các sự kiện đã bị người dùng bấm "TẮT CHUÔNG"
-      const dismissedAlarms = JSON.parse(localStorage.getItem('dismissed_alarms') || '[]');
 
       events.forEach((ev: any) => {
         const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); 
         const [evH, evM] = ev.time.split(':').map(Number);
+        const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
+        const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000));
         
-        const eventTime = new Date(evY, evMo - 1, evD, evH, evM); // Giờ diễn ra sự kiện
-        const remindTime = new Date(eventTime.getTime() - (ev.reminderAdvance * 60000)); // Giờ bắt đầu báo
-        const expireTime = new Date(eventTime.getTime() + (60 * 60000)); // Cho phép báo bù trong 1 tiếng nếu mở trễ
-        
-        const alarmKey = `session-alarm-${ev.id}`;
+        const alarmKey = `${ev.id}-${now.getHours()}-${now.getMinutes()}`;
 
-        // ĐIỀU KIỆN: Đến giờ báo + Nằm trong khoảng cho phép + Chưa từng bấm tắt
+        // Kiểm tra giờ và chặn báo lặp lại trong cùng 1 phút
         if (
-            now.getTime() >= remindTime.getTime() && 
-            now.getTime() <= expireTime.getTime() && 
-            !dismissedAlarms.includes(ev.id) && 
+            remindTime.getFullYear() === now.getFullYear() && 
+            remindTime.getMonth() === now.getMonth() && 
+            remindTime.getDate() === now.getDate() && 
+            remindTime.getHours() === now.getHours() && 
+            remindTime.getMinutes() === now.getMinutes() &&
             !alarmedIds.current.has(alarmKey)
         ) {
-            // Khóa tạm để không chạy vòng lặp giật cục trong phiên làm việc
             alarmedIds.current.add(alarmKey);
+            setRingingEvent(ev); // Bật giao diện Chuông
             
-            // 1. GỌI GIAO DIỆN MÀU ĐỎ CỦA APP
-            setRingingEvent(ev); 
-            
-            // 2. KÊU CHUÔNG
             if (audioRef.current) {
-                audioRef.current.play().catch(e => console.log('Chưa tương tác', e));
+                audioRef.current.play().catch(e => console.log('Bị chặn âm thanh do chưa tương tác', e));
             }
             
-            // 3. GỌI THÔNG BÁO GỐC CỦA TRÌNH DUYỆT / MÁY TÍNH
+            // BẮN THÔNG BÁO HỆ THỐNG VỚI QUYỀN ƯU TIÊN CAO
             if ('Notification' in window && Notification.permission === 'granted') { 
                 new Notification(`BÁO VIỆC: ${ev.title}`, { 
                     body: `⏰ Lúc: ${ev.time}\n📍 Địa điểm: ${ev.location || 'Không có'}`, 
                     icon: '/Logo_anh.png', 
-                    requireInteraction: true, 
-                    vibrate: [200, 100, 200, 100, 200, 100, 200] 
+                    requireInteraction: true, // Bắt buộc thông báo nằm lỳ trên màn hình cho đến khi tắt
+                    vibrate: [200, 100, 200, 100, 200, 100, 200] // Rung mạnh trên điện thoại Android
                 }); 
             }
         }
       });
     };
 
+    // Kiểm tra liên tục mỗi 10 giây
     const interval = setInterval(checkAlarms, 10000); 
     return () => {
         clearInterval(interval);
@@ -545,22 +545,10 @@ export default function App() {
   }, []);
 
   const stopAlarm = () => {
-      // 1. Tắt tiếng chuông
       if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
       }
-      
-      // 2. ĐƯA SỰ KIỆN VÀO DANH SÁCH "ĐÃ TẮT" ĐỂ KHÔNG BAO GIỜ KÊU LẠI
-      if (ringingEvent) {
-          const dismissedAlarms = JSON.parse(localStorage.getItem('dismissed_alarms') || '[]');
-          if (!dismissedAlarms.includes(ringingEvent.id)) {
-              dismissedAlarms.push(ringingEvent.id);
-              localStorage.setItem('dismissed_alarms', JSON.stringify(dismissedAlarms));
-          }
-      }
-      
-      // 3. Đóng giao diện
       setRingingEvent(null);
   };
 
