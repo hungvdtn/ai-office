@@ -499,6 +499,7 @@ export default function App() {
       const now = new Date();
 
       events.forEach((ev: any) => {
+        if (ev.reminderAdvance === -1) return;
         const [evY, evMo, evD] = ev.dateStr.split('-').map(Number); 
         const [evH, evM] = ev.time.split(':').map(Number);
         const eventTime = new Date(evY, evMo - 1, evD, evH, evM);
