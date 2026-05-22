@@ -555,20 +555,14 @@ export default function App() {
 
   const handleLogin = async () => { 
     try { 
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      // Phân tách rõ ràng: Điện thoại dùng Redirect (tránh bị chặn popup), Máy tính dùng Popup
-      if (isMobile) {
-         await signInWithRedirect(auth, googleProvider);
-      } else {
-         await signInWithPopup(auth, googleProvider); 
-      }
+      // Quay về dùng duy nhất 1 lệnh Popup cho cả Máy tính và Điện thoại (Giống như cũ)
+      await signInWithPopup(auth, googleProvider); 
     } catch (error: any) { 
       console.error("Lỗi đăng nhập:", error); 
-      // TUYỆT ĐỐI KHÔNG DÙNG LỆNH CHUYỂN HƯỚNG DỰ PHÒNG Ở ĐÂY NỮA ĐỂ TRÁNH LỖI 2 MÀN HÌNH
       if (error.code === 'auth/popup-blocked') {
-         alert("Trình duyệt đang chặn cửa sổ đăng nhập. Vui lòng cấp quyền (Cho phép mở Pop-up) trên thanh địa chỉ để tiếp tục.");
+         alert("Trình duyệt đang chặn cửa sổ đăng nhập. Vui lòng cấp quyền (Cho phép mở Pop-up) để tiếp tục.");
       } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-         alert("LỖI BẢO MẬT: Nếu bạn đang mở web từ trong ứng dụng Zalo/Facebook, vui lòng bấm nút 3 chấm góc phải, chọn 'Mở bằng trình duyệt' (Chrome/Safari) để có thể đăng nhập!");
+         alert("LỖI BẢO MẬT: Nếu bạn đang mở web từ trong ứng dụng Zalo/Facebook, vui lòng bấm nút 3 chấm góc phải, chọn 'Mở bằng trình duyệt' (Chrome/Safari) để đăng nhập!");
       }
     } 
   };
