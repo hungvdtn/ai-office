@@ -1187,7 +1187,7 @@ export default function Calendar() {
 
                {selEvents.length > 0 && (
                  <div className="mt-6 pt-4 border-t border-[#1e293b]">
-                   <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm lg:text-base uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}:</strong>
+                   <strong className="text-sky-400 flex items-center gap-2 mb-3 text-sm lg:text-base uppercase tracking-widest"><Bell size={16}/> Lịch trình ngày {selectedDate.getDate()}/{selectedDate.getMonth() + 1}:</strong>
                    <ul className="space-y-3">
                      {selEvents.map(ev => (
                        <li key={ev.id} onClick={() => openModalForEdit(ev)} className="flex flex-col bg-black/60 px-5 py-4 rounded-lg border border-[#1e293b] cursor-pointer hover:border-sky-500/50 transition-colors group">
