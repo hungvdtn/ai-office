@@ -180,7 +180,7 @@ const AdminPanel = () => {
                                  {u.tools && u.tools.length > 0 ? (
                                    u.tools.map((toolName: string, tIdx: number) => (
                                      <span key={tIdx} className={`px-2.5 py-1 text-[10px] font-black uppercase rounded-md tracking-wider border ${toolName === 'Lịch' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'}`}>
-                                       {toolName === 'Lịch' ? 'Lịch Vạn Niên' : 'Rà soát văn bản'}
+                                       {toolName === 'Lịch' ? 'Lịch Vạn Niên' : 'Rà lỗi văn bản'}
                                      </span>
                                    ))
                                  ) : (
@@ -290,12 +290,12 @@ const HelpContent = ({ module }: { module: string }) => {
       case 'docreview':
       return (
         <div className="space-y-4 text-sm text-slate-300 leading-relaxed font-sans">
-          <h3 className="font-bold text-brand text-lg">Hướng dẫn Rà soát tài liệu</h3>
-          <p>Công cụ “Rà soát văn bản” được thiết kế để rà soát lỗi chính tả, lỗi kỹ thuật, ngữ pháp, lỗi sử dụng từ của văn bản theo chuẩn quy tắc tiếng Việt và các quy định tại Nghị định 30/2020/NĐ-CP, giúp người dùng nâng cao chất lượng soạn thảo các văn bản, tối ưu hóa công việc.</p>
+          <h3 className="font-bold text-brand text-lg">Hướng dẫn rà lỗi tài liệu</h3>
+          <p>Công cụ “Rà lỗi văn bản” được thiết kế để rà soát lỗi chính tả, lỗi kỹ thuật, ngữ pháp, lỗi sử dụng từ của văn bản theo chuẩn quy tắc tiếng Việt và các quy định tại Nghị định 30/2020/NĐ-CP, giúp người dùng nâng cao chất lượng soạn thảo các văn bản, tối ưu hóa công việc.</p>
           <p className="font-bold text-rose-400">Bạn phải đăng nhập với tài khoản Google để sử dụng chức năng này, vì công cụ này có sử dụng AI trong rà soát.</p>
           <p>Bạn tải văn bản cần rà soát (chỉ file .docx mới được chấp nhận). Nếu là tài liệu của file .doc bạn có thể Save as …chuyển thành .docx hoặc bôi đen toàn bộ văn bản, chọn copy, chọn nút “Dán văn bản” và dán văn bản vào khung cần rà soát.</p>
           
-          <p className="font-bold text-sky-400 mt-2">Để rà soát văn bản có 2 lựa chọn:</p>
+          <p className="font-bold text-sky-400 mt-2">Để rà lỗi văn bản có 2 lựa chọn:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>(1) Rà soát chính tả:</strong> Dùng trong trường hợp văn bản ngắn, đơn giản, cần xử lý nhanh. Kết quả rà soát là các lỗi chính tả, lỗi viết hoa, lỗi kỹ thuật (đánh máy, thừa ký tự, thừa chữ; khoảng trắng, dấu câu…). Kết quả chỉ trong 1, 2 giây cho hàng trăm trang, gần như không độ trễ.</li>
             <li><strong>(2) Rà soát kỹ:</strong> Dùng trong trường hợp muốn rà soát kỹ lưỡng văn bản đòi hỏi độ chính xác cao cả về chính tả, ngữ pháp mà còn cả ngữ, nghĩa của từ, câu trong văn bản. Vì độ phức tạp cao, nên thời gian rà soát lâu, khoảng 15s/trang. Kết quả rà soát là các lỗi chính tả, kỹ thuật văn bản, ngữ pháp, sử dụng từ v.v… </li>
@@ -427,7 +427,7 @@ export default function App() {
               
               let currentModuleTag = '';
               if (activeModule === 'calendar') currentModuleTag = 'Lịch';
-              if (activeModule === 'docreview') currentModuleTag = 'Rà soát';
+              if (activeModule === 'docreview') currentModuleTag = 'Rà lỗi';
 
               if (!userSnap.exists()) {
                  // Trường hợp tài khoản mới đăng nhập hệ sinh thái lần đầu
@@ -574,7 +574,7 @@ export default function App() {
     { id: 'pdf', label: 'Xử lý PDF', icon: FileText },
     { id: 'ocr', label: 'Trích xuất OCR', icon: Languages },
     { id: 'scanner', label: 'Scan Tài liệu', icon: Scan },
-    { id: 'docreview', label: 'Rà soát Văn bản', icon: FileText },
+    { id: 'docreview', label: 'Rà lỗi văn bản', icon: FileText },
     { id: 'qrcode', label: 'Tạo mã QR', icon: QrCode },
     { id: 'idphoto', label: 'Tạo ảnh thẻ', icon: ImageIcon, isExternal: true, url: 'https://lamchuaigiaoduc.vn/id-photo/' },
     { id: 'gemini', label: 'Trợ lý Gemini', icon: Sparkles, isExternal: true, url: 'https://gemini.google.com/app' },
