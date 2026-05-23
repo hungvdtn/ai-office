@@ -162,7 +162,7 @@ export default function Scanner() {
             <h1 className="text-3xl font-sans font-bold text-slate-100 flex items-center gap-3">
               <Scan className="text-brand" size={32} /> Máy Scan Tài liệu
             </h1>
-            <p className="text-xs text-slate-400 mb-4">Cắt viền quang học chính xác và bảo vệ chi tiết đồ họa.</p>
+            <p className="text-xs text-slate-400 mb-4">Dùng điện thoại để thực hiện Scan tài liệu.</p>
           </div>
         </div>
       )}
@@ -173,7 +173,7 @@ export default function Scanner() {
              <button onClick={startCamera} disabled={isInitializing} className="office-button-primary bg-brand text-bg-dark py-4 px-8 text-lg w-full max-w-md justify-center shadow-lg shadow-brand/20 disabled:opacity-70">
                {isInitializing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />} {isInitializing ? 'ĐANG KẾT NỐI ỐNG KÍNH...' : 'MỞ MÁY QUÉT'}
              </button>
-             <p className="text-xs text-slate-500 mt-6">Canh khít văn bản vào khung vàng, hệ thống sẽ tự động cắt bỏ viền thừa.</p>
+             <p className="text-xs text-slate-500 mt-6">Canh khít văn bản vào khung vàng, sau đó ấn chụp.</p>
           </div>
         ) : (
           <div className="absolute inset-0 z-20 flex flex-col bg-black">

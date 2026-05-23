@@ -364,7 +364,7 @@ export default function DocReviewStudio() {
     <div className="space-y-6 w-full pb-10 font-sans h-full flex flex-col">
       <div className="flex items-center gap-3 border-b border-[#1e293b] pb-4">
          <FileWarning size={24} className="text-brand" />
-         <h2 className="text-xl font-bold text-white uppercase tracking-widest">Rà soát Văn bản</h2>
+         <h2 className="text-xl font-bold text-white uppercase tracking-widest">Rà lỗi văn bản</h2>
       </div>
       {step === 'upload' && (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -394,7 +394,7 @@ export default function DocReviewStudio() {
               </div>
               <div className="space-y-4">
                  <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 uppercase"><ShieldCheck size={18}/> 2. Rà soát</h3>
-                 <p className="text-xs text-slate-400 mb-4">Lựa chọn một trong hai tính năng dưới đây.</p>
+                 <p className="text-xs text-slate-400 mb-4">Lựa chọn một trong hai tính năng dưới đây để rà soát.</p>
                  <div className="grid grid-cols-2 gap-3 pt-2">
                     <button onClick={() => startReview('offline')} className="bg-slate-800 p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center justify-center gap-2 border border-[#1e293b]">
                        <Type size={24} className="text-amber-400" />
