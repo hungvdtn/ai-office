@@ -162,7 +162,7 @@ export default function Scanner() {
             <h1 className="text-3xl font-sans font-bold text-slate-100 flex items-center gap-3">
               <Scan className="text-brand" size={32} /> Máy Scan Tài liệu
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Cắt viền quang học chính xác và bảo vệ chi tiết đồ họa.</p>
+            <p className="text-xs text-slate-400 mb-4">Cắt viền quang học chính xác và bảo vệ chi tiết đồ họa.</p>
           </div>
         </div>
       )}
