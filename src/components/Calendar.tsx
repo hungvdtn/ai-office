@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Plus, Trash2, Calendar as CalendarIcon, X, MapPin, Clock, Edit3, Star, StarHalf, Sun, Moon, ArrowRightLeft, Info, Search, AlertTriangle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
@@ -787,7 +787,23 @@ export default function Calendar() {
   
   const [showEventModal, setShowEventModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false); 
-  const [showDayDetail, setShowDayDetail] = useState(false); 
+  const [showDayDetail, setShowDayDetail] = useState(false);
+   // --- STATE VÀ HÀM QUẢN LÝ KÉO THẢ CỬA SỔ XEM NGÀY ---
+  const [detailPos, setDetailPos] = useState({ x: window.innerWidth > 768 ? window.innerWidth / 2 - 350 : 10, y: 60 });
+  const detailDragRef = useRef({ isDragging: false, origin: { x: 0, y: 0 } });
+
+  const onDetailPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    detailDragRef.current = { isDragging: true, origin: { x: e.clientX - detailPos.x, y: e.clientY - detailPos.y } };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onDetailPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!detailDragRef.current.isDragging) return;
+    setDetailPos({ x: e.clientX - detailDragRef.current.origin.x, y: e.clientY - detailDragRef.current.origin.y });
+  };
+  const onDetailPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    detailDragRef.current.isDragging = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newEventTitle, setNewEventTitle] = useState('');
@@ -1421,116 +1437,139 @@ export default function Calendar() {
         </div>
       )}
 
-      {/* MODAL CHI TIẾT NGÀY PHONG THỦY */}
+      {/* CỬA SỔ CHI TIẾT NGÀY PHONG THỦY (NỔI, KÉO THẢ, CO GIÃN) */}
       <AnimatePresence>
         {showDayDetail && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f172a] border border-[#1e293b] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(56,189,248,0.1)]">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.95 }} 
+            className="fixed z-[100] bg-[#0f172a]/95 backdrop-blur-xl border-2 border-sky-500/50 rounded-2xl shadow-[0_0_50px_rgba(56,189,248,0.3)] flex flex-col overflow-hidden"
+            style={{ 
+              left: detailPos.x, 
+              top: detailPos.y, 
+              width: window.innerWidth > 768 ? 700 : window.innerWidth - 20, 
+              height: window.innerHeight > 800 ? 700 : window.innerHeight - 80, 
+              resize: 'both', // Lệnh cho phép kéo giãn kích thước ở góc dưới bên phải
+              minWidth: '320px',
+              minHeight: '400px'
+            }}
+          >
+            {/* HEADER UI (Khu vực dùng chuột để kéo thả) */}
+            <div 
+              onPointerDown={onDetailPointerDown} 
+              onPointerMove={onDetailPointerMove} 
+              onPointerUp={onDetailPointerUp}
+              className="p-4 md:p-6 bg-[#1e293b]/80 border-b border-[#1e293b] flex justify-between items-center cursor-move touch-none"
+            >
+              <div className="flex items-center gap-4 pointer-events-none">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-500 text-[#05070a] rounded-xl md:rounded-2xl flex items-center justify-center font-black text-2xl md:text-3xl font-sans shadow-lg">{selectedDate.getDate()}</div>
+                <div>
+                  <h3 className="text-white font-bold text-base md:text-lg font-sans">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
+                  <p className="text-[10px] md:text-xs text-amber-500 uppercase font-black tracking-widest font-sans mt-0.5">{dayEval.text}</p>
+                </div>
+              </div>
+              <button 
+                onPointerDown={e => e.stopPropagation()} // Chặn kéo thả khi bấm nút X
+                onClick={() => setShowDayDetail(false)} 
+                className="p-2 bg-rose-500/20 hover:bg-rose-500 rounded-xl text-rose-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={20}/>
+              </button>
+            </div>
+
+            {/* NỘI DUNG CUỘN BÊN TRONG */}
+            <div className="p-5 md:p-6 overflow-y-auto flex-1 custom-scrollbar text-slate-300 space-y-6 text-sm font-sans leading-relaxed bg-[#05070a]">
               
-              {/* HEADER UI */}
-              <div className="p-6 bg-[#1e293b]/30 border-b border-[#1e293b] flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-amber-500 text-[#05070a] rounded-2xl flex items-center justify-center font-black text-3xl font-sans shadow-lg">{selectedDate.getDate()}</div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg font-sans">Chi tiết ngày {selectedDate.toLocaleDateString('vi-VN')}</h3>
-                    <p className="text-xs text-amber-500 uppercase font-black tracking-widest font-sans mt-0.5">{dayEval.text}</p>
-                  </div>
+              {/* 1. THÔNG TIN CHUNG */}
+              <div>
+                <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">1. Thông tin chung về ngày</h4>
+                <p className="font-sans">
+                  Ngày âm lịch <span className="text-white font-bold">{selLunar.day}/{selLunar.monthStr}</span>, 
+                  là ngày: <span className="text-sky-400 font-bold">{getCanChiDay(selectedDate).text}</span>, 
+                  tháng: <span className="text-sky-400 font-bold">{getCanChiMonth(selLunar.monthNum, selectedDate.getFullYear()).text}</span>, 
+                  năm: <span className="text-sky-400 font-bold">{getCanChiYear(selectedDate.getFullYear())}</span>, 
+                  là <span className="text-amber-400 font-bold">{dayEval.text.toLowerCase()}</span> theo lịch âm. {dayEval.generalDesc}
+                </p>
+                <div className="flex items-center gap-2 mt-2 font-sans">
+                   <span>Đánh giá:</span>
+                   <span className="text-white font-bold">[{dayEval.score}]</span>
+                   {renderStars(dayEval.score)}
                 </div>
-                <button onClick={() => setShowDayDetail(false)} className="p-2 bg-slate-800/50 hover:bg-rose-500 rounded-xl text-slate-400 hover:text-white transition-colors"><X size={20}/></button>
-              </div>
-
-              <div className="p-6 overflow-y-auto custom-scrollbar text-slate-300 space-y-6 text-sm font-sans leading-relaxed bg-[#05070a]">
+                <p className="mt-2 font-sans">Kiểu ngày: <span className={`font-bold ${dayEval.isHoangDao ? 'text-emerald-400' : 'text-rose-400'}`}>{dayDet.hoangDaoType} {dayEval.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span></p>
+                <p className="font-sans">Trực: <span className="text-amber-400 font-bold">{dayDet.truc}</span></p>
                 
-                {/* 1. THÔNG TIN CHUNG */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">1. Thông tin chung về ngày</h4>
-                  <p className="font-sans">
-                    Ngày âm lịch <span className="text-white font-bold">{selLunar.day}/{selLunar.monthStr}</span>, 
-                    là ngày: <span className="text-sky-400 font-bold">{getCanChiDay(selectedDate).text}</span>, 
-                    tháng: <span className="text-sky-400 font-bold">{getCanChiMonth(selLunar.monthNum, selectedDate.getFullYear()).text}</span>, 
-                    năm: <span className="text-sky-400 font-bold">{getCanChiYear(selectedDate.getFullYear())}</span>, 
-                    là <span className="text-amber-400 font-bold">{dayEval.text.toLowerCase()}</span> theo lịch âm. {dayEval.generalDesc}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2 font-sans">
-                     <span>Đánh giá:</span>
-                     <span className="text-white font-bold">[{dayEval.score}]</span>
-                     {renderStars(dayEval.score)}
-                  </div>
-                  <p className="mt-2 font-sans">Kiểu ngày: <span className={`font-bold ${dayEval.isHoangDao ? 'text-emerald-400' : 'text-rose-400'}`}>{dayDet.hoangDaoType} {dayEval.isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</span></p>
-                  <p className="font-sans">Trực: <span className="text-amber-400 font-bold">{dayDet.truc}</span></p>
-                  
-                  <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngũ hành & Tiết khí</h5>
-                  <p className="font-sans">Nạp âm ngày: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
-                  <p className="font-sans">Đánh giá Can Chi: <span className="text-emerald-400 font-bold">{dayDet.canChiRelation}</span></p>
-                  <p className="font-sans">Ngũ hành niên mệnh: <span className="text-sky-400 font-bold">{dayDet.nguHanhNienMenh}</span></p>
-                  <p className="font-sans">Tiết khí: <span className="text-emerald-400 font-bold">{dayDet.tietKhi}</span></p>
-                  
-                  <h5 className="font-bold text-white mt-4 mb-1 font-sans">Hướng xuất hành</h5>
-                  <p className="font-sans">Hỷ thần - TỐT: <span className="text-emerald-400 font-bold">{dayDet.hyThan}</span></p>
-                  <p className="font-sans">Tài thần - TỐT: <span className="text-emerald-400 font-bold">{dayDet.taiThan}</span></p>
-                  
-                  <h5 className="font-bold text-white mt-4 mb-1 font-sans">Nhị thập bát tú</h5>
-                  <p className="font-sans">
-                    Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span> ({dayDet.saoDesc.replace('Thuộc', 'thuộc')})
-                  </p>
+                <h5 className="font-bold text-white mt-4 mb-1 font-sans">Ngũ hành & Tiết khí</h5>
+                <p className="font-sans">Nạp âm ngày: <span className="text-sky-400 font-bold">{dayDet.nguHanh}</span></p>
+                <p className="font-sans">Đánh giá Can Chi: <span className="text-emerald-400 font-bold">{dayDet.canChiRelation}</span></p>
+                <p className="font-sans">Ngũ hành niên mệnh: <span className="text-sky-400 font-bold">{dayDet.nguHanhNienMenh}</span></p>
+                <p className="font-sans">Tiết khí: <span className="text-emerald-400 font-bold">{dayDet.tietKhi}</span></p>
+                
+                <h5 className="font-bold text-white mt-4 mb-1 font-sans">Hướng xuất hành</h5>
+                <p className="font-sans">Hỷ thần - TỐT: <span className="text-emerald-400 font-bold">{dayDet.hyThan}</span></p>
+                <p className="font-sans">Tài thần - TỐT: <span className="text-emerald-400 font-bold">{dayDet.taiThan}</span></p>
+                
+                <h5 className="font-bold text-white mt-4 mb-1 font-sans">Nhị thập bát tú</h5>
+                <p className="font-sans">
+                  Sao chiếu mệnh: <span className="text-amber-400 font-bold">{dayDet.sao}</span> ({dayDet.saoDesc.replace('Thuộc', 'thuộc')})
+                </p>
 
-                  <h5 className="font-bold text-white mt-4 mb-1 font-sans">Lưu ý đặc biệt</h5>
-                  <p className="font-sans">
-                    {dayEval.hasFatal || dayDet.folkTaboos.length > 0 ? (
-                      <span className="text-rose-400 font-bold">
-                         {dayEval.hasFatal ? "NGÀY ĐẠI KỴ - " : ""} 
-                         {dayEval.generalDesc}
-                      </span>
-                    ) : (
-                      <span className="text-emerald-400 font-bold">Không có sát khí lớn, ngày bình an.</span>
-                    )}
-                  </p>
-                </div>
-
-                {/* 2. GIỜ HOÀNG ĐẠO */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Giờ Hoàng đạo</h4>
-                  <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}</p>
-                </div>
-
-                {/* 3. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Việc nên làm và không nên làm</h4>
-                  <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
-                  <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
-                </div>
-
-                {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (Ngọc Hạp Thông Thư)</h4>
-                  <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
-                      dayDet.catTinh.map((s: string, sIdx: number) => (
-                        <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.catTinh.length - 1 ? ', ' : ''}</span>
-                      ))
-                    ) : 'Không có'}</p>
-                  <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Các sao xấu:</span> {dayDet.hungTinh.length > 0 ? (
-                      dayDet.hungTinh.map((s: string, sIdx: number) => (
-                        <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.hungTinh.length - 1 ? ', ' : ''}</span>
-                      ))
-                    ) : 'Không có'}</p>
-                </div>
-
-                {/* 5. XUNG KHẮC & TAM SÁT */}
-                <div>
-                  <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc & Sát khí</h4>
-                  <p className="font-sans mt-1">
-                    <span className="text-white font-bold">- Tuổi xung khắc ngày:</span> Xung mạnh nhất với các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> (Thiên khắc Địa xung).
-                  </p>
-                  <p className="font-sans mt-2">
-                    <span className="text-white font-bold">- Tuổi xung khắc tháng:</span> Tháng này kỵ với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.
-                  </p>
-                  <p className="font-sans mt-2">
-                    <span className="text-white font-bold">- Tam Sát (Kỵ động thổ, an táng):</span> Ngày hôm nay sát khí tọa tại các hướng và tuổi <span className="text-rose-400 font-bold">{dayDet.tamSat}</span>.
-                  </p>
-                </div>
-
+                <h5 className="font-bold text-white mt-4 mb-1 font-sans">Lưu ý đặc biệt</h5>
+                <p className="font-sans">
+                  {dayEval.hasFatal || dayDet.folkTaboos.length > 0 ? (
+                    <span className="text-rose-400 font-bold">
+                       {dayEval.hasFatal ? "NGÀY ĐẠI KỴ - " : ""} 
+                       {dayEval.generalDesc}
+                    </span>
+                  ) : (
+                    <span className="text-emerald-400 font-bold">Không có sát khí lớn, ngày bình an.</span>
+                  )}
+                </p>
               </div>
-            </motion.div>
+
+              {/* 2. GIỜ HOÀNG ĐẠO */}
+              <div>
+                <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">2. Giờ Hoàng đạo</h4>
+                <p className="font-sans"><span className="text-amber-400 font-bold">Giờ lành:</span> {dayDet.gioHoangDao}</p>
+              </div>
+
+              {/* 3. MỨC ĐỘ PHÙ HỢP CÔNG VIỆC */}
+              <div>
+                <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">3. Việc nên làm và không nên làm</h4>
+                <p className="font-sans"><span className="text-emerald-400 font-bold">Nên làm (Cát):</span> {dayDet.hop}</p>
+                <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Kiêng kỵ (Hung):</span> <span className={dayDet.folkTaboos.length > 0 ? "text-rose-400" : ""}>{dayDet.ky}</span></p>
+              </div>
+
+              {/* 4. CÁC SAO TỐT XẤU THEO NGỌC HẠP THÔNG THƯ */}
+              <div>
+                <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">4. Các sao tốt xấu (Ngọc Hạp Thông Thư)</h4>
+                <p className="font-sans"><span className="text-emerald-400 font-bold">Các sao tốt:</span> {dayDet.catTinh.length > 0 ? (
+                    dayDet.catTinh.map((s: string, sIdx: number) => (
+                      <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.catTinh.length - 1 ? ', ' : ''}</span>
+                    ))
+                  ) : 'Không có'}</p>
+                <p className="mt-2 font-sans"><span className="text-rose-400 font-bold">Các sao xấu:</span> {dayDet.hungTinh.length > 0 ? (
+                    dayDet.hungTinh.map((s: string, sIdx: number) => (
+                      <span key={sIdx} className="hover:text-amber-400 transition-colors cursor-help relative group" title={STAR_MEANINGS[s] || "Đang cập nhật ý nghĩa..."}>{s}{sIdx < dayDet.hungTinh.length - 1 ? ', ' : ''}</span>
+                    ))
+                  ) : 'Không có'}</p>
+              </div>
+
+              {/* 5. XUNG KHẮC & TAM SÁT */}
+              <div>
+                <h4 className="text-brand font-bold text-base mb-2 font-sans uppercase tracking-widest">5. Xung khắc & Sát khí</h4>
+                <p className="font-sans mt-1">
+                  <span className="text-white font-bold">- Tuổi xung khắc ngày:</span> Xung mạnh nhất với các tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXung}</span> (Thiên khắc Địa xung).
+                </p>
+                <p className="font-sans mt-2">
+                  <span className="text-white font-bold">- Tuổi xung khắc tháng:</span> Tháng này kỵ với những người tuổi <span className="text-rose-400 font-bold">{dayDet.tuoiXungThang}</span>.
+                </p>
+                <p className="font-sans mt-2">
+                  <span className="text-white font-bold">- Tam Sát (Kỵ động thổ, an táng):</span> Ngày hôm nay sát khí tọa tại các hướng và tuổi <span className="text-rose-400 font-bold">{dayDet.tamSat}</span>.
+                </p>
+              </div>
+
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
